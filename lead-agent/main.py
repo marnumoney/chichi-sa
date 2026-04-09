@@ -10,6 +10,7 @@ from qualifier import qualify
 from composer import compose_email
 from mailer import get_access_token, send_email, DAILY_SEND_LIMIT
 from email_finder import find_email
+from notifier import notify_run_complete
 
 LOG_PATH = os.path.join(os.path.dirname(__file__), "logs", "agent.log")
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.yaml")
@@ -106,6 +107,7 @@ def _run_pipeline(config: dict, conn) -> None:
     anthropic_client = anthropic.Anthropic(api_key=config["anthropic"]["api_key"])
     sent_count = 0
     failed_count = 0
+    emailed_leads = []
 
     for lead in leads_to_email:
         now = datetime.now(timezone.utc).replace(tzinfo=None).isoformat(sep=" ", timespec="seconds")
@@ -127,6 +129,7 @@ def _run_pipeline(config: dict, conn) -> None:
                 "outlook_message_id": msg_id,
             })
             logger.info("Sent to %s", lead["email"])
+            emailed_leads.append({"business_name": lead["business_name"], "city": lead["city"], "email": lead["email"]})
             sent_count += 1
         except Exception as e:
             logger.error("Failed for lead %s: %s", lead.get("business_name", "unknown"), e)
@@ -141,6 +144,17 @@ def _run_pipeline(config: dict, conn) -> None:
             failed_count += 1
 
     logger.info("=== Done: %d sent, %d failed ===", sent_count, failed_count)
+
+    ntfy_topic = config.get("notifications", {}).get("ntfy_topic")
+    if ntfy_topic:
+        notify_run_complete(ntfy_topic, {
+            "scraped": len(raw_places),
+            "qualified": len(new_leads),
+            "emails_found": found_count,
+            "sent": sent_count,
+            "failed": failed_count,
+            "emailed_leads": emailed_leads,
+        })
 
 
 if __name__ == "__main__":

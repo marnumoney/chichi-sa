@@ -384,3 +384,59 @@
 2026-04-09 23:36:30,210 [INFO] scraper: Searching: restaurant in Polokwane, South Africa
 2026-04-09 23:37:14,397 [INFO] scraper: Searching: restaurant in Nelspruit, South Africa
 2026-04-09 23:37:14,397 [INFO] scraper: Searching: restaurant in Nelspruit, South Africa
+2026-04-09 23:37:58,196 [INFO] scraper: Searching: restaurant in Kimberley, South Africa
+2026-04-09 23:37:58,196 [INFO] scraper: Searching: restaurant in Kimberley, South Africa
+2026-04-09 23:38:41,596 [INFO] scraper: Searching: hair salon in Johannesburg, South Africa
+2026-04-09 23:38:41,596 [INFO] scraper: Searching: hair salon in Johannesburg, South Africa
+2026-04-09 23:39:28,470 [INFO] scraper: Searching: hair salon in Cape Town, South Africa
+2026-04-09 23:39:28,470 [INFO] scraper: Searching: hair salon in Cape Town, South Africa
+2026-04-09 23:39:34,229 [INFO] main: === Lead Agent starting ===
+2026-04-09 23:39:34,229 [INFO] main: === Lead Agent starting ===
+2026-04-09 23:39:34,233 [INFO] main: Scraping Google Places...
+2026-04-09 23:39:34,233 [INFO] main: Scraping Google Places...
+2026-04-09 23:39:34,233 [INFO] googlemaps.client: API queries_quota: 60
+2026-04-09 23:39:34,233 [INFO] googlemaps.client: API queries_quota: 60
+2026-04-09 23:39:34,233 [INFO] scraper: Searching: restaurant in Johannesburg, South Africa
+2026-04-09 23:39:34,233 [INFO] scraper: Searching: restaurant in Johannesburg, South Africa
+2026-04-09 23:40:17,529 [INFO] scraper: Searching: restaurant in Cape Town, South Africa
+2026-04-09 23:40:17,529 [INFO] scraper: Searching: restaurant in Cape Town, South Africa
+2026-04-09 23:41:02,137 [INFO] scraper: Searching: restaurant in Durban, South Africa
+2026-04-09 23:41:02,137 [INFO] scraper: Searching: restaurant in Durban, South Africa
+2026-04-09 23:41:45,567 [INFO] scraper: Searching: restaurant in Pretoria, South Africa
+2026-04-09 23:41:45,567 [INFO] scraper: Searching: restaurant in Pretoria, South Africa
+2026-04-09 23:42:28,842 [INFO] scraper: Searching: restaurant in Port Elizabeth, South Africa
+2026-04-09 23:42:28,842 [INFO] scraper: Searching: restaurant in Port Elizabeth, South Africa
+2026-04-09 23:43:12,470 [INFO] scraper: Searching: restaurant in Bloemfontein, South Africa
+2026-04-09 23:43:12,470 [INFO] scraper: Searching: restaurant in Bloemfontein, South Africa
+2026-04-09 23:43:55,588 [INFO] scraper: Searching: restaurant in East London, South Africa
+2026-04-09 23:43:55,588 [INFO] scraper: Searching: restaurant in East London, South Africa
+2026-04-09 23:44:40,461 [INFO] scraper: Searching: restaurant in Polokwane, South Africa
+2026-04-09 23:44:40,461 [INFO] scraper: Searching: restaurant in Polokwane, South Africa
+2026-04-09 23:45:23,838 [INFO] scraper: Searching: restaurant in Nelspruit, South Africa
+2026-04-09 23:45:23,838 [INFO] scraper: Searching: restaurant in Nelspruit, South Africa
+2026-04-09 23:46:06,966 [INFO] scraper: Searching: restaurant in Kimberley, South Africa
+2026-04-09 23:46:06,966 [INFO] scraper: Searching: restaurant in Kimberley, South Africa
+2026-04-09 23:46:50,406 [INFO] scraper: Searching: hair salon in Johannesburg, South Africa
+2026-04-09 23:46:50,406 [INFO] scraper: Searching: hair salon in Johannesburg, South Africa
+2026-04-09 23:47:36,795 [INFO] scraper: Searching: hair salon in Cape Town, South Africa
+2026-04-09 23:47:36,795 [INFO] scraper: Searching: hair salon in Cape Town, South Africa
+2026-04-09 23:48:19,964 [INFO] scraper: Searching: hair salon in Durban, South Africa
+2026-04-09 23:48:19,964 [INFO] scraper: Searching: hair salon in Durban, South Africa
+2026-04-09 23:49:03,837 [INFO] scraper: Searching: hair salon in Pretoria, South Africa
+2026-04-09 23:49:03,837 [INFO] scraper: Searching: hair salon in Pretoria, South Africa
+2026-04-09 23:49:46,653 [INFO] scraper: Searching: hair salon in Port Elizabeth, South Africa
+2026-04-09 23:49:46,653 [INFO] scraper: Searching: hair salon in Port Elizabeth, South Africa
+2026-04-09 23:50:30,080 [INFO] scraper: Searching: hair salon in Bloemfontein, South Africa
+2026-04-09 23:50:30,080 [INFO] scraper: Searching: hair salon in Bloemfontein, South Africa
+2026-04-09 23:51:13,588 [INFO] scraper: Searching: hair salon in East London, South Africa
+2026-04-09 23:51:13,588 [INFO] scraper: Searching: hair salon in East London, South Africa
+2026-04-09 23:51:56,289 [INFO] scraper: Searching: hair salon in Polokwane, South Africa
+2026-04-09 23:51:56,289 [INFO] scraper: Searching: hair salon in Polokwane, South Africa
+2026-04-09 23:52:39,402 [INFO] scraper: Searching: hair salon in Nelspruit, South Africa
+2026-04-09 23:52:39,402 [INFO] scraper: Searching: hair salon in Nelspruit, South Africa
+2026-04-09 23:53:22,785 [INFO] scraper: Searching: hair salon in Kimberley, South Africa
+2026-04-09 23:53:22,785 [INFO] scraper: Searching: hair salon in Kimberley, South Africa
+2026-04-09 23:54:08,289 [INFO] scraper: Searching: plumber in Johannesburg, South Africa
+2026-04-09 23:54:08,289 [INFO] scraper: Searching: plumber in Johannesburg, South Africa
+2026-04-09 23:54:57,761 [INFO] scraper: Searching: plumber in Cape Town, South Africa
+2026-04-09 23:54:57,761 [INFO] scraper: Searching: plumber in Cape Town, South Africa
