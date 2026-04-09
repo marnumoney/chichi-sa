@@ -41,30 +41,25 @@ def lead_exists(conn: sqlite3.Connection, place_id: str) -> bool:
 
 
 def insert_lead(conn: sqlite3.Connection, lead: dict) -> int:
-    try:
-        cur = conn.execute(
-            """INSERT OR IGNORE INTO leads
-               (place_id, business_name, industry, city, phone, email, rating, review_count, found_date)
-               VALUES (:place_id, :business_name, :industry, :city, :phone, :email, :rating, :review_count, :found_date)""",
-            lead,
-        )
-        conn.commit()
-        if cur.lastrowid:
-            return cur.lastrowid
-        return conn.execute(
-            "SELECT id FROM leads WHERE place_id = ?", (lead["place_id"],)
-        ).fetchone()[0]
-    except sqlite3.IntegrityError:
-        return conn.execute(
-            "SELECT id FROM leads WHERE place_id = ?", (lead["place_id"],)
-        ).fetchone()[0]
+    cur = conn.execute(
+        """INSERT OR IGNORE INTO leads
+           (place_id, business_name, industry, city, phone, email, rating, review_count, found_date)
+           VALUES (:place_id, :business_name, :industry, :city, :phone, :email, :rating, :review_count, :found_date)""",
+        lead,
+    )
+    conn.commit()
+    if cur.lastrowid is not None and cur.lastrowid != 0:
+        return cur.lastrowid
+    return conn.execute(
+        "SELECT id FROM leads WHERE place_id = ?", (lead["place_id"],)
+    ).fetchone()[0]
 
 
 def get_uncontacted_leads(conn: sqlite3.Connection, limit: int) -> list[dict]:
     rows = conn.execute(
         """SELECT l.* FROM leads l
            WHERE l.email IS NOT NULL AND l.email != ''
-           AND l.id NOT IN (SELECT lead_id FROM emails)
+           AND NOT EXISTS (SELECT 1 FROM emails WHERE emails.lead_id = l.id)
            LIMIT ?""",
         (limit,),
     ).fetchall()
@@ -72,12 +67,16 @@ def get_uncontacted_leads(conn: sqlite3.Connection, limit: int) -> list[dict]:
 
 
 def insert_email(conn: sqlite3.Connection, email_record: dict) -> None:
-    conn.execute(
-        """INSERT INTO emails (lead_id, sent_at, status, subject, body, outlook_message_id)
-           VALUES (:lead_id, :sent_at, :status, :subject, :body, :outlook_message_id)""",
-        email_record,
-    )
-    conn.commit()
+    try:
+        conn.execute(
+            """INSERT INTO emails (lead_id, sent_at, status, subject, body, outlook_message_id)
+               VALUES (:lead_id, :sent_at, :status, :subject, :body, :outlook_message_id)""",
+            email_record,
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
 
 
 def get_daily_sent_count(conn: sqlite3.Connection) -> int:
