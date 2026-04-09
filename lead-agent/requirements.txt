@@ -1,0 +1,7 @@
+googlemaps==4.10.0
+anthropic==0.28.0
+msal==1.29.0
+requests==2.32.3
+pyyaml==6.0.2
+pytest==8.2.2
+pytest-mock==3.14.0
