@@ -15,7 +15,7 @@ def get_access_token(config: dict) -> str:
     client_secret = config.get("client_secret")
     tenant_id = config.get("tenant_id")
     if not all([client_id, client_secret, tenant_id]):
-        raise ValueError("microsoft config missing client_id, client_secret, or tenant_id")
+        raise RuntimeError("microsoft config missing client_id, client_secret, or tenant_id")
     app = msal.ConfidentialClientApplication(
         client_id=client_id,
         client_credential=client_secret,
@@ -44,11 +44,14 @@ def send_email(token: str, sender: str, to_email: str, subject: str, body: str) 
         },
         "saveToSentItems": True,
     }
-    response = requests.post(url, headers=headers, json=payload)
+    response = requests.post(url, headers=headers, json=payload, timeout=30)
     if response.status_code != 202:
         raise RuntimeError(
             f"Failed to send email to {to_email}: {response.status_code} {response.text}"
         )
     msg_id = response.headers.get("x-ms-request-id", "")
-    logger.info("Email sent to %s — message_id: %s", to_email, msg_id)
+    if not msg_id:
+        logger.warning("Email sent to %s but x-ms-request-id header was missing from response", to_email)
+    else:
+        logger.info("Email sent to %s — message_id: %s", to_email, msg_id)
     return msg_id
