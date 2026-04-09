@@ -1,0 +1,8 @@
+{
+  "id": "10",
+  "subject": "Task 4: Scraper Module",
+  "description": "Create scraper.py and tests/test_scraper.py — Google Places Text Search + Place Details with dedup",
+  "status": "completed",
+  "blocks": [],
+  "blockedBy": []
+}

@@ -1,0 +1,8 @@
+{
+  "id": "14",
+  "subject": "Task 8: Cron Setup & Final Wiring",
+  "description": "Register daily 8AM cron job, verify end-to-end pipeline runs, document API key setup",
+  "status": "in_progress",
+  "blocks": [],
+  "blockedBy": []
+}

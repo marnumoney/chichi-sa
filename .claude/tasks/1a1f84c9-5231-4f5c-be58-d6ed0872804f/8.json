@@ -1,0 +1,8 @@
+{
+  "id": "8",
+  "subject": "Task 2: Database Module",
+  "description": "Create db.py and tests/test_db.py with TDD — init_db, lead_exists, insert_lead, get_uncontacted_leads, insert_email, get_daily_sent_count",
+  "status": "completed",
+  "blocks": [],
+  "blockedBy": []
+}
