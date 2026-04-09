@@ -2,7 +2,7 @@ import logging
 import os
 import yaml
 import anthropic
-from datetime import datetime
+from datetime import datetime, timezone
 
 from db import init_db, insert_lead, get_uncontacted_leads, insert_email, get_daily_sent_count
 from scraper import scrape_businesses
@@ -35,8 +35,21 @@ def run():
     logger = logging.getLogger("main")
     logger.info("=== Lead Agent starting ===")
 
-    config = load_config(CONFIG_PATH)
+    try:
+        config = load_config(CONFIG_PATH)
+    except (FileNotFoundError, Exception) as e:
+        logger.error("Failed to load config from %s: %s", CONFIG_PATH, e)
+        return
+
     conn = init_db(config["database"]["path"])
+    try:
+        _run_pipeline(config, conn)
+    finally:
+        conn.close()
+
+
+def _run_pipeline(config: dict, conn) -> None:
+    logger = logging.getLogger("main")
 
     # --- Scrape ---
     logger.info("Scraping Google Places...")
@@ -47,14 +60,16 @@ def run():
     new_leads = qualify(raw_places, conn, config["google_places"])
     logger.info("Qualified %d new leads", len(new_leads))
     for lead in new_leads:
-        insert_lead(conn, lead)
+        try:
+            insert_lead(conn, lead)
+        except Exception as e:
+            logger.error("Failed to insert lead %s: %s", lead.get("business_name", "?"), e)
 
     # --- Check daily cap ---
     already_sent_today = get_daily_sent_count(conn)
     remaining = DAILY_SEND_LIMIT - already_sent_today
     if remaining <= 0:
         logger.info("Daily send limit of %d already reached. Exiting.", DAILY_SEND_LIMIT)
-        conn.close()
         return
 
     # --- Get uncontacted leads with emails ---
@@ -63,7 +78,6 @@ def run():
 
     if not leads_to_email:
         logger.info("No leads with email addresses available today.")
-        conn.close()
         return
 
     # --- Auth ---
@@ -71,7 +85,6 @@ def run():
         token = get_access_token(config["microsoft"])
     except RuntimeError as e:
         logger.error("Auth failed: %s", e)
-        conn.close()
         return
 
     # --- Compose & Send ---
@@ -80,6 +93,7 @@ def run():
     failed_count = 0
 
     for lead in leads_to_email:
+        now = datetime.now(timezone.utc).replace(tzinfo=None).isoformat(sep=" ", timespec="seconds")
         try:
             email = compose_email(lead, config["agency"], anthropic_client)
             msg_id = send_email(
@@ -91,18 +105,19 @@ def run():
             )
             insert_email(conn, {
                 "lead_id": lead["id"],
-                "sent_at": datetime.utcnow().isoformat(sep=" ", timespec="seconds"),
+                "sent_at": now,
                 "status": "sent",
                 "subject": email["subject"],
                 "body": email["body"],
                 "outlook_message_id": msg_id,
             })
+            logger.info("Sent to %s", lead["email"])
             sent_count += 1
         except Exception as e:
             logger.error("Failed for lead %s: %s", lead.get("business_name", "unknown"), e)
             insert_email(conn, {
                 "lead_id": lead["id"],
-                "sent_at": datetime.utcnow().isoformat(sep=" ", timespec="seconds"),
+                "sent_at": now,
                 "status": "failed",
                 "subject": "",
                 "body": "",
@@ -111,7 +126,6 @@ def run():
             failed_count += 1
 
     logger.info("=== Done: %d sent, %d failed ===", sent_count, failed_count)
-    conn.close()
 
 
 if __name__ == "__main__":
