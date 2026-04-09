@@ -179,10 +179,11 @@ microsoft:
   client_id: "YOUR_CLIENT_ID"
   client_secret: "YOUR_CLIENT_SECRET"
   tenant_id: "YOUR_TENANT_ID"
-  sender_email: "you@yourdomain.com"
+  sender_email: "hello.launchpadstudio@outlook.com"
 
 agency:
-  name: "Your Agency Name"
+  name: "Launchpad Studio"
+  website: "https://launchpadstudio.shop"
   tone: "friendly and professional"
   services: "affordable, modern websites for local businesses"
   cta: "Reply to this email to book a free consultation"
