@@ -25,7 +25,6 @@ LEAD = {
 
 def test_compose_email_returns_subject_and_body(mocker):
     mock_client = MagicMock()
-    mocker.patch("composer.anthropic.Anthropic", return_value=mock_client)
     mock_client.messages.create.return_value = MagicMock(
         content=[MagicMock(text="SUBJECT: Great website opportunity\nBODY: Hello Joe...")]
     )

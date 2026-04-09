@@ -1,4 +1,3 @@
-import anthropic
 import logging
 
 logger = logging.getLogger(__name__)
@@ -54,13 +53,24 @@ def compose_email(lead: dict, agency: dict, client) -> dict:
     )
     raw = response.content[0].text
     subject = ""
-    body = ""
+    body_lines: list[str] = []
+    in_body = False
     for line in raw.split("\n"):
         if line.startswith("SUBJECT:"):
-            subject = line.replace("SUBJECT:", "").strip()
+            subject = line.removeprefix("SUBJECT:").strip()
         elif line.startswith("BODY:"):
-            body = line.replace("BODY:", "").strip()
-        elif body:
-            body += "\n" + line
+            in_body = True
+            first = line.removeprefix("BODY:").strip()
+            if first:
+                body_lines.append(first)
+        elif in_body:
+            body_lines.append(line)
+    body = "\n".join(body_lines).strip()
+    if not subject or not body:
+        logger.warning(
+            "Malformed Claude response for %s — subject=%r body_len=%d raw=%r",
+            lead["business_name"], subject, len(body), raw[:200],
+        )
+        raise ValueError(f"Claude returned malformed email for {lead['business_name']!r}: subject={subject!r}, body empty={not body}")
     logger.info("Composed email for %s — subject: %s", lead["business_name"], subject)
-    return {"subject": subject, "body": body.strip()}
+    return {"subject": subject, "body": body}
