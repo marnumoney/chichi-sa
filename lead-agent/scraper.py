@@ -52,7 +52,7 @@ def scrape_businesses(config: dict) -> list[dict]:
                         details = client.place(
                             place_id=place_id,
                             fields=["place_id", "name", "rating", "user_ratings_total",
-                                    "formatted_phone_number", "website", "types", "vicinity"],
+                                    "formatted_phone_number", "website", "vicinity"],
                         )
                         time.sleep(delay)
                         result = details.get("result", {})
