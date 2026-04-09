@@ -79,6 +79,22 @@ def insert_email(conn: sqlite3.Connection, email_record: dict) -> None:
         raise
 
 
+def update_lead_email(conn: sqlite3.Connection, lead_id: int, email: str) -> None:
+    conn.execute("UPDATE leads SET email = ? WHERE id = ?", (email, lead_id))
+    conn.commit()
+
+
+def get_leads_without_email(conn: sqlite3.Connection, limit: int) -> list[dict]:
+    rows = conn.execute(
+        """SELECT * FROM leads
+           WHERE (email IS NULL OR email = '')
+           AND NOT EXISTS (SELECT 1 FROM emails WHERE emails.lead_id = leads.id)
+           LIMIT ?""",
+        (limit,),
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
 def get_daily_sent_count(conn: sqlite3.Connection) -> int:
     today = str(date.today())
     row = conn.execute(

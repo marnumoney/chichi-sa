@@ -4,11 +4,12 @@ import yaml
 import anthropic
 from datetime import datetime, timezone
 
-from db import init_db, insert_lead, get_uncontacted_leads, insert_email, get_daily_sent_count
+from db import init_db, insert_lead, get_uncontacted_leads, insert_email, get_daily_sent_count, update_lead_email, get_leads_without_email
 from scraper import scrape_businesses
 from qualifier import qualify
 from composer import compose_email
 from mailer import get_access_token, send_email, DAILY_SEND_LIMIT
+from email_finder import find_email
 
 LOG_PATH = os.path.join(os.path.dirname(__file__), "logs", "agent.log")
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.yaml")
@@ -64,6 +65,20 @@ def _run_pipeline(config: dict, conn) -> None:
             insert_lead(conn, lead)
         except Exception as e:
             logger.error("Failed to insert lead %s: %s", lead.get("business_name", "?"), e)
+
+    # --- Find emails for leads that don't have one ---
+    leads_needing_email = get_leads_without_email(conn, limit=200)
+    logger.info("Searching web for emails for %d leads...", len(leads_needing_email))
+    found_count = 0
+    for lead in leads_needing_email:
+        try:
+            email = find_email(lead)
+            if email:
+                update_lead_email(conn, lead["id"], email)
+                found_count += 1
+        except Exception as e:
+            logger.error("Email finder error for %s: %s", lead.get("business_name", "?"), e)
+    logger.info("Found emails for %d/%d leads", found_count, len(leads_needing_email))
 
     # --- Check daily cap ---
     already_sent_today = get_daily_sent_count(conn)
