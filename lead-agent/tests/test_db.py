@@ -104,7 +104,7 @@ def test_get_daily_sent_count(conn):
     }
     lead_id = insert_lead(conn, lead)
     insert_email(conn, {
-        "lead_id": lead_id, "sent_at": "2026-04-09 08:01:00",
+        "lead_id": lead_id, "sent_at": str(date.today()) + " 08:01:00",
         "status": "sent", "subject": "Hi", "body": "Body",
         "outlook_message_id": "msg_002",
     })
