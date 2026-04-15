@@ -1,8 +1,0 @@
-{
-  "id": "9",
-  "subject": "Task 3: Qualifier Module",
-  "description": "Create qualifier.py and tests/test_qualifier.py — filter by no website, rating, reviews, dedup",
-  "status": "completed",
-  "blocks": [],
-  "blockedBy": []
-}

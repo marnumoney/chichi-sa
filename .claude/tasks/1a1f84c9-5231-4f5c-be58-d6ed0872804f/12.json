@@ -1,8 +1,0 @@
-{
-  "id": "12",
-  "subject": "Task 6: Mailer Module",
-  "description": "Create mailer.py and tests/test_mailer.py — Microsoft Graph API OAuth2 + send email, DAILY_SEND_LIMIT=100",
-  "status": "completed",
-  "blocks": [],
-  "blockedBy": []
-}

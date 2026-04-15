@@ -1,8 +1,0 @@
-{
-  "id": "11",
-  "subject": "Task 5: Composer Module",
-  "description": "Create composer.py and tests/test_composer.py — Claude API email generation with SUBJECT/BODY parsing",
-  "status": "completed",
-  "blocks": [],
-  "blockedBy": []
-}

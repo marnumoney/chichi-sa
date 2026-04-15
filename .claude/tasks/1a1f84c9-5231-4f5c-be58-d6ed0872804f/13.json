@@ -1,8 +1,0 @@
-{
-  "id": "13",
-  "subject": "Task 7: Main Orchestrator",
-  "description": "Create main.py — wire scraper→qualifier→composer→mailer with logging and daily cap enforcement",
-  "status": "completed",
-  "blocks": [],
-  "blockedBy": []
-}

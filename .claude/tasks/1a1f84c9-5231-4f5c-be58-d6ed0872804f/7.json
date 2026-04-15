@@ -1,8 +1,0 @@
-{
-  "id": "7",
-  "subject": "Task 1: Project Scaffold",
-  "description": "Create lead-agent/ directory structure, requirements.txt, config.yaml, logs/.gitkeep, tests/__init__.py, install venv",
-  "status": "completed",
-  "blocks": [],
-  "blockedBy": []
-}
