@@ -1,0 +1,19 @@
+# Worktrees
+.worktrees/
+
+# Cache and runtime dirs
+.cache/
+.local/
+.claude/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Secrets
+.env
+*.env
+
+# Logs
+*.log
