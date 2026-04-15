@@ -8,7 +8,7 @@ from email.header import decode_header
 
 import googlemaps
 import requests
-from ddgs import DDGS
+from duckduckgo_search import DDGS
 
 logger = logging.getLogger(__name__)
 
