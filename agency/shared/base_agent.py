@@ -50,3 +50,45 @@ class BaseAgent:
 
     def _report(self, actions: list) -> DepartmentReport:
         raise NotImplementedError
+
+
+class DocGenAgent(BaseAgent):
+    """Base for agents whose only job is to generate a markdown document using Claude."""
+    dept_label: str = "doc"
+    file_prefix: str = "doc"
+    metric_key: str = "docs_generated"
+
+    def __init__(self, dept_name, config, db, mailer, notifier):
+        super().__init__(dept_name, config, db, mailer, notifier)
+        self.output_dir = None
+        import anthropic
+        self.client = anthropic.Anthropic(api_key=config["anthropic"]["api_key"])
+        self.model = config["anthropic"]["model"]
+
+    def _get_context(self) -> dict:
+        return {}
+
+    def _build_prompt(self, directive: Directive) -> str:
+        raise NotImplementedError
+
+    def _execute(self, directive: Directive) -> list:
+        from datetime import date
+        import os
+        prompt = self._build_prompt(directive)
+        resp = self.client.messages.create(model=self.model, max_tokens=1500,
+                                            messages=[{"role": "user", "content": prompt}])
+        content = resp.content[0].text
+        filename = f"{self.file_prefix}-{date.today()}.md"
+        filepath = os.path.join(self.output_dir, filename)
+        with open(filepath, "w") as f:
+            f.write(content)
+        return [{"action": f"{self.dept_label}_generated", "file": filepath}]
+
+    def _report(self, actions: list) -> DepartmentReport:
+        files = [a["file"] for a in actions if a.get("file")]
+        return DepartmentReport(
+            dept=self.dept_name, status="success",
+            actions_taken=[a["action"] for a in actions],
+            files_created=files,
+            metrics={self.metric_key: len(files)},
+        )
