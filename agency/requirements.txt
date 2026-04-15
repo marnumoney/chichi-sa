@@ -2,6 +2,6 @@ anthropic
 googlemaps
 requests
 beautifulsoup4
-duckduckgo-search
+ddgs
 PyYAML
 pytest
