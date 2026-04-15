@@ -1,0 +1,7 @@
+anthropic
+googlemaps
+requests
+beautifulsoup4
+duckduckgo-search
+PyYAML
+pytest

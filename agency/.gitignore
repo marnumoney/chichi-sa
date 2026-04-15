@@ -1,0 +1,10 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.log
+.env
+data/agency.db
+outputs/
+memory/journal/
