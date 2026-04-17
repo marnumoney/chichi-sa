@@ -1,7 +1,6 @@
 import logging
 import os
 from datetime import date, timedelta
-from typing import Optional
 
 from sqlcipher3 import dbapi2 as sqlite3
 
