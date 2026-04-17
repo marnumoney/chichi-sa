@@ -5,3 +5,4 @@ beautifulsoup4
 ddgs
 PyYAML
 pytest
+sqlcipher3
