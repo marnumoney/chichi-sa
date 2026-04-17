@@ -1,57 +1,39 @@
-import msal
-import requests
+import smtplib
 import logging
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 logger = logging.getLogger(__name__)
 
 DAILY_SEND_LIMIT = 100
-GRAPH_SEND_URL = "https://graph.microsoft.com/v1.0/users/{sender}/sendMail"
-SCOPES = ["https://graph.microsoft.com/.default"]
+SMTP_HOST = "smtp.gmail.com"
+SMTP_PORT = 587
 
 
-def get_access_token(config: dict) -> str:
-    """Acquire an OAuth2 access token from Microsoft using client credentials."""
-    client_id = config.get("client_id")
-    client_secret = config.get("client_secret")
-    tenant_id = config.get("tenant_id")
-    if not all([client_id, client_secret, tenant_id]):
-        raise RuntimeError("microsoft config missing client_id, client_secret, or tenant_id")
-    app = msal.ConfidentialClientApplication(
-        client_id=client_id,
-        client_credential=client_secret,
-        authority=f"https://login.microsoftonline.com/{tenant_id}",
-    )
-    result = app.acquire_token_for_client(scopes=SCOPES)
-    if "access_token" not in result:
-        raise RuntimeError(
-            f"Failed to acquire token: {result.get('error_description', result.get('error', 'unknown'))}"
-        )
-    return result["access_token"]
-
-
-def send_email(token: str, sender: str, to_email: str, subject: str, body: str) -> str:
-    """Send an email via Microsoft Graph API. Returns the outlook_message_id."""
-    url = GRAPH_SEND_URL.format(sender=sender)
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
+def get_access_token(config: dict) -> dict:
+    """Return Gmail SMTP credentials from config."""
+    return {
+        "sender": config["sender_email"],
+        "password": config["app_password"],
     }
-    payload = {
-        "message": {
-            "subject": subject,
-            "body": {"contentType": "Text", "content": body},
-            "toRecipients": [{"emailAddress": {"address": to_email}}],
-        },
-        "saveToSentItems": True,
-    }
-    response = requests.post(url, headers=headers, json=payload, timeout=30)
-    if response.status_code != 202:
-        raise RuntimeError(
-            f"Failed to send email to {to_email}: {response.status_code} {response.text}"
-        )
-    msg_id = response.headers.get("x-ms-request-id", "")
-    if not msg_id:
-        logger.warning("Email sent to %s but x-ms-request-id header was missing from response", to_email)
-    else:
-        logger.info("Email sent to %s — message_id: %s", to_email, msg_id)
-    return msg_id
+
+
+def send_email(token: dict, sender: str, to_email: str, subject: str, body: str) -> str:
+    """Send an email via Gmail SMTP. Returns a message ID string."""
+    password = token["password"]
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = sender
+    msg["To"] = to_email
+    msg.attach(MIMEText(body, "plain", "utf-8"))
+
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as smtp:
+        smtp.ehlo()
+        smtp.starttls()
+        smtp.ehlo()
+        smtp.login(sender, password)
+        smtp.sendmail(sender, to_email, msg.as_string())
+
+    logger.info("Email sent to %s via Gmail SMTP", to_email)
+    return f"gmail-{to_email}"

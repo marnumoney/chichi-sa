@@ -21,9 +21,10 @@ Write a personalized cold email to this business. The email should:
 1. Open by acknowledging their strong reputation on Google (reference their exact rating and review count)
 2. Point out that they are missing out on customers because they have no website
 3. Introduce {agency_name} as the solution ({services})
-4. Include the agency website: {agency_website}
-5. Close with this exact call to action: "{cta}"
-6. Sign off with "Best regards, The {agency_name} Team"
+4. Mention the $200 starter package naturally — make it feel like a no-brainer, not salesy
+5. Include the agency website: {agency_website}
+6. Close with this exact call to action: "{cta}"
+7. Sign off with "Best regards, The {agency_name} Team"
 
 Format your response EXACTLY as:
 SUBJECT: <email subject line>

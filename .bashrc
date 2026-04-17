@@ -117,3 +117,4 @@ if ! shopt -oq posix; then
 fi
 export PATH="$HOME/.local/bin:$PATH"
 alias claudedd="claude --dangerously-skip-permissions"
+export PATH="$HOME/.local/bin:$PATH"

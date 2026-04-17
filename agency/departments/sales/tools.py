@@ -147,7 +147,6 @@ def compose_email(lead: dict, agency: dict, client, model: str) -> dict:
 Business: {lead['business_name']}, {lead['industry']}, {lead['city']}
 Rating: {lead['rating']} stars, {lead.get('review_count')} reviews
 Services: {agency['services']}
-Website: {agency['website']}
 Tone: {agency['tone']}
 CTA: {agency['cta']}
 Rules: mention their exact rating, point out missing website, keep under 200 words.
