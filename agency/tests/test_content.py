@@ -7,7 +7,7 @@ from departments.content.agent import ContentAgent
 
 
 def test_content_agent_skip():
-    conn = init_db(":memory:")
+    conn = init_db(":memory:", key="testkey")
     agent = ContentAgent("content", {
         "anthropic": {"model": "m", "api_key": "k"},
         "agency": {"name": "T", "website": "h", "tone": "p"},
@@ -20,7 +20,7 @@ def test_content_agent_skip():
 
 
 def test_content_agent_writes_file(tmp_path):
-    conn = init_db(":memory:")
+    conn = init_db(":memory:", key="testkey")
     config = {
         "anthropic": {"model": "m", "api_key": "k"},
         "agency": {"name": "Launchpad", "website": "https://x.com", "tone": "friendly"},

@@ -13,7 +13,7 @@ from shared.db import (init_db, lead_exists, insert_lead, get_uncontacted_leads,
 
 @pytest.fixture
 def conn():
-    c = init_db(":memory:")
+    c = init_db(":memory:", key="testkey")
     yield c
     c.close()
 

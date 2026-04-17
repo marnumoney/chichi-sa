@@ -16,7 +16,7 @@ def test_load_config_injects_env(tmp_path):
 
 def test_read_business_context_returns_metrics(tmp_path):
     from ceo import read_business_context
-    conn = init_db(":memory:")
+    conn = init_db(":memory:", key="testkey")
     insert_client(conn, {"name": "C1", "email": "c1@x.com", "phone": "",
                          "status": "active", "revenue_total": 500, "notes": ""})
     ctx = read_business_context(conn, str(tmp_path / "strategy.md"), str(tmp_path / "journal"))

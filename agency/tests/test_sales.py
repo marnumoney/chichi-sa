@@ -19,7 +19,7 @@ def make_config():
 
 
 def test_sales_agent_skips_when_priority_skip():
-    conn = init_db(":memory:")
+    conn = init_db(":memory:", key="testkey")
     agent = SalesAgent("sales", make_config(), conn, {}, "topic")
     agent.output_dir = "/tmp"
     report = agent.run(Directive(priority="skip", instruction=""))
@@ -28,7 +28,7 @@ def test_sales_agent_skips_when_priority_skip():
 
 
 def test_sales_agent_returns_report_on_success():
-    conn = init_db(":memory:")
+    conn = init_db(":memory:", key="testkey")
     agent = SalesAgent("sales", make_config(), conn, {"sender": "t@t.com", "password": "x"}, "topic")
     agent.output_dir = "/tmp"
     with patch.object(agent, "_execute", return_value=[{"action": "sent_email", "lead": "Cafe"}]):

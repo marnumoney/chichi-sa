@@ -18,7 +18,7 @@ class StubAgent(BaseAgent):
 
 
 def test_base_agent_run_skips_on_skip_priority():
-    conn = init_db(":memory:")
+    conn = init_db(":memory:", key="testkey")
     agent = StubAgent("stub", {}, conn, None, None)
     report = agent.run(Directive(priority="skip", instruction=""))
     assert report.status == "skipped"
@@ -26,7 +26,7 @@ def test_base_agent_run_skips_on_skip_priority():
 
 
 def test_base_agent_run_returns_report():
-    conn = init_db(":memory:")
+    conn = init_db(":memory:", key="testkey")
     agent = StubAgent("stub", {}, conn, None, None)
     report = agent.run(Directive(priority="high", instruction="do the thing"))
     assert report.status == "success"
@@ -35,7 +35,7 @@ def test_base_agent_run_returns_report():
 
 
 def test_base_agent_run_catches_exception():
-    conn = init_db(":memory:")
+    conn = init_db(":memory:", key="testkey")
 
     class BrokenAgent(BaseAgent):
         def _get_context(self): return {}
