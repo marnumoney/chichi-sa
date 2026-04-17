@@ -8,4 +8,4 @@ pytest-mock==3.14.0
 beautifulsoup4==4.14.3
 lxml==6.0.3
 ddgs==9.13.0
-sqlcipher3
+sqlcipher3==0.6.2
