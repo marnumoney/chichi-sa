@@ -1,7 +1,26 @@
 import logging
-import sqlite3
+import os
 from datetime import date, timedelta
 from typing import Optional
+
+from sqlcipher3 import dbapi2 as sqlite3
+
+
+def _load_key(key: str | None = None) -> str:
+    if key is not None:
+        return key
+    path = os.path.expanduser("~/.db_master.key")
+    with open(path, "r") as f:
+        return f.read().strip()
+
+
+def _apply_cipher_settings(conn: sqlite3.Connection, key: str) -> None:
+    conn.execute(f'PRAGMA key="{key}"')
+    conn.execute("PRAGMA cipher_page_size = 4096")
+    conn.execute("PRAGMA kdf_iter = 256000")
+    conn.execute("PRAGMA cipher_hmac_algorithm = HMAC_SHA512")
+    conn.execute("PRAGMA cipher_kdf_algorithm = PBKDF2_HMAC_SHA512")
+
 
 logger = logging.getLogger(__name__)
 
@@ -107,8 +126,12 @@ CREATE TABLE IF NOT EXISTS ceo_directives (
 """
 
 
-def init_db(path: str) -> sqlite3.Connection:
+def init_db(path: str, key: str | None = None) -> sqlite3.Connection:
+    db_key = _load_key(key)
     conn = sqlite3.connect(path)
+    _apply_cipher_settings(conn, db_key)
+    if path != ":memory:":
+        os.chmod(path, 0o600)
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA)
     conn.commit()
