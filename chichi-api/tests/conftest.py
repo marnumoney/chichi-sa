@@ -25,9 +25,11 @@ def test_db():
 @pytest.fixture
 def client(test_db):
     app.dependency_overrides[get_db] = lambda: test_db
-    with TestClient(app) as c:
-        yield c
-    app.dependency_overrides.clear()
+    try:
+        with TestClient(app) as c:
+            yield c
+    finally:
+        app.dependency_overrides.clear()
 
 
 @pytest.fixture
@@ -59,6 +61,8 @@ def seeded_client(test_db):
     test_db.commit()
 
     app.dependency_overrides[get_db] = lambda: test_db
-    with TestClient(app) as c:
-        yield c
-    app.dependency_overrides.clear()
+    try:
+        with TestClient(app) as c:
+            yield c
+    finally:
+        app.dependency_overrides.clear()

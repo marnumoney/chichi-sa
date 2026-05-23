@@ -6,9 +6,11 @@ DB_PATH = os.getenv('DB_PATH', 'chichi.db')
 
 
 def get_connection() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    db_path = os.getenv('DB_PATH', 'chichi.db')
+    conn = sqlite3.connect(db_path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute('PRAGMA journal_mode=WAL')
+    conn.execute('PRAGMA foreign_keys = ON')
     return conn
 
 
@@ -43,7 +45,7 @@ def create_tables(conn: sqlite3.Connection):
 
         CREATE TABLE IF NOT EXISTS puppies (
             id TEXT PRIMARY KEY,
-            kennel_id TEXT NOT NULL,
+            kennel_id TEXT NOT NULL REFERENCES kennels(id),
             name TEXT NOT NULL,
             coat_type TEXT,
             gender TEXT,
@@ -64,7 +66,7 @@ def create_tables(conn: sqlite3.Connection):
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             name TEXT,
-            kennel_id TEXT,
+            kennel_id TEXT REFERENCES kennels(id),
             status TEXT DEFAULT 'pending_verification',
             joined_date TEXT,
             warning_date TEXT
@@ -90,7 +92,7 @@ def create_tables(conn: sqlite3.Connection):
 
         CREATE TABLE IF NOT EXISTS testimonials (
             id TEXT PRIMARY KEY,
-            kennel_id TEXT,
+            kennel_id TEXT REFERENCES kennels(id),
             buyer_name TEXT,
             stars INTEGER,
             text TEXT,
