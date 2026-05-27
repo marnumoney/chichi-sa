@@ -1,15 +1,15 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List
 
 
 class LoginRequest(BaseModel):
-    email: str
-    password: str
+    email: EmailStr
+    password: str = Field(min_length=8)
 
 
 class SignupRequest(BaseModel):
-    email: str
-    password: str
+    email: EmailStr
+    password: str = Field(min_length=8)
     name: str
     phone: str
     province: str
@@ -63,11 +63,11 @@ class KennelUpdate(BaseModel):
 
 
 class SellerCreate(BaseModel):
-    email: str
-    password: str
+    email: EmailStr
+    password: str = Field(min_length=8)
     name: str
     kennel_id: Optional[str] = None
-    status: str = 'pending_verification'
+    # status is always set by the server, not the caller
 
 
 class SellerUpdate(BaseModel):
@@ -88,7 +88,7 @@ class TestimonialCreate(BaseModel):
 class PurchaseRequest(BaseModel):
     puppy_id: str
     buyer_name: str
-    buyer_email: str
+    buyer_email: EmailStr
 
 
 class SettingsUpdate(BaseModel):

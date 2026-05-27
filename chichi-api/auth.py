@@ -1,28 +1,33 @@
 import os
+import warnings
 from datetime import datetime, timedelta, timezone
 import sqlite3
 
+import bcrypt as _bcrypt
 import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from passlib.context import CryptContext
 
 from database import get_db
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-change-in-production')
+_secret = os.getenv('SECRET_KEY')
+if not _secret:
+    warnings.warn('SECRET_KEY not set — using insecure default. Set it before going live.')
+    _secret = 'dev-secret-change-in-production'
+SECRET_KEY = _secret
+
 ALGORITHM = 'HS256'
 TOKEN_EXPIRY_DAYS = 7
 
-pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 bearer = HTTPBearer()
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return _bcrypt.hashpw(password.encode(), _bcrypt.gensalt()).decode()
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    return _bcrypt.checkpw(plain.encode(), hashed.encode())
 
 
 def create_token(payload: dict) -> str:
@@ -60,4 +65,6 @@ def get_current_seller(
     row = db.execute('SELECT * FROM sellers WHERE id = ?', (seller_id,)).fetchone()
     if not row:
         raise HTTPException(status_code=404, detail='Seller not found')
-    return dict(row)
+    seller = dict(row)
+    seller.pop('password_hash', None)
+    return seller
