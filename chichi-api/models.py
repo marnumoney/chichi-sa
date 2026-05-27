@@ -1,0 +1,108 @@
+from pydantic import BaseModel
+from typing import Optional, List
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class SignupRequest(BaseModel):
+    email: str
+    password: str
+    name: str
+    phone: str
+    province: str
+    kennel_name: str
+    registry: str
+
+
+class PuppyCreate(BaseModel):
+    name: str
+    coat_type: str
+    gender: str
+    color: str
+    dob: str
+    price: float
+    breeding_rights: bool = False
+    images: List[str] = []
+    pedigree: dict = {}
+    health: List[str] = []
+    description: str = ''
+    registration_no: str = ''
+
+
+class KennelCreate(BaseModel):
+    name: str
+    slug: str
+    registry: str
+    description: str = ''
+    location: str = ''
+    contact: str = ''
+    phone: str = ''
+    commission: float = 8.0
+    initials: str = ''
+    color: str = '#B5651D'
+    referral_code: Optional[str] = None
+
+
+class KennelUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    location: Optional[str] = None
+    contact: Optional[str] = None
+    phone: Optional[str] = None
+    commission: Optional[float] = None
+    initials: Optional[str] = None
+    color: Optional[str] = None
+    status: Optional[str] = None
+    membership_status: Optional[str] = None
+    membership_expiry: Optional[str] = None
+    referral_code: Optional[str] = None
+    slug: Optional[str] = None
+
+
+class SellerCreate(BaseModel):
+    email: str
+    password: str
+    name: str
+    kennel_id: Optional[str] = None
+    status: str = 'pending_verification'
+
+
+class SellerUpdate(BaseModel):
+    email: Optional[str] = None
+    name: Optional[str] = None
+    kennel_id: Optional[str] = None
+    status: Optional[str] = None
+    warning_date: Optional[str] = None
+
+
+class TestimonialCreate(BaseModel):
+    kennel_id: str
+    buyer_name: str
+    stars: int
+    text: str
+
+
+class PurchaseRequest(BaseModel):
+    puppy_id: str
+    buyer_name: str
+    buyer_email: str
+
+
+class SettingsUpdate(BaseModel):
+    default_commission: Optional[float] = None
+    membership_fee_annual: Optional[float] = None
+    referral_discount: Optional[float] = None
+    site_name: Optional[str] = None
+    tagline: Optional[str] = None
+    admin_bank_name: Optional[str] = None
+    admin_account_holder: Optional[str] = None
+    admin_account_number: Optional[str] = None
+    admin_branch_code: Optional[str] = None
+    admin_account_type: Optional[str] = None
+
+
+class LegalUpdate(BaseModel):
+    content: str
