@@ -14,7 +14,7 @@ except ImportError:
 
 @pytest.fixture
 def test_db():
-    conn = sqlite3.connect(':memory:')
+    conn = sqlite3.connect(':memory:', check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute('PRAGMA journal_mode=WAL')
     create_tables(conn)
@@ -66,3 +66,14 @@ def seeded_client(test_db):
             yield c
     finally:
         app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def admin_token(seeded_client, monkeypatch):
+    from auth import hash_password as hp
+    monkeypatch.setenv('ADMIN_EMAIL', 'admin@test.co.za')
+    monkeypatch.setenv('ADMIN_PASSWORD_HASH', hp('adminpass'))
+    res = seeded_client.post('/auth/admin/login', json={
+        'email': 'admin@test.co.za', 'password': 'adminpass'
+    })
+    return res.json()['token']

@@ -1,0 +1,64 @@
+import sqlite3
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+
+from database import get_db, parse_puppy
+
+router = APIRouter()
+
+
+@router.get('/kennels')
+def list_kennels(db: sqlite3.Connection = Depends(get_db)):
+    rows = db.execute(
+        "SELECT * FROM kennels WHERE status = 'approved' ORDER BY name"
+    ).fetchall()
+    return [dict(r) for r in rows]
+
+
+@router.get('/kennels/{slug}')
+def get_kennel(slug: str, db: sqlite3.Connection = Depends(get_db)):
+    row = db.execute('SELECT * FROM kennels WHERE slug = ?', (slug,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail='Kennel not found')
+    kennel = dict(row)
+    puppy_rows = db.execute(
+        "SELECT * FROM puppies WHERE kennel_id = ? AND sold = 0", (kennel['id'],)
+    ).fetchall()
+    return {'kennel': kennel, 'puppies': [parse_puppy(p) for p in puppy_rows]}
+
+
+@router.get('/puppies')
+def list_puppies(
+    coat: Optional[str] = Query(None),
+    gender: Optional[str] = Query(None),
+    sold: Optional[str] = Query(None),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    query = 'SELECT * FROM puppies WHERE 1=1'
+    params: list = []
+    if coat:
+        query += ' AND coat_type = ?'
+        params.append(coat)
+    if gender:
+        query += ' AND gender = ?'
+        params.append(gender)
+    if sold is not None:
+        query += ' AND sold = ?'
+        params.append(1 if sold.lower() == 'true' else 0)
+    rows = db.execute(query, params).fetchall()
+    return [parse_puppy(r) for r in rows]
+
+
+@router.get('/puppies/{puppy_id}')
+def get_puppy(puppy_id: str, db: sqlite3.Connection = Depends(get_db)):
+    row = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail='Puppy not found')
+    return parse_puppy(row)
+
+
+@router.get('/testimonials')
+def list_testimonials(db: sqlite3.Connection = Depends(get_db)):
+    rows = db.execute('SELECT * FROM testimonials ORDER BY date DESC').fetchall()
+    return [dict(r) for r in rows]
