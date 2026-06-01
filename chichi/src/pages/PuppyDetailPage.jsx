@@ -40,7 +40,7 @@ export default function PuppyDetailPage() {
   }
 
   const kennel = kennels.find(k => k.id === puppy.kennelId)
-  const commission = kennel?.commission ?? adminSettings.defaultCommission
+  const commission = kennel?.commission ?? adminSettings?.defaultCommission ?? 8
   const commissionAmt = Math.round(puppy.price * commission / 100)
   const sellerPayout = puppy.price - commissionAmt
   const isSold = puppy.sold

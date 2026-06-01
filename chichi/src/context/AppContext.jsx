@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 
-const API = 'http://localhost:8000'
+const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const AppContext = createContext(null)
 
 function toCamel(str) {
@@ -147,11 +147,12 @@ export function AppProvider({ children }) {
     }
     const raw = await res.json()
     const { token } = raw
+    // API returns { token, seller: { ...fields, kennel: {...} } }
+    // kennel is nested inside seller — normalize handles the whole tree
     const seller = normalize(raw.seller)
-    const kennel = normalize(raw.kennel)
     localStorage.setItem('token', token)
     localStorage.setItem('role', 'seller')
-    setSellerUser({ ...seller, kennel })
+    setSellerUser(seller)
     return { success: true }
   }
 

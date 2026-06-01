@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    @apply bg-cream text-espresso font-body antialiased;
+  }
+  h1, h2, h3, h4, h5 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-sienna text-white px-6 py-3 font-body font-medium text-sm tracking-wide
+           transition-all duration-200 hover:bg-sienna-dark active:scale-95 inline-block;
+  }
+  .btn-secondary {
+    @apply border border-espresso text-espresso px-6 py-3 font-body font-medium text-sm tracking-wide
+           transition-all duration-200 hover:bg-espresso hover:text-cream active:scale-95 inline-block;
+  }
+  .btn-outline {
+    @apply border border-sienna text-sienna px-6 py-3 font-body font-medium text-sm tracking-wide
+           transition-all duration-200 hover:bg-sienna hover:text-white active:scale-95 inline-block;
+  }
+  .btn-ghost {
+    @apply text-muted hover:text-espresso font-body font-medium text-sm transition-colors inline-block;
+  }
+  .card {
+    @apply bg-white border border-divider shadow-sm;
+  }
+  .input-field {
+    @apply w-full border border-divider bg-white px-4 py-3 font-body text-espresso text-sm
+           focus:outline-none focus:border-sienna focus:ring-1 focus:ring-sienna transition-colors;
+  }
+  .label {
+    @apply block font-body text-xs font-semibold uppercase tracking-widest text-muted mb-1.5;
+  }
+  .section-title {
+    @apply font-display text-3xl md:text-4xl font-semibold text-espresso;
+  }
+  .nav-link-active {
+    @apply text-sienna border-b-2 border-sienna pb-0.5;
+  }
+  .nav-link {
+    @apply text-muted hover:text-espresso transition-colors border-b-2 border-transparent pb-0.5;
+  }
+  .tab-btn {
+    @apply px-6 py-3 font-body font-semibold text-sm tracking-widest uppercase transition-colors cursor-pointer;
+  }
+  .badge-kusa {
+    @apply bg-espresso text-cream text-[10px] font-bold tracking-widest uppercase px-2 py-0.5;
+  }
+  .badge-canine {
+    @apply bg-sage text-white text-[10px] font-bold tracking-widest uppercase px-2 py-0.5;
+  }
+  .badge-sold {
+    @apply bg-red-100 text-red-700 text-[10px] font-bold tracking-widest uppercase px-2 py-0.5;
+  }
+  .badge-available {
+    @apply bg-sage/10 text-sage-dark text-[10px] font-bold tracking-widest uppercase px-2 py-0.5;
+  }
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-2.5 font-body text-sm font-medium text-muted
+           hover:text-espresso hover:bg-wheat/50 transition-all;
+  }
+  .sidebar-link-active {
+    @apply flex items-center gap-3 px-4 py-2.5 font-body text-sm font-semibold text-sienna
+           bg-sienna/8 border-r-2 border-sienna;
+  }
+}
+
+@layer utilities {
+  .bg-sienna\/8 {
+    background-color: rgb(181 101 29 / 0.08);
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #FAF6F0;
+}
+::-webkit-scrollbar-thumb {
+  background: #E2D5C3;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B5651D;
+}

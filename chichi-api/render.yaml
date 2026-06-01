@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: chichi-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python seed.py && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DB_PATH
+        value: /tmp/chichi.db
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_EMAIL
+        value: admin@chihuahuasa.co.za
+      - key: ADMIN_PASSWORD_HASH
+        value: "$2b$12$PGEzzXOdu6sHXMyQvjCqo.oGpOA6N7XDq7u4voxqli9HmtZBPnkLS"

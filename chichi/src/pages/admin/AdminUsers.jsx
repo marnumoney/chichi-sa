@@ -1,0 +1,222 @@
+import { useState } from 'react'
+import { useApp } from '../../context/AppContext'
+import { Pencil, Trash2, Plus, Check, X } from 'lucide-react'
+import Modal from '../../components/Modal'
+
+const EMPTY_SELLER = { name: '', email: '', phone: '', password: 'seller123', kennelId: '', status: 'approved' }
+
+function SellerModal({ seller, kennels, open, onClose, onSave, title }) {
+  const [form, setForm] = useState(seller ?? EMPTY_SELLER)
+  const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
+  return (
+    <Modal open={open} onClose={onClose} title={title} maxWidth="max-w-lg">
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div><label className="label">Full Name *</label><input required className="input-field" value={form.name} onChange={set('name')} /></div>
+          <div><label className="label">Email *</label><input type="email" required className="input-field" value={form.email} onChange={set('email')} /></div>
+          <div><label className="label">Phone</label><input className="input-field" value={form.phone || ''} onChange={set('phone')} /></div>
+          <div><label className="label">Password</label><input className="input-field" value={form.password || 'seller123'} onChange={set('password')} /></div>
+          <div>
+            <label className="label">Linked Kennel</label>
+            <select className="input-field" value={form.kennelId || ''} onChange={set('kennelId')}>
+              <option value="">No kennel linked</option>
+              {kennels.filter(k => k.status === 'approved').map(k => <option key={k.id} value={k.id}>{k.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="label">Status</label>
+            <select className="input-field" value={form.status} onChange={set('status')}>
+              <option value="approved">Approved</option>
+              <option value="pending_verification">Pending Verification</option>
+              <option value="pending_payment">Pending Payment</option>
+            </select>
+          </div>
+        </div>
+        <div className="flex gap-3 pt-1">
+          <button onClick={onClose} className="flex-1 btn-secondary text-xs tracking-widest uppercase py-3">Cancel</button>
+          <button onClick={() => onSave(form)} className="flex-1 btn-primary text-xs tracking-widest uppercase py-3">Save</button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+export default function AdminUsers() {
+  const { sellers, kennels, transactions, approveSeller, adminAddSeller, adminEditSeller, adminRemoveSeller } = useApp()
+  const [tab, setTab] = useState('Sellers')
+  const [addOpen, setAddOpen] = useState(false)
+  const [editTarget, setEditTarget] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+
+  const buyers = Object.values(
+    transactions.reduce((acc, t) => {
+      if (!acc[t.buyerEmail]) acc[t.buyerEmail] = { name: t.buyerName, email: t.buyerEmail, purchases: [] }
+      acc[t.buyerEmail].purchases.push(t)
+      return acc
+    }, {})
+  )
+
+  const statusBadge = (status) => {
+    if (status === 'approved') return <span className="badge-available px-2 py-0.5">Approved</span>
+    if (status === 'pending_verification') return <span className="bg-amber-100 text-amber-700 text-[10px] font-bold tracking-widest uppercase px-2 py-0.5">Pending Verify</span>
+    if (status === 'pending_payment') return <span className="bg-blue-100 text-blue-700 text-[10px] font-bold tracking-widest uppercase px-2 py-0.5">Pending Payment</span>
+    return null
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h2 className="font-display text-3xl font-semibold text-espresso mb-1">Users</h2>
+          <p className="font-body text-sm text-muted">Manage all sellers and buyers on the platform.</p>
+        </div>
+        {tab === 'Sellers' && (
+          <button onClick={() => setAddOpen(true)} className="flex items-center gap-2 btn-primary text-xs tracking-widest uppercase py-2.5 px-5">
+            <Plus className="w-3.5 h-3.5" /> Add Seller
+          </button>
+        )}
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-0 mb-6 border-b-2 border-divider">
+        {['Sellers', 'Buyers'].map(t => (
+          <button key={t} onClick={() => setTab(t)}
+            className={`tab-btn ${tab === t ? 'text-sienna border-b-2 border-sienna -mb-[2px]' : 'text-muted hover:text-espresso'}`}>
+            {t}
+            <span className={`ml-1.5 text-[10px] py-0.5 px-1.5 font-bold ${tab === t ? 'bg-espresso text-cream' : 'bg-divider text-muted'}`}>
+              {t === 'Sellers' ? sellers.length : buyers.length}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {tab === 'Sellers' && (
+        <div className="bg-white border border-divider overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full font-body text-sm">
+              <thead>
+                <tr className="bg-cream border-b border-divider">
+                  {['Name', 'Email', 'Phone', 'Linked Kennel', 'Joined', 'Status', 'Actions'].map(h => (
+                    <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-muted uppercase tracking-widest">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-divider">
+                {sellers.map(s => {
+                  const kennel = kennels.find(k => k.id === s.kennelId)
+                  return (
+                    <tr key={s.id} className="hover:bg-cream/30 transition-colors">
+                      <td className="px-5 py-3 font-semibold text-espresso">{s.name}</td>
+                      <td className="px-5 py-3 text-muted text-xs">{s.email}</td>
+                      <td className="px-5 py-3 text-muted text-xs">{s.phone || '—'}</td>
+                      <td className="px-5 py-3 text-xs">
+                        {kennel ? (
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-4 h-4 flex-shrink-0" style={{ backgroundColor: kennel.color }} />
+                            <span className="text-espresso">{kennel.name}</span>
+                          </div>
+                        ) : <span className="text-muted">—</span>}
+                      </td>
+                      <td className="px-5 py-3 text-muted text-xs">{s.joinedDate}</td>
+                      <td className="px-5 py-3">{statusBadge(s.status)}</td>
+                      <td className="px-5 py-3">
+                        <div className="flex gap-2">
+                          {s.status === 'pending_verification' && (
+                            <button onClick={() => approveSeller(s.id)}
+                              className="flex items-center gap-1 bg-sage text-white text-[10px] font-bold uppercase tracking-widest px-2 py-1.5 hover:bg-sage-dark transition-colors">
+                              <Check className="w-3 h-3" /> Approve
+                            </button>
+                          )}
+                          <button onClick={() => setEditTarget(s)} className="text-muted hover:text-sienna transition-colors p-1">
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => setDeleteTarget({ id: s.id, name: s.name, type: 'seller' })} className="text-muted hover:text-red-500 transition-colors p-1">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {tab === 'Buyers' && (
+        <div className="bg-white border border-divider overflow-hidden">
+          {buyers.length === 0 ? (
+            <p className="px-5 py-12 text-center font-body text-sm text-muted">No buyers yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full font-body text-sm">
+                <thead>
+                  <tr className="bg-cream border-b border-divider">
+                    {['Name', 'Email', 'Purchases', 'Total Spent', 'Last Purchase'].map(h => (
+                      <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-muted uppercase tracking-widest">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-divider">
+                  {buyers.map(b => (
+                    <tr key={b.email} className="hover:bg-cream/30 transition-colors">
+                      <td className="px-5 py-3 font-semibold text-espresso">{b.name}</td>
+                      <td className="px-5 py-3 text-muted text-xs">{b.email}</td>
+                      <td className="px-5 py-3 text-xs">
+                        {b.purchases.map(p => (
+                          <div key={p.id} className="text-espresso">{p.puppyName} <span className="text-muted">({p.kennelName})</span></div>
+                        ))}
+                      </td>
+                      <td className="px-5 py-3 font-semibold text-espresso">R{b.purchases.reduce((a, p) => a + p.amount, 0).toLocaleString()}</td>
+                      <td className="px-5 py-3 text-muted text-xs">{b.purchases[b.purchases.length - 1]?.date}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Add seller modal */}
+      <SellerModal
+        seller={EMPTY_SELLER}
+        kennels={kennels}
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        title="Add New Seller"
+        onSave={(form) => { adminAddSeller(form); setAddOpen(false) }}
+      />
+
+      {/* Edit seller modal */}
+      {editTarget && (
+        <SellerModal
+          key={editTarget.id}
+          seller={editTarget}
+          kennels={kennels}
+          open={!!editTarget}
+          onClose={() => setEditTarget(null)}
+          title={`Edit — ${editTarget.name}`}
+          onSave={(form) => { adminEditSeller(editTarget.id, form); setEditTarget(null) }}
+        />
+      )}
+
+      {/* Delete confirmation */}
+      <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Remove User">
+        <div className="space-y-4">
+          <p className="font-body text-sm text-muted">
+            Remove <strong className="text-espresso">{deleteTarget?.name}</strong> from the platform? This cannot be undone.
+          </p>
+          <div className="flex gap-3">
+            <button onClick={() => setDeleteTarget(null)} className="flex-1 btn-secondary text-xs tracking-widest uppercase py-3">Cancel</button>
+            <button onClick={() => { adminRemoveSeller(deleteTarget.id); setDeleteTarget(null) }}
+              className="flex-1 bg-red-600 text-white font-body text-xs font-semibold tracking-widest uppercase py-3 hover:bg-red-700 transition-colors">
+              Remove
+            </button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  )
+}
