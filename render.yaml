@@ -13,4 +13,4 @@ services:
       - key: ADMIN_EMAIL
         value: admin@chihuahuasa.co.za
       - key: ADMIN_PASSWORD_HASH
-        value: "$2b$12$PGEzzXOdu6sHXMyQvjCqo.oGpOA6N7XDq7u4voxqli9HmtZBPnkLS"
+        value: "$2b$12$N3taTWoHGXCpzSy3hWvDouwQx0xF18ug974DXmXIQo6mwqYUE5voS"
