@@ -1,11 +1,45 @@
-import sqlite3
-import json
 import os
+import json
 
-DB_PATH = os.getenv('DB_PATH', 'chichi.db')
+DATABASE_URL = os.getenv('DATABASE_URL')
 
 
-def get_connection() -> sqlite3.Connection:
+# ── PostgreSQL wrapper ────────────────────────────────────────────────────────
+
+class _PgConnection:
+    """Adapts psycopg2 to sqlite3's conn.execute() API so routers need no changes."""
+
+    def __init__(self, conn):
+        self._conn = conn
+
+    def execute(self, sql, params=()):
+        import psycopg2.extras
+        cur = self._conn.cursor()
+        cur.execute(sql.replace('?', '%s'), params)
+        return cur
+
+    def executemany(self, sql, param_list):
+        import psycopg2.extras
+        cur = self._conn.cursor()
+        psycopg2.extras.execute_batch(cur, sql.replace('?', '%s'), param_list)
+        return cur
+
+    def commit(self):
+        self._conn.commit()
+
+    def close(self):
+        self._conn.close()
+
+
+# ── Connection factory ────────────────────────────────────────────────────────
+
+def get_connection():
+    if DATABASE_URL:
+        import psycopg2
+        import psycopg2.extras
+        conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+        return _PgConnection(conn)
+    import sqlite3
     db_path = os.getenv('DB_PATH', 'chichi.db')
     conn = sqlite3.connect(db_path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
@@ -22,9 +56,14 @@ def get_db():
         conn.close()
 
 
-def create_tables(conn: sqlite3.Connection):
-    conn.executescript("""
-        CREATE TABLE IF NOT EXISTS kennels (
+# ── Schema ────────────────────────────────────────────────────────────────────
+
+def create_tables(conn):
+    is_pg = isinstance(conn, _PgConnection)
+    ignore = 'ON CONFLICT DO NOTHING' if is_pg else ''
+
+    statements = [
+        """CREATE TABLE IF NOT EXISTS kennels (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             slug TEXT UNIQUE NOT NULL,
@@ -41,11 +80,10 @@ def create_tables(conn: sqlite3.Connection):
             status TEXT DEFAULT 'pending',
             referred_by TEXT,
             referral_code TEXT
-        );
-
-        CREATE TABLE IF NOT EXISTS puppies (
+        )""",
+        """CREATE TABLE IF NOT EXISTS puppies (
             id TEXT PRIMARY KEY,
-            kennel_id TEXT NOT NULL REFERENCES kennels(id),
+            kennel_id TEXT NOT NULL,
             name TEXT NOT NULL,
             coat_type TEXT,
             gender TEXT,
@@ -59,20 +97,18 @@ def create_tables(conn: sqlite3.Connection):
             health TEXT DEFAULT '[]',
             description TEXT,
             registration_no TEXT
-        );
-
-        CREATE TABLE IF NOT EXISTS sellers (
+        )""",
+        """CREATE TABLE IF NOT EXISTS sellers (
             id TEXT PRIMARY KEY,
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             name TEXT,
-            kennel_id TEXT REFERENCES kennels(id),
+            kennel_id TEXT,
             status TEXT DEFAULT 'pending_verification',
             joined_date TEXT,
             warning_date TEXT
-        );
-
-        CREATE TABLE IF NOT EXISTS transactions (
+        )""",
+        """CREATE TABLE IF NOT EXISTS transactions (
             id TEXT PRIMARY KEY,
             puppy_id TEXT,
             puppy_name TEXT,
@@ -88,18 +124,16 @@ def create_tables(conn: sqlite3.Connection):
             date TEXT,
             seller_paid_date TEXT,
             commission_paid_date TEXT
-        );
-
-        CREATE TABLE IF NOT EXISTS testimonials (
+        )""",
+        """CREATE TABLE IF NOT EXISTS testimonials (
             id TEXT PRIMARY KEY,
-            kennel_id TEXT REFERENCES kennels(id),
+            kennel_id TEXT,
             buyer_name TEXT,
             stars INTEGER,
             text TEXT,
             date TEXT
-        );
-
-        CREATE TABLE IF NOT EXISTS admin_settings (
+        )""",
+        """CREATE TABLE IF NOT EXISTS admin_settings (
             id INTEGER PRIMARY KEY DEFAULT 1,
             default_commission REAL DEFAULT 8.0,
             membership_fee_annual REAL DEFAULT 1200.0,
@@ -111,19 +145,21 @@ def create_tables(conn: sqlite3.Connection):
             admin_account_number TEXT DEFAULT '',
             admin_branch_code TEXT DEFAULT '',
             admin_account_type TEXT DEFAULT 'Cheque / Current'
-        );
-
-        INSERT OR IGNORE INTO admin_settings (id) VALUES (1);
-
-        CREATE TABLE IF NOT EXISTS legal_text (
+        )""",
+        """CREATE TABLE IF NOT EXISTS legal_text (
             id INTEGER PRIMARY KEY DEFAULT 1,
             content TEXT DEFAULT ''
-        );
+        )""",
+        f"INSERT INTO admin_settings (id) VALUES (1) {ignore}",
+        f"INSERT INTO legal_text (id) VALUES (1) {ignore}",
+    ]
 
-        INSERT OR IGNORE INTO legal_text (id) VALUES (1);
-    """)
+    for stmt in statements:
+        conn.execute(stmt)
     conn.commit()
 
+
+# ── Row parsers ───────────────────────────────────────────────────────────────
 
 def parse_puppy(row) -> dict:
     d = dict(row)

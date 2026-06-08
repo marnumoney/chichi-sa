@@ -7,8 +7,8 @@ import { Logo, ChihuahuaMark } from '../../components/Logo'
 export default function SellerLogin() {
   const { loginSeller } = useApp()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('info@littleroyalschis.co.za')
-  const [password, setPassword] = useState('seller123')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState('')
 
@@ -78,6 +78,7 @@ export default function SellerLogin() {
                 <input
                   type={showPw ? 'text' : 'password'}
                   required
+                  autoComplete="current-password"
                   className="input-field pr-10"
                   value={password}
                   onChange={e => setPassword(e.target.value)}

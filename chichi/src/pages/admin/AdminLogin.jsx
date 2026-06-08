@@ -7,8 +7,8 @@ import { Logo } from '../../components/Logo'
 export default function AdminLogin() {
   const { loginAdmin } = useApp()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('admin@chihuahuasa.co.za')
-  const [password, setPassword] = useState('admin123')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState('')
 
@@ -47,6 +47,7 @@ export default function AdminLogin() {
                 <input
                   type={showPw ? 'text' : 'password'}
                   required
+                  autoComplete="current-password"
                   className="input-field pr-10"
                   value={password}
                   onChange={e => setPassword(e.target.value)}

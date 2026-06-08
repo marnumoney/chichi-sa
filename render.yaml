@@ -4,10 +4,10 @@ services:
     runtime: python
     rootDir: chichi-api
     buildCommand: pip install -r requirements.txt
-    startCommand: python seed.py && uvicorn main:app --host 0.0.0.0 --port $PORT
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: DB_PATH
-        value: /tmp/chichi.db
+      - key: DATABASE_URL
+        sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: ADMIN_EMAIL

@@ -97,9 +97,9 @@ export default function HomePage() {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
           <div>
             <h2 className="section-title">Available Puppies</h2>
-            <p className="font-body text-sm text-muted mt-1">
-              {allShown.length} available
-            </p>
+            {allShown.length > 0 && (
+              <p className="font-body text-sm text-muted mt-1">{allShown.length} available</p>
+            )}
           </div>
           <Link to="/kennels" className="flex items-center gap-1 text-sienna font-body text-sm font-medium hover:gap-2 transition-all">
             View by Kennel <ChevronRight className="w-4 h-4" />
@@ -163,7 +163,16 @@ export default function HomePage() {
 
         {/* Grid */}
         {allShown.length === 0 ? (
-          <div className="text-center py-20 text-muted font-body">No puppies match your search.</div>
+          <div className="text-center py-20 border border-dashed border-divider">
+            {search || coat !== 'All' || registry !== 'All' || gender !== 'All' ? (
+              <p className="font-body text-sm text-muted">No puppies match your search.</p>
+            ) : (
+              <>
+                <p className="font-display text-xl font-semibold text-espresso mb-2">Listings coming soon</p>
+                <p className="font-body text-sm text-muted max-w-sm mx-auto">Our first verified breeders are joining the marketplace. Check back shortly for available Chihuahuas.</p>
+              </>
+            )}
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {allShown.map(p => <PuppyCard key={p.id} puppy={p} />)}
@@ -171,31 +180,33 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* ── Featured Kennels ── */}
-      <section className="bg-white border-t border-divider py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-8">
-            <h2 className="section-title">Our Kennels</h2>
-            <Link to="/kennels" className="flex items-center gap-1 text-sienna font-body text-sm font-medium hover:gap-2 transition-all">
-              See all <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {approvedKennels.map(kennel => (
-              <Link key={kennel.id} to="/kennels" className="p-4 border border-divider hover:border-sienna/40 hover:shadow-sm transition-all group text-center">
-                <div
-                  className="w-12 h-12 mx-auto mb-3 flex items-center justify-center text-white font-bold text-sm font-body"
-                  style={{ backgroundColor: kennel.color }}
-                >
-                  {kennel.initials}
-                </div>
-                <p className="font-body text-xs font-semibold text-espresso group-hover:text-sienna transition-colors leading-tight">{kennel.name}</p>
-                <p className="font-body text-[10px] text-muted mt-0.5">{kennel.registry}</p>
+      {/* ── Featured Kennels — only shown when breeders exist ── */}
+      {approvedKennels.length > 0 && (
+        <section className="bg-white border-t border-divider py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-end justify-between mb-8">
+              <h2 className="section-title">Our Kennels</h2>
+              <Link to="/kennels" className="flex items-center gap-1 text-sienna font-body text-sm font-medium hover:gap-2 transition-all">
+                See all <ChevronRight className="w-4 h-4" />
               </Link>
-            ))}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {approvedKennels.map(kennel => (
+                <Link key={kennel.id} to="/kennels" className="p-4 border border-divider hover:border-sienna/40 hover:shadow-sm transition-all group text-center">
+                  <div
+                    className="w-12 h-12 mx-auto mb-3 flex items-center justify-center text-white font-bold text-sm font-body"
+                    style={{ backgroundColor: kennel.color }}
+                  >
+                    {kennel.initials}
+                  </div>
+                  <p className="font-body text-xs font-semibold text-espresso group-hover:text-sienna transition-colors leading-tight">{kennel.name}</p>
+                  <p className="font-body text-[10px] text-muted mt-0.5">{kennel.registry}</p>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── How It Works ── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
