@@ -32,10 +32,6 @@ export default function AdminLogin() {
           <h1 className="font-display text-2xl font-semibold text-espresso mb-1">Admin Login</h1>
           <p className="font-body text-xs text-muted mb-6 tracking-wide">Back office access only</p>
 
-          <div className="bg-sage/10 border border-sage/30 px-3 py-2 mb-5 font-body text-xs text-sage-dark leading-relaxed">
-            <strong>Demo:</strong> admin@chihuahuasa.co.za / admin123
-          </div>
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="label">Email</label>

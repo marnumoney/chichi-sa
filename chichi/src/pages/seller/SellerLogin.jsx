@@ -63,10 +63,6 @@ export default function SellerLogin() {
           <h1 className="font-display text-3xl font-semibold text-espresso mb-1">Welcome back</h1>
           <p className="font-body text-sm text-muted mb-6">Sign in to your seller portal</p>
 
-          <div className="bg-sienna/8 border border-sienna/20 px-3 py-2.5 mb-5 font-body text-xs text-sienna-dark leading-relaxed">
-            <strong>Demo:</strong> info@littleroyalschis.co.za / seller123
-          </div>
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="label">Email</label>
