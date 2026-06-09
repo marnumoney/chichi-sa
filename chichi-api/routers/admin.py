@@ -170,12 +170,13 @@ def admin_approve_seller(
     db.execute("""
         INSERT INTO kennels
         (id, name, slug, registry, initials, color, membership_status, commission, status)
-        VALUES (?,?,?,?,'??',?,'pending_payment',8.0,'pending')
+        VALUES (?,?,?,?,?,?,'pending_payment',8.0,'pending')
     """, (
         kennel_id,
         f"{seller['name']}'s Kennel",
         f"kennel-{kennel_id}",
         'KUSA',
+        '??',
         color,
     ))
     db.execute(
