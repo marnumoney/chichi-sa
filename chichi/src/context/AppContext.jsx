@@ -124,7 +124,7 @@ export function AppProvider({ children }) {
   const loginAdmin = async (email, password) => {
     const res = await apiFetch('/auth/admin/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: { email, password },
     })
     if (!res.ok) return false
     const { token } = await res.json()
@@ -139,7 +139,7 @@ export function AppProvider({ children }) {
   const loginSeller = async (email, password) => {
     const res = await apiFetch('/auth/seller/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: { email, password },
     })
     if (!res.ok) {
       const err = await res.json()
@@ -172,7 +172,7 @@ export function AppProvider({ children }) {
   const signupSeller = async (formData) => {
     const res = await apiFetch('/auth/seller/signup', {
       method: 'POST',
-      body: JSON.stringify(formData),
+      body: formData,
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.detail || 'Signup failed')
@@ -183,11 +183,11 @@ export function AppProvider({ children }) {
   const purchasePuppy = async (puppyId, buyerDetails) => {
     const res = await apiFetch('/transactions', {
       method: 'POST',
-      body: JSON.stringify({
+      body: {
         puppy_id: puppyId,
         buyer_name: buyerDetails?.name ?? 'Anonymous',
         buyer_email: buyerDetails?.email ?? '',
-      }),
+      },
     })
     if (!res.ok) return null
     const txn = normalize(await res.json())
@@ -199,7 +199,7 @@ export function AppProvider({ children }) {
   const addPuppy = async (puppyData) => {
     await apiFetch('/seller/puppies', {
       method: 'POST',
-      body: JSON.stringify(puppyData),
+      body: puppyData,
     })
     await loadPuppies()
   }
@@ -212,7 +212,7 @@ export function AppProvider({ children }) {
   const updateSellerProfile = async (updates) => {
     const res = await apiFetch('/seller/profile', {
       method: 'PUT',
-      body: JSON.stringify(updates),
+      body: updates,
     })
     if (res.ok) {
       const kennel = normalize(await res.json())
@@ -225,7 +225,7 @@ export function AppProvider({ children }) {
   const adminAddKennel = async (data) => {
     const res = await apiFetch('/admin/kennels', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: data,
     })
     const kennel = normalize(await res.json())
     await loadAdminData()
@@ -235,7 +235,7 @@ export function AppProvider({ children }) {
   const adminEditKennel = async (kennelId, updates) => {
     await apiFetch(`/admin/kennels/${kennelId}`, {
       method: 'PUT',
-      body: JSON.stringify(updates),
+      body: updates,
     })
     await loadAdminData()
   }
@@ -261,7 +261,7 @@ export function AppProvider({ children }) {
   const adminAddSeller = async (data) => {
     const res = await apiFetch('/admin/sellers', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: data,
     })
     const seller = normalize(await res.json())
     await loadAdminData()
@@ -271,7 +271,7 @@ export function AppProvider({ children }) {
   const adminEditSeller = async (sellerId, updates) => {
     await apiFetch(`/admin/sellers/${sellerId}`, {
       method: 'PUT',
-      body: JSON.stringify(updates),
+      body: updates,
     })
     await loadAdminData()
   }
@@ -302,7 +302,7 @@ export function AppProvider({ children }) {
   const addTestimonial = async (data) => {
     await apiFetch('/admin/testimonials', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: data,
     })
     await loadTestimonials()
   }
@@ -330,7 +330,7 @@ export function AppProvider({ children }) {
   const updateAdminSettings = async (settings) => {
     const res = await apiFetch('/admin/settings', {
       method: 'PUT',
-      body: JSON.stringify(settings),
+      body: settings,
     })
     if (res.ok) setAdminSettings(normalize(await res.json()))
   }
@@ -338,7 +338,7 @@ export function AppProvider({ children }) {
   const updateLegal = async (content) => {
     const res = await apiFetch('/admin/legal', {
       method: 'PUT',
-      body: JSON.stringify({ content }),
+      body: { content },
     })
     if (res.ok) { const d = normalize(await res.json()); setLegalContent(d.content) }
   }
