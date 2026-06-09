@@ -354,6 +354,7 @@ export function AppProvider({ children }) {
       updateKennelCommission, addPuppy, delistPuppy,
       updateLegal, updateAdminSettings, signupSeller, updateSellerProfile,
       payMembership,
+      loadAdminData,
       adminRemovePuppy, adminAddKennel, adminEditKennel, adminRemoveKennel,
       adminAddSeller, adminEditSeller, adminRemoveSeller,
     }}>

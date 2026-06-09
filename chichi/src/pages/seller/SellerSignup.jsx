@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
-import { CheckCircle, Loader2, Upload, FileCheck, X } from 'lucide-react'
+import { CheckCircle, Loader2, Upload, FileCheck, X, Eye, EyeOff } from 'lucide-react'
 import { Logo } from '../../components/Logo'
 
 const FORMSUBMIT_EMAIL = 'Chihuahuasouthafrica@gmail.com'
@@ -16,11 +16,13 @@ export default function SellerSignup() {
     registry: 'KUSA',
     province: '',
     referralCode: '',
-    password: 'seller123',
+    password: '',
   })
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [sendError, setSendError] = useState(false)
+  const [saveError, setSaveError] = useState('')
+  const [showPw, setShowPw] = useState(false)
   const [docs, setDocs] = useState({ kennelCert: null })
   const [sireCerts, setSireCerts] = useState([])
   const [damCerts, setDamCerts] = useState([])
@@ -73,9 +75,22 @@ export default function SellerSignup() {
       setSendError(true)
     }
 
-    await signupSeller(form)
-    setLoading(false)
-    setSubmitted(true)
+    try {
+      await signupSeller({
+        email: form.email,
+        password: form.password,
+        name: form.name,
+        phone: form.phone,
+        province: form.province,
+        kennel_name: form.kennelName,
+        registry: form.registry,
+      })
+      setSubmitted(true)
+    } catch (err) {
+      setSaveError(err.message || 'Could not save your application. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (submitted) {
@@ -173,6 +188,25 @@ export default function SellerSignup() {
           </div>
 
           <div>
+            <label className="label">Password *</label>
+            <div className="relative">
+              <input
+                type={showPw ? 'text' : 'password'}
+                required
+                minLength={8}
+                autoComplete="new-password"
+                className="input-field pr-10"
+                value={form.password}
+                onChange={set('password')}
+                placeholder="Minimum 8 characters"
+              />
+              <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-espresso" onClick={() => setShowPw(p => !p)}>
+                {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          <div>
             <label className="label">Referral Code <span className="text-muted font-normal normal-case tracking-normal">(optional — get a commission discount)</span></label>
             <input type="text" className="input-field" value={form.referralCode} onChange={set('referralCode')} placeholder="e.g. HVB2024" />
           </div>
@@ -265,6 +299,9 @@ export default function SellerSignup() {
             <p className="font-body text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2">
               Could not send email notification, but your application was still saved. Admin will review it.
             </p>
+          )}
+          {saveError && (
+            <p className="font-body text-xs text-red-700 bg-red-50 border border-red-200 px-3 py-2">{saveError}</p>
           )}
           <button
             type="submit"

@@ -1,6 +1,6 @@
 import { useApp } from '../../context/AppContext'
 import { Link } from 'react-router-dom'
-import { Building2, Package, Users, CheckCircle } from 'lucide-react'
+import { Building2, Package, Users, CheckCircle, RefreshCw } from 'lucide-react'
 
 function RandIcon() {
   return <span className="font-body font-bold text-base leading-none">R</span>
@@ -22,7 +22,7 @@ function StatCard({ icon: Icon, label, value, sub, color }) {
 }
 
 export default function AdminDashboard() {
-  const { kennels, puppies, sellers, adminSettings, transactions } = useApp()
+  const { kennels, puppies, sellers, adminSettings, transactions, loadAdminData } = useApp()
 
   const approved = kennels.filter(k => k.status === 'approved')
   const pending = sellers.filter(s => s.status === 'pending_verification')
@@ -106,10 +106,15 @@ export default function AdminDashboard() {
         {/* Pending applications */}
         <div className="bg-white border border-divider">
           <div className="flex items-center justify-between px-5 py-4 border-b border-divider">
-            <h3 className="font-body font-semibold text-sm text-espresso">Pending Applications</h3>
-            {pending.length > 0 && (
-              <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5">{pending.length}</span>
-            )}
+            <div className="flex items-center gap-2">
+              <h3 className="font-body font-semibold text-sm text-espresso">Pending Applications</h3>
+              {pending.length > 0 && (
+                <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5">{pending.length}</span>
+              )}
+            </div>
+            <button onClick={loadAdminData} className="text-muted hover:text-espresso transition-colors" title="Refresh">
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
           </div>
           <div className="divide-y divide-divider">
             {pending.length === 0 ? (

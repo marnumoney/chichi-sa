@@ -11,10 +11,10 @@ class SignupRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8)
     name: str
-    phone: str
-    province: str
-    kennel_name: str
-    registry: str
+    phone: Optional[str] = None
+    province: Optional[str] = None
+    kennel_name: Optional[str] = None
+    registry: Optional[str] = None
 
 
 class PuppyCreate(BaseModel):
@@ -34,7 +34,7 @@ class PuppyCreate(BaseModel):
 
 class KennelCreate(BaseModel):
     name: str
-    slug: str
+    slug: Optional[str] = None
     registry: str
     description: str = ''
     location: str = ''

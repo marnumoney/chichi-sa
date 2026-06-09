@@ -1,4 +1,5 @@
 import random
+import re
 import sqlite3
 import uuid
 from datetime import date, timedelta
@@ -13,6 +14,10 @@ from models import (KennelCreate, KennelUpdate, LegalUpdate, SellerCreate,
 router = APIRouter()
 
 _PALETTE = ['#B5651D', '#4A7C59', '#C49A1D', '#7C5C4A', '#2A1F14', '#6B4A7C']
+
+
+def _slugify(text: str) -> str:
+    return re.sub(r'[^a-z0-9]+', '-', text.lower()).strip('-')
 
 
 # ── Kennels ──────────────────────────────────────────────────────────────────
@@ -34,6 +39,12 @@ def admin_add_kennel(
 ):
     kennel_id = f'k{uuid.uuid4().hex[:8]}'
     expiry = (date.today() + timedelta(days=365)).isoformat()
+    base_slug = body.slug or _slugify(body.name)
+    slug = base_slug
+    suffix = 1
+    while db.execute('SELECT id FROM kennels WHERE slug = ?', (slug,)).fetchone():
+        slug = f'{base_slug}-{suffix}'
+        suffix += 1
     db.execute("""
         INSERT INTO kennels
         (id, name, slug, registry, initials, color, description, location,
@@ -41,7 +52,7 @@ def admin_add_kennel(
          status, referral_code)
         VALUES (?,?,?,?,?,?,?,?,?,?,'active',?,?,'approved',?)
     """, (
-        kennel_id, body.name, body.slug, body.registry,
+        kennel_id, body.name, slug, body.registry,
         body.initials or body.name[:3].upper(), body.color,
         body.description, body.location, body.contact, body.phone,
         expiry, body.commission, body.referral_code,
