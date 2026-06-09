@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext'
 import { Pencil, Trash2, Plus, Check, X } from 'lucide-react'
 import Modal from '../../components/Modal'
 
-const EMPTY_SELLER = { name: '', email: '', phone: '', password: 'seller123', kennelId: '', status: 'approved' }
+const EMPTY_SELLER = { name: '', email: '', phone: '', password: '', kennelId: '', status: 'approved' }
 
 function SellerModal({ seller, kennels, open, onClose, onSave, title }) {
   const [form, setForm] = useState(seller ?? EMPTY_SELLER)
@@ -15,7 +15,7 @@ function SellerModal({ seller, kennels, open, onClose, onSave, title }) {
           <div><label className="label">Full Name *</label><input required className="input-field" value={form.name} onChange={set('name')} /></div>
           <div><label className="label">Email *</label><input type="email" required className="input-field" value={form.email} onChange={set('email')} /></div>
           <div><label className="label">Phone</label><input className="input-field" value={form.phone || ''} onChange={set('phone')} /></div>
-          <div><label className="label">Password</label><input className="input-field" value={form.password || 'seller123'} onChange={set('password')} /></div>
+          <div><label className="label">Password</label><input type="password" required className="input-field" value={form.password || ''} onChange={set('password')} /></div>
           <div>
             <label className="label">Linked Kennel</label>
             <select className="input-field" value={form.kennelId || ''} onChange={set('kennelId')}>
