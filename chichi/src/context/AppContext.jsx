@@ -75,11 +75,17 @@ export function AppProvider({ children }) {
     if (res.ok) setTestimonials(normalize(await res.json()))
   }, [])
 
+  const loadLegalContent = useCallback(async () => {
+    const res = await apiFetch('/legal')
+    if (res.ok) { const data = await res.json(); setLegalContent(data.content ?? '') }
+  }, [])
+
   useEffect(() => {
     loadKennels()
     loadPuppies()
     loadTestimonials()
-  }, [loadKennels, loadPuppies, loadTestimonials])
+    loadLegalContent()
+  }, [loadKennels, loadPuppies, loadTestimonials, loadLegalContent])
 
   // ── Bootstrap: restore session from localStorage ──────────────────────────
   useEffect(() => {

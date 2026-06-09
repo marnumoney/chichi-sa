@@ -64,6 +64,12 @@ def list_testimonials(db: sqlite3.Connection = Depends(get_db)):
     return [dict(r) for r in rows]
 
 
+@router.get('/legal')
+def get_legal(db: sqlite3.Connection = Depends(get_db)):
+    row = db.execute('SELECT content FROM legal_text WHERE id = 1').fetchone()
+    return {'content': row['content'] if row else ''}
+
+
 @router.get('/sellers/{seller_id}/payment-info')
 def get_seller_payment_info(seller_id: str, db: sqlite3.Connection = Depends(get_db)):
     """Returns minimal public info needed to render the membership payment page."""
