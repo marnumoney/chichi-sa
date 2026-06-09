@@ -7,21 +7,19 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 # ── PostgreSQL wrapper ────────────────────────────────────────────────────────
 
 class _PgConnection:
-    """Adapts psycopg2 to sqlite3's conn.execute() API so routers need no changes."""
+    """Adapts psycopg3 to sqlite3's conn.execute() API so routers need no changes."""
 
     def __init__(self, conn):
         self._conn = conn
 
     def execute(self, sql, params=()):
-        import psycopg2.extras
         cur = self._conn.cursor()
         cur.execute(sql.replace('?', '%s'), params)
         return cur
 
     def executemany(self, sql, param_list):
-        import psycopg2.extras
         cur = self._conn.cursor()
-        psycopg2.extras.execute_batch(cur, sql.replace('?', '%s'), param_list)
+        cur.executemany(sql.replace('?', '%s'), param_list)
         return cur
 
     def commit(self):
@@ -35,9 +33,9 @@ class _PgConnection:
 
 def get_connection():
     if DATABASE_URL:
-        import psycopg2
-        import psycopg2.extras
-        conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+        import psycopg
+        from psycopg.rows import dict_row
+        conn = psycopg.connect(DATABASE_URL, row_factory=dict_row)
         return _PgConnection(conn)
     import sqlite3
     db_path = os.getenv('DB_PATH', 'chichi.db')
