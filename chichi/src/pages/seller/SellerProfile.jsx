@@ -22,7 +22,7 @@ export default function SellerProfile() {
     accountHolder: kennel?.accountHolder ?? '',
     accountNumber: kennel?.accountNumber ?? '',
     branchCode: kennel?.branchCode ?? '',
-    accountType: kennel?.accountType ?? 'Cheque / Current',
+    accountType: kennel?.accountType ?? '',
   })
   const [saved, setSaved] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -41,7 +41,7 @@ export default function SellerProfile() {
       accountHolder: kennel.accountHolder ?? '',
       accountNumber: kennel.accountNumber ?? '',
       branchCode: kennel.branchCode ?? '',
-      accountType: kennel.accountType ?? 'Cheque / Current',
+      accountType: kennel.accountType ?? '',
     })
   }, [kennel?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
