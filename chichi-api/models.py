@@ -60,6 +60,11 @@ class KennelUpdate(BaseModel):
     membership_expiry: Optional[str] = None
     referral_code: Optional[str] = None
     slug: Optional[str] = None
+    bank_name: Optional[str] = None
+    account_holder: Optional[str] = None
+    account_number: Optional[str] = None
+    branch_code: Optional[str] = None
+    account_type: Optional[str] = None
 
 
 class SellerCreate(BaseModel):

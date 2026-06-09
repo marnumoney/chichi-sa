@@ -77,7 +77,12 @@ def create_tables(conn):
             commission REAL DEFAULT 8.0,
             status TEXT DEFAULT 'pending',
             referred_by TEXT,
-            referral_code TEXT
+            referral_code TEXT,
+            bank_name TEXT DEFAULT '',
+            account_holder TEXT DEFAULT '',
+            account_number TEXT DEFAULT '',
+            branch_code TEXT DEFAULT '',
+            account_type TEXT DEFAULT ''
         )""",
         """CREATE TABLE IF NOT EXISTS puppies (
             id TEXT PRIMARY KEY,
@@ -155,6 +160,21 @@ def create_tables(conn):
     for stmt in statements:
         conn.execute(stmt)
     conn.commit()
+
+    # Additive migrations for existing tables
+    banking_cols = [
+        ('bank_name', "TEXT DEFAULT ''"),
+        ('account_holder', "TEXT DEFAULT ''"),
+        ('account_number', "TEXT DEFAULT ''"),
+        ('branch_code', "TEXT DEFAULT ''"),
+        ('account_type', "TEXT DEFAULT ''"),
+    ]
+    for col, defn in banking_cols:
+        try:
+            conn.execute(f'ALTER TABLE kennels ADD COLUMN {col} {defn}')
+            conn.commit()
+        except Exception:
+            pass  # column already exists
 
 
 # ── Row parsers ───────────────────────────────────────────────────────────────
