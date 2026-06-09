@@ -7,7 +7,7 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 # ── PostgreSQL wrapper ────────────────────────────────────────────────────────
 
 class _PgConnection:
-    """Adapts psycopg3 to sqlite3's conn.execute() API so routers need no changes."""
+    """Adapts psycopg2 to sqlite3's conn.execute() API so routers need no changes."""
 
     def __init__(self, conn):
         self._conn = conn
@@ -33,9 +33,9 @@ class _PgConnection:
 
 def get_connection():
     if DATABASE_URL:
-        import psycopg
-        from psycopg.rows import dict_row
-        conn = psycopg.connect(DATABASE_URL, row_factory=dict_row)
+        import psycopg2
+        import psycopg2.extras
+        conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
         return _PgConnection(conn)
     import sqlite3
     db_path = os.getenv('DB_PATH', 'chichi.db')
