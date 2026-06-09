@@ -1,9 +1,10 @@
-import { useState } from 'react'
-import { useSearchParams, Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useSearchParams, Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { Lock, CheckCircle, CreditCard, Shield } from 'lucide-react'
 import { LogoCompact } from '../components/Logo'
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 function formatCard(val) {
   return val.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim()
@@ -15,14 +16,27 @@ function formatExpiry(val) {
 
 export default function PayMembership() {
   const [params] = useSearchParams()
-  const { sellers, kennels, payMembership, adminSettings } = useApp()
-  const navigate = useNavigate()
+  const { payMembership, adminSettings } = useApp()
 
   const sellerId = params.get('seller')
-  const seller = sellers.find(s => s.id === sellerId)
-  const kennel = kennels.find(k => k.id === seller?.kennelId)
   const membershipFee = adminSettings?.membershipFeeAnnual ?? 1200
   const defaultCommission = adminSettings?.defaultCommission ?? 8
+
+  const [seller, setSeller] = useState(null)
+  const [kennel, setKennel] = useState(null)
+  const [notFound, setNotFound] = useState(false)
+
+  useEffect(() => {
+    if (!sellerId) { setNotFound(true); return }
+    fetch(`${API}/sellers/${sellerId}/payment-info`)
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => {
+        if (!data.seller || !data.kennel) { setNotFound(true); return }
+        setSeller(data.seller)
+        setKennel(data.kennel)
+      })
+      .catch(() => setNotFound(true))
+  }, [sellerId])
 
   const [form, setForm] = useState({ name: '', card: '', expiry: '', cvv: '' })
   const [paid, setPaid] = useState(false)
@@ -59,13 +73,21 @@ export default function PayMembership() {
     }, 1800)
   }
 
-  if (!seller || !kennel) {
+  if (notFound) {
     return (
       <div className="min-h-screen bg-cream flex items-center justify-center p-4">
         <div className="text-center">
           <p className="font-display text-2xl text-espresso mb-4">Invalid payment link.</p>
           <Link to="/" className="btn-primary text-xs tracking-widest uppercase">Go to Home</Link>
         </div>
+      </div>
+    )
+  }
+
+  if (!seller || !kennel) {
+    return (
+      <div className="min-h-screen bg-cream flex items-center justify-center p-4">
+        <p className="font-body text-sm text-muted">Loading…</p>
       </div>
     )
   }
