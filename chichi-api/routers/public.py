@@ -62,3 +62,20 @@ def get_puppy(puppy_id: str, db: sqlite3.Connection = Depends(get_db)):
 def list_testimonials(db: sqlite3.Connection = Depends(get_db)):
     rows = db.execute('SELECT * FROM testimonials ORDER BY date DESC').fetchall()
     return [dict(r) for r in rows]
+
+
+@router.get('/sellers/{seller_id}/payment-info')
+def get_seller_payment_info(seller_id: str, db: sqlite3.Connection = Depends(get_db)):
+    """Returns minimal public info needed to render the membership payment page."""
+    seller = db.execute(
+        'SELECT id, name, kennel_id, status FROM sellers WHERE id = ?', (seller_id,)
+    ).fetchone()
+    if not seller:
+        raise HTTPException(status_code=404, detail='Seller not found')
+    seller = dict(seller)
+    kennel = None
+    if seller.get('kennel_id'):
+        row = db.execute('SELECT * FROM kennels WHERE id = ?', (seller['kennel_id'],)).fetchone()
+        if row:
+            kennel = dict(row)
+    return {'seller': seller, 'kennel': kennel}
