@@ -37,7 +37,7 @@ export function sendInactivityWarning(seller, kennelName) {
     'Status': 'Inactive for over 1 year — Action Required',
     'Notice': 'Your Chihuahua South Africa account has been inactive for over 1 year with no sales. You have 30 days to list a puppy or make a sale before your account is automatically removed.',
     'Action Required': 'Log in to your seller portal and list a puppy or contact admin to discuss your account.',
-    'Portal': 'https://chihuahuasouthafrica.co.za/seller/login',
+    'Portal': 'https://chihuahuasouthafrica.com/seller/login',
   })
 }
 

@@ -10,6 +10,6 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: ADMIN_EMAIL
-        value: admin@chihuahuasa.co.za
+        value: chihuahuasouthafrica@gmail.com
       - key: ADMIN_PASSWORD_HASH
-        value: "$2b$12$PGEzzXOdu6sHXMyQvjCqo.oGpOA6N7XDq7u4voxqli9HmtZBPnkLS"
+        value: "$2b$12$8pR2ejrJiQ.JPzsWh/Dfd.Z8TzDROMXFEOgsYfqHLiIyjfHwPgwTS"

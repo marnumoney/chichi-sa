@@ -13,7 +13,7 @@ router = APIRouter()
 
 @router.post('/admin/login')
 def admin_login(body: LoginRequest):
-    admin_email = os.getenv('ADMIN_EMAIL', 'admin@chihuahuasa.co.za')
+    admin_email = os.getenv('ADMIN_EMAIL', 'chihuahuasouthafrica@gmail.com')
     admin_hash = os.getenv('ADMIN_PASSWORD_HASH', '')
     if body.email != admin_email:
         raise HTTPException(status_code=401, detail='Invalid credentials')
