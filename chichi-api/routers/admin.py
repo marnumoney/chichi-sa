@@ -144,6 +144,21 @@ def admin_edit_seller(
     return result
 
 
+@router.put('/sellers/{seller_id}/reset-password')
+def admin_reset_seller_password(
+    seller_id: str,
+    body: dict,
+    _: dict = Depends(get_current_admin),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    new_password = body.get('password', '')
+    if len(new_password) < 8:
+        raise HTTPException(status_code=400, detail='Password must be at least 8 characters')
+    db.execute('UPDATE sellers SET password_hash = ? WHERE id = ?', (hash_password(new_password), seller_id))
+    db.commit()
+    return {'ok': True}
+
+
 @router.delete('/sellers/{seller_id}')
 def admin_delete_seller(
     seller_id: str,
