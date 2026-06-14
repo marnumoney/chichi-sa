@@ -140,46 +140,52 @@ def seed():
 
     create_tables(conn)
 
-    conn.executemany(f"""
-        {insert_ignore} kennels
-        (id, name, slug, registry, initials, color, description, location, contact, phone,
-         membership_status, membership_expiry, commission, status, referred_by, referral_code)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-        {on_conflict}
-    """, KENNELS)
+    batches = [
+        (f"""
+            {insert_ignore} kennels
+            (id, name, slug, registry, initials, color, description, location, contact, phone,
+             membership_status, membership_expiry, commission, status, referred_by, referral_code)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) {on_conflict}
+        """, KENNELS),
+        (f"""
+            {insert_ignore} puppies
+            (id, kennel_id, name, coat_type, gender, color, dob, price, sold, breeding_rights,
+             images, pedigree, health, description, registration_no)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) {on_conflict}
+        """, PUPPIES),
+        (f"""
+            {insert_ignore} sellers
+            (id, email, password_hash, name, kennel_id, status, joined_date)
+            VALUES (?,?,?,?,?,?,?) {on_conflict}
+        """, [(s[0], s[1], hash_password(s[2]), s[3], s[4], s[5], s[6]) for s in SELLERS]),
+        (f"""
+            {insert_ignore} transactions
+            (id, puppy_id, puppy_name, kennel_id, kennel_name, buyer_name, buyer_email,
+             amount, commission, seller_payout, seller_paid, commission_paid, date,
+             seller_paid_date, commission_paid_date)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) {on_conflict}
+        """, TRANSACTIONS),
+        (f"""
+            {insert_ignore} testimonials (id, kennel_id, buyer_name, stars, text, date)
+            VALUES (?,?,?,?,?,?) {on_conflict}
+        """, TESTIMONIALS),
+    ]
 
-    conn.executemany(f"""
-        {insert_ignore} puppies
-        (id, kennel_id, name, coat_type, gender, color, dob, price, sold, breeding_rights,
-         images, pedigree, health, description, registration_no)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-        {on_conflict}
-    """, PUPPIES)
+    for sql, rows in batches:
+        try:
+            conn.executemany(sql, rows)
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            print(f'Seed batch skipped (already seeded?): {e}')
 
-    conn.executemany(f"""
-        {insert_ignore} sellers
-        (id, email, password_hash, name, kennel_id, status, joined_date)
-        VALUES (?,?,?,?,?,?,?)
-        {on_conflict}
-    """, [(s[0], s[1], hash_password(s[2]), s[3], s[4], s[5], s[6]) for s in SELLERS])
+    try:
+        conn.execute("UPDATE legal_text SET content = ? WHERE id = 1", (LEGAL_CONTENT,))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f'Legal text update skipped: {e}')
 
-    conn.executemany(f"""
-        {insert_ignore} transactions
-        (id, puppy_id, puppy_name, kennel_id, kennel_name, buyer_name, buyer_email,
-         amount, commission, seller_payout, seller_paid, commission_paid, date,
-         seller_paid_date, commission_paid_date)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-        {on_conflict}
-    """, TRANSACTIONS)
-
-    conn.executemany(f"""
-        {insert_ignore} testimonials (id, kennel_id, buyer_name, stars, text, date)
-        VALUES (?,?,?,?,?,?)
-        {on_conflict}
-    """, TESTIMONIALS)
-
-    conn.execute("UPDATE legal_text SET content = ? WHERE id = 1", (LEGAL_CONTENT,))
-    conn.commit()
     conn.close()
     print('Seed complete.')
 
