@@ -58,7 +58,8 @@ def get_db():
 
 def create_tables(conn):
     is_pg = isinstance(conn, _PgConnection)
-    ignore = 'ON CONFLICT DO NOTHING' if is_pg else ''
+    insert_ignore = 'INSERT INTO' if is_pg else 'INSERT OR IGNORE INTO'
+    on_conflict = 'ON CONFLICT DO NOTHING' if is_pg else ''
 
     statements = [
         """CREATE TABLE IF NOT EXISTS kennels (
@@ -153,8 +154,8 @@ def create_tables(conn):
             id INTEGER PRIMARY KEY DEFAULT 1,
             content TEXT DEFAULT ''
         )""",
-        f"INSERT INTO admin_settings (id) VALUES (1) {ignore}",
-        f"INSERT INTO legal_text (id) VALUES (1) {ignore}",
+        f"{insert_ignore} admin_settings (id) VALUES (1) {on_conflict}",
+        f"{insert_ignore} legal_text (id) VALUES (1) {on_conflict}",
     ]
 
     for stmt in statements:
