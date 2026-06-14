@@ -4,13 +4,19 @@ services:
     runtime: python
     rootDir: chichi-api
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    startCommand: python seed.py && uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: chichi-db
+          property: connectionString
       - key: SECRET_KEY
         generateValue: true
       - key: ADMIN_EMAIL
-        value: admin@chihuahuasa.co.za
+        value: chihuahuasouthafrica@gmail.com
       - key: ADMIN_PASSWORD_HASH
-        value: "$2b$12$N3taTWoHGXCpzSy3hWvDouwQx0xF18ug974DXmXIQo6mwqYUE5voS"
+        value: "$2b$12$8pR2ejrJiQ.JPzsWh/Dfd.Z8TzDROMXFEOgsYfqHLiIyjfHwPgwTS"
+
+databases:
+  - name: chichi-db
+    plan: free
