@@ -7,16 +7,10 @@ services:
     startCommand: python seed.py && uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: chichi-db
-          property: connectionString
+        sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: ADMIN_EMAIL
         value: chihuahuasouthafrica@gmail.com
       - key: ADMIN_PASSWORD_HASH
         value: "$2b$12$8pR2ejrJiQ.JPzsWh/Dfd.Z8TzDROMXFEOgsYfqHLiIyjfHwPgwTS"
-
-databases:
-  - name: chichi-db
-    plan: free
