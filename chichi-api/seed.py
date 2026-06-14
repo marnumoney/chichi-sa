@@ -1,9 +1,8 @@
-"""Run once to populate chichi.db with mock data. Usage: python seed.py"""
+"""Seed the database with initial data. Runs on every deploy — safe to re-run (idempotent)."""
 import json
-import sqlite3
 
 from auth import hash_password
-from database import create_tables, DB_PATH
+from database import create_tables, get_connection
 
 KENNELS = [
     ('k1', 'Little Royals Chihuahuas', 'little-royals-chihuahuas', 'KUSA', 'LR', '#B5651D',
@@ -134,45 +133,51 @@ Referral discount: 1.5% commission reduction for referring an approved kennel.
 
 
 def seed():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = get_connection()
+    is_pg = hasattr(conn, '_conn')  # _PgConnection wraps psycopg2
+    ignore = 'ON CONFLICT DO NOTHING' if is_pg else 'OR IGNORE'
+
     create_tables(conn)
 
-    conn.executemany("""
-        INSERT OR IGNORE INTO kennels
+    conn.executemany(f"""
+        INSERT {'' if is_pg else ignore} INTO kennels
         (id, name, slug, registry, initials, color, description, location, contact, phone,
          membership_status, membership_expiry, commission, status, referred_by, referral_code)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        {ignore if is_pg else ''}
     """, KENNELS)
 
-    conn.executemany("""
-        INSERT OR IGNORE INTO puppies
+    conn.executemany(f"""
+        INSERT {'' if is_pg else ignore} INTO puppies
         (id, kennel_id, name, coat_type, gender, color, dob, price, sold, breeding_rights,
          images, pedigree, health, description, registration_no)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        {ignore if is_pg else ''}
     """, PUPPIES)
 
-    conn.executemany("""
-        INSERT OR IGNORE INTO sellers
+    conn.executemany(f"""
+        INSERT {'' if is_pg else ignore} INTO sellers
         (id, email, password_hash, name, kennel_id, status, joined_date)
         VALUES (?,?,?,?,?,?,?)
+        {ignore if is_pg else ''}
     """, [(s[0], s[1], hash_password(s[2]), s[3], s[4], s[5], s[6]) for s in SELLERS])
 
-    conn.executemany("""
-        INSERT OR IGNORE INTO transactions
+    conn.executemany(f"""
+        INSERT {'' if is_pg else ignore} INTO transactions
         (id, puppy_id, puppy_name, kennel_id, kennel_name, buyer_name, buyer_email,
          amount, commission, seller_payout, seller_paid, commission_paid, date,
          seller_paid_date, commission_paid_date)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        {ignore if is_pg else ''}
     """, TRANSACTIONS)
 
-    conn.executemany("""
-        INSERT OR IGNORE INTO testimonials (id, kennel_id, buyer_name, stars, text, date)
+    conn.executemany(f"""
+        INSERT {'' if is_pg else ignore} INTO testimonials (id, kennel_id, buyer_name, stars, text, date)
         VALUES (?,?,?,?,?,?)
+        {ignore if is_pg else ''}
     """, TESTIMONIALS)
 
     conn.execute("UPDATE legal_text SET content = ? WHERE id = 1", (LEGAL_CONTENT,))
-
     conn.commit()
     conn.close()
     print('Seed complete.')
