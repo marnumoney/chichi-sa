@@ -178,7 +178,7 @@ def create_tables(conn):
             conn.execute(f'ALTER TABLE kennels ADD COLUMN {col} {defn}')
             conn.commit()
         except Exception:
-            pass  # column already exists
+            conn.rollback()  # PostgreSQL requires rollback before any further statements
 
 
 # ── Row parsers ───────────────────────────────────────────────────────────────
