@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import { CheckCircle, Shield, Copy, Check } from 'lucide-react'
+import { CheckCircle, Shield } from 'lucide-react'
 import { LogoCompact } from '../components/Logo'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -17,9 +17,8 @@ export default function PayMembership() {
   const [seller, setSeller] = useState(null)
   const [kennel, setKennel] = useState(null)
   const [notFound, setNotFound] = useState(false)
-  const [paid, setPaid] = useState(false)
+  const [paid, setPaid] = useState(params.get('paid') === 'true')
   const [loading, setLoading] = useState(false)
-  const [copied, setCopied] = useState(null)
 
   useEffect(() => {
     if (!sellerId) { setNotFound(true); return }
@@ -33,29 +32,31 @@ export default function PayMembership() {
       .catch(() => setNotFound(true))
   }, [sellerId])
 
-  const copyToClipboard = (text, field) => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(field)
-      setTimeout(() => setCopied(null), 2000)
-    })
-  }
-
-  const handleConfirm = () => {
+  const handlePayFast = async () => {
     setLoading(true)
-    payMembership(sellerId).then(() => {
+    try {
+      const res = await fetch(`${API}/payfast/membership-checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ seller_id: sellerId }),
+      })
+      const fields = await res.json()
+      const form = document.createElement('form')
+      form.method = 'POST'
+      form.action = 'https://www.payfast.co.za/eng/process'
+      Object.entries(fields).forEach(([k, v]) => {
+        const input = document.createElement('input')
+        input.type = 'hidden'
+        input.name = k
+        input.value = v
+        form.appendChild(input)
+      })
+      document.body.appendChild(form)
+      form.submit()
+    } catch (_) {
       setLoading(false)
-      setPaid(true)
-    })
+    }
   }
-
-  const bankDetails = [
-    { label: 'Bank', value: adminSettings?.adminBankName || 'FNB' },
-    { label: 'Account Holder', value: adminSettings?.adminAccountHolder || 'Chihuahua South Africa' },
-    { label: 'Account Number', value: adminSettings?.adminAccountNumber || '—' },
-    { label: 'Branch Code', value: adminSettings?.adminBranchCode || '—' },
-    { label: 'Account Type', value: adminSettings?.adminAccountType || 'Cheque / Current' },
-    { label: 'Reference', value: kennel?.name || sellerId },
-  ]
 
   if (notFound) {
     return (
@@ -146,44 +147,25 @@ export default function PayMembership() {
           </div>
         </div>
 
-        {/* Banking details */}
-        <div className="bg-white border border-divider p-6 mb-6">
-          <p className="font-body text-xs font-semibold uppercase tracking-widest text-muted mb-4">EFT Banking Details</p>
-          <div className="space-y-3">
-            {bankDetails.map(({ label, value }) => (
-              <div key={label} className="flex items-center justify-between py-2 border-b border-divider last:border-0">
-                <span className="font-body text-xs text-muted">{label}</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-body text-sm font-semibold text-espresso font-mono">{value}</span>
-                  {value && value !== '—' && (
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(value, label)}
-                      className="text-muted hover:text-sienna transition-colors"
-                    >
-                      {copied === label ? <Check className="w-3.5 h-3.5 text-sage-dark" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="font-body text-xs text-muted mt-4 p-3 bg-cream border border-divider leading-relaxed">
-            Please use your kennel name <strong className="text-espresso">"{kennel.name}"</strong> as the payment reference. Once your EFT reflects, click the button below to notify us.
+        {/* PayFast button */}
+        <div className="bg-white border border-divider p-6 mb-6 text-center space-y-4">
+          <p className="font-body text-xs text-muted uppercase tracking-widest">Secure Payment via</p>
+          <p className="font-display text-2xl font-bold text-espresso tracking-widest">PAYFAST</p>
+          <p className="font-body text-sm text-muted leading-relaxed">
+            You'll be redirected to PayFast to complete your payment securely. Once paid, your seller portal will be activated automatically.
           </p>
         </div>
 
-        {/* Confirm button */}
         <button
-          onClick={handleConfirm}
+          onClick={handlePayFast}
           disabled={loading}
           className={`w-full py-4 font-body font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition-colors ${loading ? 'bg-muted text-cream cursor-not-allowed' : 'bg-sienna text-white hover:bg-sienna-dark'}`}
         >
           <CheckCircle className="w-4 h-4" />
-          {loading ? 'Confirming...' : "I've Made My EFT Payment"}
+          {loading ? 'Redirecting to PayFast...' : `Pay R${membershipFee.toLocaleString()} via PayFast`}
         </button>
         <p className="font-body text-xs text-muted text-center mt-3">
-          Your account will be activated once payment is verified. This usually takes 1–2 business days.
+          🔒 Secure SA payments. Your portal activates automatically on payment confirmation.
         </p>
       </div>
     </div>

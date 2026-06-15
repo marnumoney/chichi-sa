@@ -14,3 +14,13 @@ services:
         value: chihuahuasouthafrica@gmail.com
       - key: ADMIN_PASSWORD_HASH
         value: "$2b$12$8pR2ejrJiQ.JPzsWh/Dfd.Z8TzDROMXFEOgsYfqHLiIyjfHwPgwTS"
+      - key: PAYFAST_MERCHANT_ID
+        value: "35726985"
+      - key: PAYFAST_MERCHANT_KEY
+        value: "gp3je4kljmbsi"
+      - key: PAYFAST_PASSPHRASE
+        value: ""
+      - key: FRONTEND_URL
+        value: https://chihuahuasouthafrica.com
+      - key: BACKEND_URL
+        value: https://chichi-api-7k6y.onrender.com
