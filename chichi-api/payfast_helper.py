@@ -2,7 +2,9 @@ import hashlib
 import os
 import urllib.parse
 
-PAYFAST_URL = 'https://www.payfast.co.za/eng/process'
+_SANDBOX = os.getenv('PAYFAST_SANDBOX', 'false').lower() == 'true'
+PAYFAST_URL = 'https://sandbox.payfast.co.za/eng/process' if _SANDBOX else 'https://www.payfast.co.za/eng/process'
+PAYFAST_VALIDATE_URL = 'https://sandbox.payfast.co.za/eng/query/validate' if _SANDBOX else 'https://www.payfast.co.za/eng/query/validate'
 MERCHANT_ID = os.getenv('PAYFAST_MERCHANT_ID', '')
 MERCHANT_KEY = os.getenv('PAYFAST_MERCHANT_KEY', '')
 PASSPHRASE = os.getenv('PAYFAST_PASSPHRASE', '')

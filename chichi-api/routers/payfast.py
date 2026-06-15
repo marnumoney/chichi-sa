@@ -9,7 +9,7 @@ from fastapi.responses import PlainTextResponse
 
 from database import get_db
 from payfast_helper import (BACKEND_URL, FRONTEND_URL, PASSPHRASE,
-                             build_payment_fields)
+                             PAYFAST_URL, PAYFAST_VALIDATE_URL, build_payment_fields)
 
 router = APIRouter()
 
@@ -27,7 +27,7 @@ async def _validate_with_payfast(raw_form: dict) -> bool:
     try:
         async with httpx.AsyncClient() as client:
             res = await client.post(
-                'https://www.payfast.co.za/eng/query/validate',
+                PAYFAST_VALIDATE_URL,
                 data=raw_form,
                 headers={'Content-Type': 'application/x-www-form-urlencoded'},
                 timeout=10,
@@ -67,7 +67,7 @@ async def puppy_checkout(body: dict, db=Depends(get_db)):
         'custom_str2': buyer_name,
         'custom_str3': buyer_email,
     })
-    return fields
+    return {'payfast_url': PAYFAST_URL, **fields}
 
 
 @router.post('/payfast/membership-checkout')
@@ -92,7 +92,7 @@ async def membership_checkout(body: dict, db=Depends(get_db)):
         'item_name': 'Chihuahua South Africa Annual Membership',
         'custom_str1': seller_id,
     })
-    return fields
+    return {'payfast_url': PAYFAST_URL, **fields}
 
 
 # ── ITN Webhooks ──────────────────────────────────────────────────────────────

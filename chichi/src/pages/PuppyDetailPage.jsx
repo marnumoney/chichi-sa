@@ -67,10 +67,10 @@ export default function PuppyDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ puppy_id: puppy.id, buyer_name: buyer.name, buyer_email: buyer.email }),
       })
-      const fields = await res.json()
+      const { payfast_url, ...fields } = await res.json()
       const form = document.createElement('form')
       form.method = 'POST'
-      form.action = 'https://www.payfast.co.za/eng/process'
+      form.action = payfast_url
       Object.entries(fields).forEach(([k, v]) => {
         const input = document.createElement('input')
         input.type = 'hidden'

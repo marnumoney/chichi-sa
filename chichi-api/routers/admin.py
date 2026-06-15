@@ -287,6 +287,22 @@ def admin_delete_testimonial(
     return {'ok': True}
 
 
+# ── Clear all data ───────────────────────────────────────────────────────────
+
+@router.delete('/clear-all-data')
+def admin_clear_all_data(
+    _: dict = Depends(get_current_admin),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    db.execute('DELETE FROM transactions')
+    db.execute('DELETE FROM testimonials')
+    db.execute('DELETE FROM puppies')
+    db.execute('DELETE FROM sellers')
+    db.execute('DELETE FROM kennels')
+    db.commit()
+    return {'ok': True, 'message': 'All kennels, puppies, sellers, transactions and testimonials deleted.'}
+
+
 # ── Settings ──────────────────────────────────────────────────────────────────
 
 @router.get('/settings')
