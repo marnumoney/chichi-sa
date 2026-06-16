@@ -1,3 +1,4 @@
+import json
 import os
 import sqlite3
 from datetime import date
@@ -5,7 +6,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 
 from auth import create_token, hash_password, verify_password
-from database import get_db
+from database import get_db, parse_seller
 from models import LoginRequest, SignupRequest
 
 router = APIRouter()
@@ -55,13 +56,12 @@ def seller_signup(body: SignupRequest, db: sqlite3.Connection = Depends(get_db))
     today = date.today().isoformat()
     db.execute("""
         INSERT INTO sellers (id, email, password_hash, name, kennel_id, status, joined_date,
-                             kennel_name, registry, phone, province)
-        VALUES (?, ?, ?, ?, NULL, 'pending_verification', ?, ?, ?, ?, ?)
+                             kennel_name, registry, phone, province, documents)
+        VALUES (?, ?, ?, ?, NULL, 'pending_verification', ?, ?, ?, ?, ?, ?)
     """, (seller_id, body.email, hash_password(body.password), body.name, today,
           body.kennel_name or '', body.registry or 'KUSA',
-          body.phone or '', body.province or ''))
+          body.phone or '', body.province or '',
+          json.dumps(body.documents or {})))
     db.commit()
     row = db.execute('SELECT * FROM sellers WHERE id = ?', (seller_id,)).fetchone()
-    seller = dict(row)
-    seller.pop('password_hash')
-    return seller
+    return parse_seller(row)

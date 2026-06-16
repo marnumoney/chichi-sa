@@ -185,6 +185,7 @@ def create_tables(conn):
         ('registry', "TEXT DEFAULT 'KUSA'"),
         ('phone', "TEXT DEFAULT ''"),
         ('province', "TEXT DEFAULT ''"),
+        ('documents', "TEXT DEFAULT '{}'"),
     ]
     for col, defn in seller_cols:
         try:
@@ -217,4 +218,14 @@ def parse_transaction(row) -> dict:
     d = dict(row)
     d['seller_paid'] = bool(d.get('seller_paid', 0))
     d['commission_paid'] = bool(d.get('commission_paid', 0))
+    return d
+
+
+def parse_seller(row) -> dict:
+    d = dict(row)
+    d.pop('password_hash', None)
+    try:
+        d['documents'] = json.loads(d.get('documents') or '{}')
+    except Exception:
+        d['documents'] = {}
     return d

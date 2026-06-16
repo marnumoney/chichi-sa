@@ -5,6 +5,20 @@ import { CheckCircle, Loader2, Upload, FileCheck, X, Eye, EyeOff } from 'lucide-
 import { Logo } from '../../components/Logo'
 
 const FORMSUBMIT_EMAIL = 'Chihuahuasouthafrica@gmail.com'
+const CLOUDINARY_CLOUD = 'dzq8vzby8'
+const CLOUDINARY_PRESET = 'Chihuahua south africa'
+
+async function uploadToCloudinary(file) {
+  const fd = new FormData()
+  fd.append('file', file)
+  fd.append('upload_preset', CLOUDINARY_PRESET)
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`, {
+    method: 'POST',
+    body: fd,
+  })
+  const data = await res.json()
+  return data.secure_url
+}
 
 export default function SellerSignup() {
   const { signupSeller } = useApp()
@@ -51,6 +65,26 @@ export default function SellerSignup() {
     e.preventDefault()
     setLoading(true)
     setSendError(false)
+    setSaveError('')
+
+    // Upload all documents to Cloudinary first
+    let documents = {}
+    try {
+      const [kennelUrl, ...sireUrls] = await Promise.all([
+        docs.kennelCert ? uploadToCloudinary(docs.kennelCert) : Promise.resolve(null),
+        ...sireCerts.map(uploadToCloudinary),
+      ])
+      const damUrls = await Promise.all(damCerts.map(uploadToCloudinary))
+      documents = {
+        kennel_cert: kennelUrl,
+        sire_certs: sireUrls.filter(Boolean),
+        dam_certs: damUrls.filter(Boolean),
+      }
+    } catch {
+      setSaveError('Failed to upload documents. Please try again.')
+      setLoading(false)
+      return
+    }
 
     try {
       await fetch(`https://formsubmit.co/ajax/${FORMSUBMIT_EMAIL}`, {
@@ -65,9 +99,9 @@ export default function SellerSignup() {
           'Registry': form.registry,
           'Province': form.province,
           'Referral Code': form.referralCode || 'None',
-          'Kennel Certificate': docs.kennelCert?.name || 'Not uploaded',
-          'Sire Certificates': sireCerts.length ? sireCerts.map(f => f.name).join(', ') : 'Not uploaded',
-          'Dam Certificates': damCerts.length ? damCerts.map(f => f.name).join(', ') : 'Not uploaded',
+          'Kennel Certificate': documents.kennel_cert || 'Not uploaded',
+          'Sire Certificates': documents.sire_certs?.join(', ') || 'Not uploaded',
+          'Dam Certificates': documents.dam_certs?.join(', ') || 'Not uploaded',
           'Applied': new Date().toLocaleDateString('en-ZA'),
         }),
       })
@@ -84,6 +118,7 @@ export default function SellerSignup() {
         province: form.province,
         kennel_name: form.kennelName,
         registry: form.registry,
+        documents,
       })
       setSubmitted(true)
     } catch (err) {

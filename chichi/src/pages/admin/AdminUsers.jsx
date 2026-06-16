@@ -1,7 +1,57 @@
 import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
-import { Pencil, Trash2, Plus, Check, X } from 'lucide-react'
+import { Pencil, Trash2, Plus, Check, X, FileText, ExternalLink } from 'lucide-react'
 import Modal from '../../components/Modal'
+
+function DocsModal({ seller, open, onClose }) {
+  const docs = seller?.documents || {}
+  const kennelCert = docs.kennel_cert
+  const sireCerts = docs.sire_certs || []
+  const damCerts = docs.dam_certs || []
+  const hasAny = kennelCert || sireCerts.length > 0 || damCerts.length > 0
+
+  const DocLink = ({ url, label }) => (
+    <a href={url} target="_blank" rel="noopener noreferrer"
+      className="flex items-center gap-2 px-3 py-2.5 border border-divider hover:border-sienna hover:bg-cream transition-colors group">
+      <FileText className="w-4 h-4 text-muted group-hover:text-sienna flex-shrink-0" />
+      <span className="font-body text-xs text-espresso flex-1 truncate">{label}</span>
+      <ExternalLink className="w-3.5 h-3.5 text-muted group-hover:text-sienna flex-shrink-0" />
+    </a>
+  )
+
+  return (
+    <Modal open={open} onClose={onClose} title={`Documents — ${seller?.name}`} maxWidth="max-w-lg">
+      {!hasAny ? (
+        <p className="font-body text-sm text-muted py-4 text-center">No documents uploaded.</p>
+      ) : (
+        <div className="space-y-5">
+          {kennelCert && (
+            <div>
+              <p className="font-body text-xs font-semibold uppercase tracking-widest text-muted mb-2">Kennel Registration Certificate</p>
+              <DocLink url={kennelCert} label="View certificate" />
+            </div>
+          )}
+          {sireCerts.length > 0 && (
+            <div>
+              <p className="font-body text-xs font-semibold uppercase tracking-widest text-muted mb-2">Sire Certificates ({sireCerts.length})</p>
+              <div className="space-y-1.5">
+                {sireCerts.map((url, i) => <DocLink key={i} url={url} label={`Sire certificate ${i + 1}`} />)}
+              </div>
+            </div>
+          )}
+          {damCerts.length > 0 && (
+            <div>
+              <p className="font-body text-xs font-semibold uppercase tracking-widest text-muted mb-2">Dam Certificates ({damCerts.length})</p>
+              <div className="space-y-1.5">
+                {damCerts.map((url, i) => <DocLink key={i} url={url} label={`Dam certificate ${i + 1}`} />)}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </Modal>
+  )
+}
 
 const EMPTY_SELLER = { name: '', email: '', phone: '', password: '', kennelId: '', status: 'approved' }
 
@@ -47,6 +97,7 @@ export default function AdminUsers() {
   const [addOpen, setAddOpen] = useState(false)
   const [editTarget, setEditTarget] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [docsTarget, setDocsTarget] = useState(null)
 
   const buyers = Object.values(
     transactions.reduce((acc, t) => {
@@ -120,13 +171,16 @@ export default function AdminUsers() {
                       <td className="px-5 py-3 text-muted text-xs">{s.joinedDate}</td>
                       <td className="px-5 py-3">{statusBadge(s.status)}</td>
                       <td className="px-5 py-3">
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-center">
                           {s.status === 'pending_verification' && (
                             <button onClick={() => approveSeller(s.id)}
                               className="flex items-center gap-1 bg-sage text-white text-[10px] font-bold uppercase tracking-widest px-2 py-1.5 hover:bg-sage-dark transition-colors">
                               <Check className="w-3 h-3" /> Approve
                             </button>
                           )}
+                          <button onClick={() => setDocsTarget(s)} className="text-muted hover:text-sienna transition-colors p-1" title="View documents">
+                            <FileText className="w-3.5 h-3.5" />
+                          </button>
                           <button onClick={() => setEditTarget(s)} className="text-muted hover:text-sienna transition-colors p-1">
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
@@ -178,6 +232,8 @@ export default function AdminUsers() {
           )}
         </div>
       )}
+
+      <DocsModal seller={docsTarget} open={!!docsTarget} onClose={() => setDocsTarget(null)} />
 
       {/* Add seller modal */}
       <SellerModal

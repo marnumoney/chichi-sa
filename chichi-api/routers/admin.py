@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from payfast_helper import FRONTEND_URL
 
 from auth import get_current_admin, hash_password
-from database import get_db, parse_puppy, parse_transaction
+from database import get_db, parse_puppy, parse_seller, parse_transaction
 from models import (KennelCreate, KennelUpdate, LegalUpdate, SellerCreate,
                     SellerUpdate, SettingsUpdate, TestimonialCreate)
 
@@ -105,7 +105,7 @@ def admin_list_sellers(
     db: sqlite3.Connection = Depends(get_db),
 ):
     rows = db.execute('SELECT * FROM sellers ORDER BY joined_date DESC').fetchall()
-    return [{k: v for k, v in dict(r).items() if k != 'password_hash'} for r in rows]
+    return [parse_seller(r) for r in rows]
 
 
 @router.post('/sellers', status_code=201)

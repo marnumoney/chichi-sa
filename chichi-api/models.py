@@ -15,6 +15,7 @@ class SignupRequest(BaseModel):
     province: Optional[str] = None
     kennel_name: Optional[str] = None
     registry: Optional[str] = None
+    documents: Optional[dict] = None
 
 
 class PuppyCreate(BaseModel):
