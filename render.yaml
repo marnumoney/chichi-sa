@@ -13,7 +13,7 @@ services:
       - key: ADMIN_EMAIL
         value: chihuahuasouthafrica@gmail.com
       - key: ADMIN_PASSWORD_HASH
-        value: "$2b$12$8pR2ejrJiQ.JPzsWh/Dfd.Z8TzDROMXFEOgsYfqHLiIyjfHwPgwTS"
+        value: "$2b$12$e7L/LEmMy1wy7onm3F5U6uug3ipH1UiEj4DfIIgmz8sidk4JF9ZJa"
       - key: PAYFAST_MERCHANT_ID
         value: "35726985"
       - key: PAYFAST_MERCHANT_KEY
