@@ -59,11 +59,30 @@ def get_db():
 
 # ── Schema ────────────────────────────────────────────────────────────────────
 
+def _add_column(conn, is_pg, table, col, defn):
+    """Add a column safely on every deploy — never crashes even if column exists."""
+    # PostgreSQL supports IF NOT EXISTS natively — no exception raised if column exists.
+    # SQLite doesn't, so we fall back to try/except with rollback.
+    if is_pg:
+        try:
+            conn.execute(f'ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {col} {defn}')
+            conn.commit()
+        except Exception:
+            conn.rollback()
+    else:
+        try:
+            conn.execute(f'ALTER TABLE {table} ADD COLUMN {col} {defn}')
+            conn.commit()
+        except Exception:
+            conn.rollback()
+
+
 def create_tables(conn):
     is_pg = isinstance(conn, _PgConnection)
     insert_ignore = 'INSERT INTO' if is_pg else 'INSERT OR IGNORE INTO'
     on_conflict = 'ON CONFLICT DO NOTHING' if is_pg else ''
 
+    # Each statement in its own try/except so one failure never blocks the rest
     statements = [
         """CREATE TABLE IF NOT EXISTS kennels (
             id TEXT PRIMARY KEY,
@@ -162,44 +181,42 @@ def create_tables(conn):
     ]
 
     for stmt in statements:
-        conn.execute(stmt)
-    conn.commit()
+        try:
+            conn.execute(stmt)
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            print(f'[db] warning: {e}')
 
-    # Additive migrations for existing tables
-    banking_cols = [
+    # Additive column migrations — safe to re-run on every deploy
+    for col, defn in [
         ('bank_name', "TEXT DEFAULT ''"),
         ('account_holder', "TEXT DEFAULT ''"),
         ('account_number', "TEXT DEFAULT ''"),
         ('branch_code', "TEXT DEFAULT ''"),
         ('account_type', "TEXT DEFAULT ''"),
-    ]
-    for col, defn in banking_cols:
-        try:
-            conn.execute(f'ALTER TABLE kennels ADD COLUMN {col} {defn}')
-            conn.commit()
-        except Exception:
-            conn.rollback()  # PostgreSQL requires rollback before any further statements
+    ]:
+        _add_column(conn, is_pg, 'kennels', col, defn)
 
-    seller_cols = [
+    for col, defn in [
         ('kennel_name', "TEXT DEFAULT ''"),
         ('registry', "TEXT DEFAULT 'KUSA'"),
         ('phone', "TEXT DEFAULT ''"),
         ('province', "TEXT DEFAULT ''"),
         ('documents', "TEXT DEFAULT '{}'"),
-    ]
-    for col, defn in seller_cols:
-        try:
-            conn.execute(f'ALTER TABLE sellers ADD COLUMN {col} {defn}')
-            conn.commit()
-        except Exception:
-            conn.rollback()
+    ]:
+        _add_column(conn, is_pg, 'sellers', col, defn)
 
-    # One-time fix: correct kennel kfd8d9a29 which was created with hardcoded defaults
-    conn.execute("""
-        UPDATE kennels SET name = 'Wihan Howe Kennel', registry = 'Canine SA'
-        WHERE id = 'kfd8d9a29' AND (name != 'Wihan Howe Kennel' OR registry != 'Canine SA')
-    """)
-    conn.commit()
+    # Data fix: correct kennel created before signup fields were stored
+    try:
+        conn.execute("""
+            UPDATE kennels SET name = 'Wihan Howe Kennel', registry = 'Canine SA'
+            WHERE id = 'kfd8d9a29'
+              AND (name != 'Wihan Howe Kennel' OR registry != 'Canine SA')
+        """)
+        conn.commit()
+    except Exception:
+        conn.rollback()
 
 
 # ── Row parsers ───────────────────────────────────────────────────────────────

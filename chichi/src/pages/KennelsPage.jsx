@@ -140,8 +140,24 @@ function KennelSection({ kennel, puppies, testimonials, transactions, addTestimo
   )
 }
 
+function KennelSkeleton() {
+  return (
+    <div className="animate-pulse space-y-4 py-8 border-b border-divider">
+      <div className="flex items-center gap-4">
+        <div className="w-14 h-14 rounded-full bg-divider" />
+        <div className="space-y-2 flex-1">
+          <div className="h-4 bg-divider rounded w-48" />
+          <div className="h-3 bg-divider rounded w-32" />
+        </div>
+      </div>
+      <div className="h-3 bg-divider rounded w-3/4" />
+      <div className="h-3 bg-divider rounded w-1/2" />
+    </div>
+  )
+}
+
 export default function KennelsPage() {
-  const { kennels, puppies, testimonials, transactions, addTestimonial } = useApp()
+  const { kennels, puppies, testimonials, transactions, addTestimonial, loadingPublic } = useApp()
   const [tab, setTab] = useState('KUSA')
   const approved = kennels.filter(k => k.status === 'approved')
   const kusaKennels = approved.filter(k => k.registry === 'KUSA')
@@ -183,7 +199,9 @@ export default function KennelsPage() {
         </div>
       </div>
 
-      {shown.length === 0 ? (
+      {loadingPublic ? (
+        [1, 2].map(i => <KennelSkeleton key={i} />)
+      ) : shown.length === 0 ? (
         <p className="font-body text-sm text-muted text-center py-16">No approved kennels in this registry yet.</p>
       ) : (
         shown.map(kennel => (
