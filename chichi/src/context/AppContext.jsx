@@ -48,6 +48,26 @@ async function apiFetch(path, options = {}) {
   return res
 }
 
+// Retries up to `retries` times with a 15s per-attempt timeout — handles Render cold starts
+async function publicFetch(path, retries = 3) {
+  for (let i = 0; i <= retries; i++) {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 15000)
+    try {
+      const res = await fetch(`${API}${path}`, {
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+      })
+      clearTimeout(timer)
+      return res
+    } catch {
+      clearTimeout(timer)
+      if (i === retries) return null
+      await new Promise(r => setTimeout(r, 2000 * (i + 1)))
+    }
+  }
+}
+
 export function AppProvider({ children }) {
   const [kennels, setKennels] = useState([])
   const [puppies, setPuppies] = useState([])
@@ -58,33 +78,32 @@ export function AppProvider({ children }) {
   const [legalContent, setLegalContent] = useState('')
   const [adminUser, setAdminUser] = useState(null)
   const [sellerUser, setSellerUser] = useState(null)
+  const [loadingPublic, setLoadingPublic] = useState(true)
 
   // ── Public data loaders ───────────────────────────────────────────────────
   const loadKennels = useCallback(async () => {
-    const res = await apiFetch('/kennels')
-    if (res.ok) setKennels(normalize(await res.json()))
+    const res = await publicFetch('/kennels')
+    if (res?.ok) setKennels(normalize(await res.json()))
   }, [])
 
   const loadPuppies = useCallback(async () => {
-    const res = await apiFetch('/puppies')
-    if (res.ok) setPuppies(normalize(await res.json()))
+    const res = await publicFetch('/puppies')
+    if (res?.ok) setPuppies(normalize(await res.json()))
   }, [])
 
   const loadTestimonials = useCallback(async () => {
-    const res = await apiFetch('/testimonials')
-    if (res.ok) setTestimonials(normalize(await res.json()))
+    const res = await publicFetch('/testimonials')
+    if (res?.ok) setTestimonials(normalize(await res.json()))
   }, [])
 
   const loadLegalContent = useCallback(async () => {
-    const res = await apiFetch('/legal')
-    if (res.ok) { const data = await res.json(); setLegalContent(data.content ?? '') }
+    const res = await publicFetch('/legal')
+    if (res?.ok) { const data = await res.json(); setLegalContent(data.content ?? '') }
   }, [])
 
   useEffect(() => {
-    loadKennels()
-    loadPuppies()
-    loadTestimonials()
-    loadLegalContent()
+    Promise.all([loadKennels(), loadPuppies(), loadTestimonials(), loadLegalContent()])
+      .finally(() => setLoadingPublic(false))
   }, [loadKennels, loadPuppies, loadTestimonials, loadLegalContent])
 
   // ── Bootstrap: restore session from localStorage ──────────────────────────
@@ -213,6 +232,11 @@ export function AppProvider({ children }) {
   const delistPuppy = async (puppyId) => {
     await apiFetch(`/seller/puppies/${puppyId}`, { method: 'DELETE' })
     await loadPuppies()
+  }
+
+  const updateSellerDocuments = async (documents) => {
+    const res = await apiFetch('/seller/documents', { method: 'PUT', body: documents })
+    if (res.ok) setSellerUser(prev => ({ ...prev, documents }))
   }
 
   const updateSellerProfile = async (updates) => {
@@ -351,14 +375,14 @@ export function AppProvider({ children }) {
 
   return (
     <AppContext.Provider value={{
-      kennels, puppies, sellers, adminSettings, legalContent, transactions, testimonials,
+      kennels, puppies, sellers, adminSettings, legalContent, transactions, testimonials, loadingPublic,
       addTestimonial, removeTestimonial,
       adminUser, sellerUser,
       loginAdmin, loginSeller, logoutAdmin, logoutSeller,
       purchasePuppy, releasePayment, markSellerPaid, markCommissionPaid,
       approveSeller, approveKennel, rejectKennel,
       updateKennelCommission, addPuppy, delistPuppy,
-      updateLegal, updateAdminSettings, signupSeller, updateSellerProfile,
+      updateLegal, updateAdminSettings, signupSeller, updateSellerProfile, updateSellerDocuments,
       payMembership,
       loadAdminData,
       adminRemovePuppy, adminAddKennel, adminEditKennel, adminRemoveKennel,

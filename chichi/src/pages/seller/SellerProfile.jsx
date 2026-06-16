@@ -1,6 +1,21 @@
 import { useState, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
-import { Save, Check, Copy, Upload, Landmark } from 'lucide-react'
+import { Save, Check, Copy, Upload, Landmark, FileText, X, FileCheck, ExternalLink } from 'lucide-react'
+
+const CLOUDINARY_CLOUD = 'dzq8vzby8'
+const CLOUDINARY_PRESET = 'Chihuahua south africa'
+
+async function uploadToCloudinary(file) {
+  const fd = new FormData()
+  fd.append('file', file)
+  fd.append('upload_preset', CLOUDINARY_PRESET)
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`, {
+    method: 'POST',
+    body: fd,
+  })
+  const data = await res.json()
+  return data.secure_url
+}
 
 const SA_BANKS = [
   'ABSA Bank', 'Capitec Bank', 'FNB (First National Bank)', 'Nedbank',
@@ -9,7 +24,7 @@ const SA_BANKS = [
 ]
 
 export default function SellerProfile() {
-  const { sellerUser, updateSellerProfile } = useApp()
+  const { sellerUser, updateSellerProfile, updateSellerDocuments } = useApp()
   const kennel = sellerUser?.kennel
 
   const [form, setForm] = useState({
@@ -27,6 +42,12 @@ export default function SellerProfile() {
   const [saved, setSaved] = useState(false)
   const [copied, setCopied] = useState(false)
   const [logoPreview, setLogoPreview] = useState(null)
+  const [docsSaved, setDocsSaved] = useState(false)
+  const [docsUploading, setDocsUploading] = useState(false)
+  const [docsError, setDocsError] = useState('')
+  const [newKennelCert, setNewKennelCert] = useState(null)
+  const [newSireCerts, setNewSireCerts] = useState([])
+  const [newDamCerts, setNewDamCerts] = useState([])
 
   // Re-populate form if kennel data arrives after initial mount (page refresh)
   useEffect(() => {
@@ -198,6 +219,141 @@ export default function SellerProfile() {
               ✓ Banking details saved — admin will EFT R[payout amount] to <strong>{form.accountHolder}</strong> at <strong>{form.bankName}</strong>, Acc: <strong>{form.accountNumber}</strong>
             </div>
           )}
+        </div>
+
+        {/* Documents */}
+        <div className="bg-white border border-divider p-6 space-y-5">
+          <div>
+            <h3 className="font-body font-semibold text-sm text-espresso mb-1">Registration Documents</h3>
+            <p className="font-body text-xs text-muted">Upload or replace your kennel certificate and parent registration documents. Admin uses these to verify your account.</p>
+          </div>
+
+          {/* Existing docs */}
+          {(() => {
+            const docs = sellerUser?.documents || {}
+            const existing = [
+              docs.kennel_cert && { url: docs.kennel_cert, label: 'Kennel Certificate' },
+              ...(docs.sire_certs || []).map((u, i) => ({ url: u, label: `Sire Certificate ${i + 1}` })),
+              ...(docs.dam_certs || []).map((u, i) => ({ url: u, label: `Dam Certificate ${i + 1}` })),
+            ].filter(Boolean)
+            return existing.length > 0 ? (
+              <div>
+                <p className="font-body text-xs font-semibold uppercase tracking-widest text-muted mb-2">Current Documents</p>
+                <div className="space-y-1.5">
+                  {existing.map((d, i) => (
+                    <a key={i} href={d.url} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-2 border border-divider hover:border-sienna hover:bg-cream transition-colors group">
+                      <FileText className="w-4 h-4 text-muted group-hover:text-sienna flex-shrink-0" />
+                      <span className="font-body text-xs text-espresso flex-1">{d.label}</span>
+                      <ExternalLink className="w-3 h-3 text-muted group-hover:text-sienna" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="font-body text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2">No documents on file. Please upload your certificates below.</p>
+            )
+          })()}
+
+          {/* Upload new */}
+          <div className="space-y-4">
+            <p className="font-body text-xs font-semibold uppercase tracking-widest text-muted">Upload / Replace Documents</p>
+
+            {/* Kennel cert */}
+            <div>
+              <label className="label">Kennel Registration Certificate</label>
+              {newKennelCert ? (
+                <div className="flex items-center gap-3 border border-sage/40 bg-sage/5 px-4 py-3">
+                  <FileCheck className="w-4 h-4 text-sage-dark flex-shrink-0" />
+                  <span className="font-body text-sm text-espresso flex-1 truncate">{newKennelCert.name}</span>
+                  <button type="button" onClick={() => setNewKennelCert(null)} className="text-muted hover:text-red-500"><X className="w-4 h-4" /></button>
+                </div>
+              ) : (
+                <label className="flex items-center gap-3 border-2 border-dashed border-divider hover:border-sienna/40 px-4 py-3 cursor-pointer transition-colors">
+                  <Upload className="w-4 h-4 text-muted flex-shrink-0" />
+                  <span className="font-body text-sm text-muted">Click to upload certificate</span>
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="sr-only" onChange={e => setNewKennelCert(e.target.files[0] || null)} />
+                </label>
+              )}
+            </div>
+
+            {/* Sire certs */}
+            <div>
+              <label className="label">Sire (Father) Certificates</label>
+              <label className="flex items-center gap-3 border-2 border-dashed border-divider hover:border-sienna/40 px-4 py-3 cursor-pointer transition-colors">
+                <Upload className="w-4 h-4 text-muted flex-shrink-0" />
+                <span className="font-body text-sm text-muted">Click to add sire certificate(s)</span>
+                <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple className="sr-only"
+                  onChange={e => setNewSireCerts(prev => [...prev, ...Array.from(e.target.files)])} />
+              </label>
+              {newSireCerts.map((f, i) => (
+                <div key={i} className="flex items-center gap-3 border border-sage/40 bg-sage/5 px-3 py-2 mt-1.5">
+                  <FileCheck className="w-4 h-4 text-sage-dark flex-shrink-0" />
+                  <span className="font-body text-xs text-espresso flex-1 truncate">{f.name}</span>
+                  <button type="button" onClick={() => setNewSireCerts(p => p.filter((_, idx) => idx !== i))} className="text-muted hover:text-red-500"><X className="w-3.5 h-3.5" /></button>
+                </div>
+              ))}
+            </div>
+
+            {/* Dam certs */}
+            <div>
+              <label className="label">Dam (Mother) Certificates</label>
+              <label className="flex items-center gap-3 border-2 border-dashed border-divider hover:border-sienna/40 px-4 py-3 cursor-pointer transition-colors">
+                <Upload className="w-4 h-4 text-muted flex-shrink-0" />
+                <span className="font-body text-sm text-muted">Click to add dam certificate(s)</span>
+                <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple className="sr-only"
+                  onChange={e => setNewDamCerts(prev => [...prev, ...Array.from(e.target.files)])} />
+              </label>
+              {newDamCerts.map((f, i) => (
+                <div key={i} className="flex items-center gap-3 border border-sage/40 bg-sage/5 px-3 py-2 mt-1.5">
+                  <FileCheck className="w-4 h-4 text-sage-dark flex-shrink-0" />
+                  <span className="font-body text-xs text-espresso flex-1 truncate">{f.name}</span>
+                  <button type="button" onClick={() => setNewDamCerts(p => p.filter((_, idx) => idx !== i))} className="text-muted hover:text-red-500"><X className="w-3.5 h-3.5" /></button>
+                </div>
+              ))}
+            </div>
+
+            {docsError && <p className="font-body text-xs text-red-700 bg-red-50 border border-red-200 px-3 py-2">{docsError}</p>}
+
+            {(newKennelCert || newSireCerts.length > 0 || newDamCerts.length > 0) && (
+              <button
+                type="button"
+                disabled={docsUploading}
+                onClick={async () => {
+                  setDocsUploading(true)
+                  setDocsError('')
+                  try {
+                    const existing = sellerUser?.documents || {}
+                    const [kennelUrl, ...sireUrls] = await Promise.all([
+                      newKennelCert ? uploadToCloudinary(newKennelCert) : Promise.resolve(existing.kennel_cert || null),
+                      ...newSireCerts.map(uploadToCloudinary),
+                    ])
+                    const damUrls = await Promise.all(newDamCerts.map(uploadToCloudinary))
+                    const documents = {
+                      kennel_cert: kennelUrl,
+                      sire_certs: [...(existing.sire_certs || []), ...sireUrls.filter(Boolean)],
+                      dam_certs: [...(existing.dam_certs || []), ...damUrls.filter(Boolean)],
+                    }
+                    await updateSellerDocuments(documents)
+                    setNewKennelCert(null)
+                    setNewSireCerts([])
+                    setNewDamCerts([])
+                    setDocsSaved(true)
+                    setTimeout(() => setDocsSaved(false), 3000)
+                  } catch {
+                    setDocsError('Upload failed. Please try again.')
+                  } finally {
+                    setDocsUploading(false)
+                  }
+                }}
+                className={`flex items-center gap-2 px-6 py-3 font-body text-xs font-semibold tracking-widest uppercase transition-all ${
+                  docsSaved ? 'bg-sage text-white' : docsUploading ? 'bg-muted text-cream cursor-not-allowed' : 'btn-primary'
+                }`}
+              >
+                {docsSaved ? <><Check className="w-4 h-4" /> Documents Saved!</> : docsUploading ? 'Uploading…' : <><Upload className="w-4 h-4" /> Save Documents</>}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Referral */}

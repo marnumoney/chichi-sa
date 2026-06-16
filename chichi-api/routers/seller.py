@@ -43,6 +43,20 @@ def update_profile(
     return dict(row)
 
 
+@router.put('/documents')
+def update_documents(
+    body: dict,
+    seller: dict = Depends(get_current_seller),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    db.execute(
+        'UPDATE sellers SET documents = ? WHERE id = ?',
+        (json.dumps(body), seller['id'])
+    )
+    db.commit()
+    return body
+
+
 @router.get('/puppies')
 def list_seller_puppies(
     seller: dict = Depends(get_current_seller),
