@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import { Logo } from '../../components/Logo'
-import { ShoppingBag, User, Phone, Mail, LogOut, Check, Clock } from 'lucide-react'
+import { ShoppingBag, User, LogOut, Check } from 'lucide-react'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -12,7 +12,7 @@ function authHeaders() {
 }
 
 export default function BuyerDashboard() {
-  const { buyerUser, logoutBuyer, kennels } = useApp()
+  const { buyerUser, logoutBuyer } = useApp()
   const navigate = useNavigate()
   const [purchases, setPurchases] = useState([])
   const [tab, setTab] = useState('purchases')
@@ -108,7 +108,6 @@ export default function BuyerDashboard() {
             ) : (
               <div className="space-y-4">
                 {purchases.map(p => {
-                  const kennel = kennels.find(k => k.id === p.kennel_id)
                   return (
                     <div key={p.id} className="bg-white border border-divider p-5">
                       <div className="flex items-start justify-between mb-4">
@@ -117,22 +116,6 @@ export default function BuyerDashboard() {
                           <p className="font-body text-sm text-muted">{p.kennel_name} · {p.date}</p>
                         </div>
                         <span className="font-display text-xl font-semibold text-espresso">R{(p.amount || 0).toLocaleString()}</span>
-                      </div>
-
-                      {/* Breeder contact — revealed after purchase */}
-                      <div className="bg-cream border border-divider p-4">
-                        <p className="font-body text-xs font-semibold uppercase tracking-widest text-muted mb-3">Breeder Contact</p>
-                        <p className="font-body font-semibold text-sm text-espresso mb-2">{p.kennel_name}</p>
-                        {kennel?.phone && (
-                          <a href={`tel:${kennel.phone}`} className="flex items-center gap-2 font-body text-sm text-sienna hover:underline mb-1">
-                            <Phone className="w-3.5 h-3.5" /> {kennel.phone}
-                          </a>
-                        )}
-                        {kennel?.contact && (
-                          <a href={`mailto:${kennel.contact}`} className="flex items-center gap-2 font-body text-sm text-sienna hover:underline">
-                            <Mail className="w-3.5 h-3.5" /> {kennel.contact}
-                          </a>
-                        )}
                       </div>
 
                       <div className="flex items-center gap-2 mt-3">
