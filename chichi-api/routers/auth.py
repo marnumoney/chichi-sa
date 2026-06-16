@@ -54,9 +54,12 @@ def seller_signup(body: SignupRequest, db: sqlite3.Connection = Depends(get_db))
     seller_id = f's{uuid.uuid4().hex[:8]}'
     today = date.today().isoformat()
     db.execute("""
-        INSERT INTO sellers (id, email, password_hash, name, kennel_id, status, joined_date)
-        VALUES (?, ?, ?, ?, NULL, 'pending_verification', ?)
-    """, (seller_id, body.email, hash_password(body.password), body.name, today))
+        INSERT INTO sellers (id, email, password_hash, name, kennel_id, status, joined_date,
+                             kennel_name, registry, phone, province)
+        VALUES (?, ?, ?, ?, NULL, 'pending_verification', ?, ?, ?, ?, ?)
+    """, (seller_id, body.email, hash_password(body.password), body.name, today,
+          body.kennel_name or '', body.registry or 'KUSA',
+          body.phone or '', body.province or ''))
     db.commit()
     row = db.execute('SELECT * FROM sellers WHERE id = ?', (seller_id,)).fetchone()
     seller = dict(row)

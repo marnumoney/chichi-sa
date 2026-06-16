@@ -180,6 +180,19 @@ def create_tables(conn):
         except Exception:
             conn.rollback()  # PostgreSQL requires rollback before any further statements
 
+    seller_cols = [
+        ('kennel_name', "TEXT DEFAULT ''"),
+        ('registry', "TEXT DEFAULT 'KUSA'"),
+        ('phone', "TEXT DEFAULT ''"),
+        ('province', "TEXT DEFAULT ''"),
+    ]
+    for col, defn in seller_cols:
+        try:
+            conn.execute(f'ALTER TABLE sellers ADD COLUMN {col} {defn}')
+            conn.commit()
+        except Exception:
+            conn.rollback()
+
 
 # ── Row parsers ───────────────────────────────────────────────────────────────
 

@@ -182,15 +182,17 @@ def admin_approve_seller(
     seller = dict(seller)
     kennel_id = f'k{uuid.uuid4().hex[:8]}'
     color = random.choice(_PALETTE)
+    kennel_name = seller.get('kennel_name') or f"{seller['name']}'s Kennel"
+    registry = seller.get('registry') or 'KUSA'
     db.execute("""
         INSERT INTO kennels
         (id, name, slug, registry, initials, color, membership_status, commission, status)
         VALUES (?,?,?,?,?,?,'pending_payment',8.0,'pending')
     """, (
         kennel_id,
-        f"{seller['name']}'s Kennel",
+        kennel_name,
         f"kennel-{kennel_id}",
-        'KUSA',
+        registry,
         '??',
         color,
     ))
