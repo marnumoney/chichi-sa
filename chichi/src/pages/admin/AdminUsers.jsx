@@ -1,7 +1,44 @@
 import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
-import { Pencil, Trash2, Plus, Check, X, FileText, ExternalLink } from 'lucide-react'
+import { Pencil, Trash2, Plus, Check, X, FileText, ExternalLink, Eye } from 'lucide-react'
 import Modal from '../../components/Modal'
+
+function BuyerModal({ buyer, transactions, open, onClose }) {
+  const purchases = transactions.filter(t => t.buyerId === buyer?.id)
+  return (
+    <Modal open={open} onClose={onClose} title={`Buyer — ${buyer?.name}`} maxWidth="max-w-lg">
+      <div className="space-y-5">
+        <div className="grid grid-cols-2 gap-3 font-body text-sm">
+          <div><p className="text-xs text-muted uppercase tracking-widest mb-1">Full Name</p><p className="font-semibold text-espresso">{buyer?.name}</p></div>
+          <div><p className="text-xs text-muted uppercase tracking-widest mb-1">Email</p><p className="text-espresso break-all">{buyer?.email}</p></div>
+          <div><p className="text-xs text-muted uppercase tracking-widest mb-1">Phone</p><p className="text-espresso">{buyer?.phone || '—'}</p></div>
+          <div><p className="text-xs text-muted uppercase tracking-widest mb-1">Joined</p><p className="text-espresso">{buyer?.joinedDate}</p></div>
+          <div><p className="text-xs text-muted uppercase tracking-widest mb-1">Purchases</p><p className="font-semibold text-espresso">{purchases.length}</p></div>
+          <div><p className="text-xs text-muted uppercase tracking-widest mb-1">Total Spent</p><p className="font-semibold text-espresso">R{purchases.reduce((a, t) => a + (t.amount || 0), 0).toLocaleString()}</p></div>
+        </div>
+
+        {purchases.length > 0 && (
+          <div>
+            <p className="font-body text-xs font-semibold uppercase tracking-widest text-muted mb-3">Purchase History</p>
+            <div className="space-y-2">
+              {purchases.map(t => (
+                <div key={t.id} className="flex items-center justify-between bg-cream border border-divider px-4 py-3 font-body text-sm">
+                  <div>
+                    <p className="font-semibold text-espresso">{t.puppyName}</p>
+                    <p className="text-xs text-muted">{t.kennelName} · {t.date}</p>
+                  </div>
+                  <span className="font-semibold text-espresso">R{(t.amount || 0).toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <button onClick={onClose} className="w-full btn-secondary text-xs tracking-widest uppercase py-3">Close</button>
+      </div>
+    </Modal>
+  )
+}
 
 function DocsModal({ seller, open, onClose }) {
   const docs = seller?.documents || {}
@@ -98,6 +135,7 @@ export default function AdminUsers() {
   const [editTarget, setEditTarget] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [docsTarget, setDocsTarget] = useState(null)
+  const [buyerTarget, setBuyerTarget] = useState(null)
 
   const statusBadge = (status) => {
     if (status === 'approved') return <span className="badge-available px-2 py-0.5">Approved</span>
@@ -199,7 +237,7 @@ export default function AdminUsers() {
               <table className="w-full font-body text-sm">
                 <thead>
                   <tr className="bg-cream border-b border-divider">
-                    {['Name', 'Email', 'Phone', 'Joined', 'Purchases', 'Total Spent'].map(h => (
+                    {['Name', 'Email', 'Phone', 'Joined', 'Purchases', 'Total Spent', ''].map(h => (
                       <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-muted uppercase tracking-widest">{h}</th>
                     ))}
                   </tr>
@@ -216,6 +254,11 @@ export default function AdminUsers() {
                         <td className="px-5 py-3 text-muted text-xs">{b.joinedDate}</td>
                         <td className="px-5 py-3 text-xs text-espresso">{b.purchaseCount ?? buyerTxns.length}</td>
                         <td className="px-5 py-3 font-semibold text-espresso">R{totalSpent.toLocaleString()}</td>
+                        <td className="px-5 py-3">
+                          <button onClick={() => setBuyerTarget(b)} className="text-muted hover:text-sienna transition-colors p-1" title="View details">
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
                       </tr>
                     )
                   })}
@@ -227,6 +270,7 @@ export default function AdminUsers() {
       )}
 
       <DocsModal seller={docsTarget} open={!!docsTarget} onClose={() => setDocsTarget(null)} />
+      <BuyerModal buyer={buyerTarget} transactions={transactions} open={!!buyerTarget} onClose={() => setBuyerTarget(null)} />
 
       {/* Add seller modal */}
       <SellerModal
