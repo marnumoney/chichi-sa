@@ -143,9 +143,9 @@ export default function AdminWallet() {
     return 'partial'
   }
 
-  const handleSaveBank = (e) => {
+  const handleSaveBank = async (e) => {
     e.preventDefault()
-    updateAdminSettings(bankForm)
+    await updateAdminSettings(bankForm)
     setBankSaved(true)
     setTimeout(() => { setBankSaved(false); setBankingOpen(false) }, 2000)
   }

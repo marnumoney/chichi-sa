@@ -113,6 +113,7 @@ export function AppProvider({ children }) {
     if (!token) return
     if (role === 'admin') {
       setAdminUser({ email: localStorage.getItem('adminEmail') || '', name: 'Admin' })
+      loadAdminData()
     }
     if (role === 'seller') {
       apiFetch('/seller/me').then(async res => {
