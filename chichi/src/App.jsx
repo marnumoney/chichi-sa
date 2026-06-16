@@ -25,6 +25,9 @@ import SellerDashboard from './pages/seller/SellerDashboard'
 import SellerPuppies from './pages/seller/SellerPuppies'
 import SellerProfile from './pages/seller/SellerProfile'
 import PayMembership from './pages/PayMembership'
+import BuyerSignup from './pages/buyer/BuyerSignup'
+import BuyerLogin from './pages/buyer/BuyerLogin'
+import BuyerDashboard from './pages/buyer/BuyerDashboard'
 
 function ProtectedAdmin({ children }) {
   const { adminUser } = useApp()
@@ -34,6 +37,11 @@ function ProtectedAdmin({ children }) {
 function ProtectedSeller({ children }) {
   const { sellerUser } = useApp()
   return sellerUser ? children : <Navigate to="/seller/login" replace />
+}
+
+function ProtectedBuyer({ children }) {
+  const { buyerUser } = useApp()
+  return buyerUser ? children : <Navigate to="/buyer/login" replace />
 }
 
 function PublicLayout({ children }) {
@@ -65,6 +73,10 @@ export default function App() {
         <Route path="legal" element={<AdminLegal />} />
         <Route path="kennels" element={<AdminKennels />} />
       </Route>
+
+      <Route path="/buyer/signup" element={<BuyerSignup />} />
+      <Route path="/buyer/login" element={<BuyerLogin />} />
+      <Route path="/buyer" element={<ProtectedBuyer><BuyerDashboard /></ProtectedBuyer>} />
 
       <Route path="/pay/membership" element={<PayMembership />} />
       <Route path="/seller/signup" element={<SellerSignup />} />

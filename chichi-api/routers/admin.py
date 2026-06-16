@@ -452,3 +452,21 @@ def admin_release_transaction(
     if not row:
         raise HTTPException(status_code=404, detail='Transaction not found')
     return parse_transaction(row)
+
+
+@router.get('/buyers')
+def admin_list_buyers(
+    _: dict = Depends(get_current_admin),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    rows = db.execute('SELECT * FROM buyers ORDER BY joined_date DESC').fetchall()
+    buyers = []
+    for row in rows:
+        b = dict(row)
+        b.pop('password_hash', None)
+        purchase_count = db.execute(
+            'SELECT COUNT(*) as cnt FROM transactions WHERE buyer_id = ?', (b['id'],)
+        ).fetchone()
+        b['purchase_count'] = dict(purchase_count)['cnt'] if purchase_count else 0
+        buyers.append(b)
+    return buyers

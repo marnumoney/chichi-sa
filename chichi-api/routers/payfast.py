@@ -44,6 +44,7 @@ async def puppy_checkout(body: dict, db=Depends(get_db)):
     puppy_id = body.get('puppy_id', '')
     buyer_name = body.get('buyer_name', '').strip()
     buyer_email = body.get('buyer_email', '').strip()
+    buyer_id = body.get('buyer_id', '')
 
     puppy = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
     if not puppy:
@@ -66,6 +67,7 @@ async def puppy_checkout(body: dict, db=Depends(get_db)):
         'custom_str1': puppy_id,
         'custom_str2': buyer_name,
         'custom_str3': buyer_email,
+        'custom_str4': buyer_id,
     })
     return {'payfast_url': PAYFAST_URL, **fields}
 
@@ -110,6 +112,7 @@ async def payfast_notify(request: Request, db=Depends(get_db)):
     puppy_id = form.get('custom_str1', '')
     buyer_name = form.get('custom_str2', '')
     buyer_email = form.get('custom_str3', '')
+    buyer_id = form.get('custom_str4', '')
 
     puppy = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
     if not puppy or dict(puppy)['sold']:
@@ -125,13 +128,13 @@ async def payfast_notify(request: Request, db=Depends(get_db)):
     db.execute("""
         INSERT INTO transactions
         (id, puppy_id, puppy_name, kennel_id, kennel_name, buyer_name, buyer_email,
-         amount, commission, seller_payout, seller_paid, commission_paid, date)
-        VALUES (?,?,?,?,?,?,?,?,?,?,0,0,?)
+         amount, commission, seller_payout, seller_paid, commission_paid, date, buyer_id)
+        VALUES (?,?,?,?,?,?,?,?,?,?,0,0,?,?)
     """, (
         txn_id, puppy['id'], puppy['name'],
         puppy['kennel_id'], dict(kennel)['name'] if kennel else '',
         buyer_name, buyer_email,
-        puppy['price'], commission, seller_payout, date.today().isoformat(),
+        puppy['price'], commission, seller_payout, date.today().isoformat(), buyer_id,
     ))
     db.execute('UPDATE puppies SET sold = 1 WHERE id = ?', (puppy_id,))
     db.commit()

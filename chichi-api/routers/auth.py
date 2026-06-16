@@ -1,13 +1,23 @@
 import json
 import os
 import sqlite3
+import uuid
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 from auth import create_token, hash_password, verify_password
 from database import get_db, parse_seller
 from models import LoginRequest, SignupRequest
+
+
+class BuyerSignupRequest(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
+    phone: Optional[str] = ''
 
 router = APIRouter()
 
@@ -65,3 +75,35 @@ def seller_signup(body: SignupRequest, db: sqlite3.Connection = Depends(get_db))
     db.commit()
     row = db.execute('SELECT * FROM sellers WHERE id = ?', (seller_id,)).fetchone()
     return parse_seller(row)
+
+
+@router.post('/buyer/signup', status_code=201)
+def buyer_signup(body: BuyerSignupRequest, db: sqlite3.Connection = Depends(get_db)):
+    existing = db.execute('SELECT id FROM buyers WHERE email = ?', (body.email,)).fetchone()
+    if existing:
+        raise HTTPException(status_code=409, detail='Email already registered')
+    buyer_id = f'b{uuid.uuid4().hex[:8]}'
+    db.execute("""
+        INSERT INTO buyers (id, email, password_hash, name, phone, joined_date)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (buyer_id, body.email, hash_password(body.password), body.name,
+          body.phone or '', date.today().isoformat()))
+    db.commit()
+    row = db.execute('SELECT * FROM buyers WHERE id = ?', (buyer_id,)).fetchone()
+    buyer = dict(row)
+    buyer.pop('password_hash', None)
+    token = create_token({'buyer_id': buyer_id})
+    return {'token': token, 'buyer': buyer}
+
+
+@router.post('/buyer/login')
+def buyer_login(body: LoginRequest, db: sqlite3.Connection = Depends(get_db)):
+    row = db.execute('SELECT * FROM buyers WHERE email = ?', (body.email,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=401, detail='Invalid credentials')
+    buyer = dict(row)
+    if not verify_password(body.password, buyer['password_hash']):
+        raise HTTPException(status_code=401, detail='Invalid credentials')
+    buyer.pop('password_hash', None)
+    token = create_token({'buyer_id': buyer['id']})
+    return {'token': token, 'buyer': buyer}

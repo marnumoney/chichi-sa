@@ -68,3 +68,19 @@ def get_current_seller(
     seller = dict(row)
     seller.pop('password_hash', None)
     return seller
+
+
+def get_current_buyer(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer),
+    db: sqlite3.Connection = Depends(get_db),
+) -> dict:
+    payload = decode_token(credentials.credentials)
+    buyer_id = payload.get('buyer_id')
+    if not buyer_id:
+        raise HTTPException(status_code=403, detail='Buyer access required')
+    row = db.execute('SELECT * FROM buyers WHERE id = ?', (buyer_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail='Buyer not found')
+    buyer = dict(row)
+    buyer.pop('password_hash', None)
+    return buyer

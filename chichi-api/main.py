@@ -31,6 +31,7 @@ app.add_middleware(
 from routers import auth as auth_router
 from routers import public as public_router
 from routers import seller as seller_router
+from routers import buyer as buyer_router
 from routers import admin as admin_router
 from routers import transactions as transactions_router
 from routers import payfast as payfast_router
@@ -38,6 +39,7 @@ from routers import payfast as payfast_router
 app.include_router(auth_router.router, prefix='/auth', tags=['auth'])
 app.include_router(public_router.router, tags=['public'])
 app.include_router(seller_router.router, prefix='/seller', tags=['seller'])
+app.include_router(buyer_router.router, prefix='/buyer', tags=['buyer'])
 app.include_router(admin_router.router, prefix='/admin', tags=['admin'])
 app.include_router(transactions_router.router, tags=['transactions'])
 app.include_router(payfast_router.router, tags=['payfast'])

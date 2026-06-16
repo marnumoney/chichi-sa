@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, MapPin, Phone, Mail, Check, ShieldCheck, Lock } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MapPin, Phone, Mail, Check, ShieldCheck, Lock, UserCircle } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import Modal from '../components/Modal'
 
@@ -19,13 +19,13 @@ function getAge(dob) {
 export default function PuppyDetailPage() {
   const { id } = useParams()
   const [searchParams] = useSearchParams()
-  const { puppies, kennels, adminSettings } = useApp()
+  const { puppies, kennels, adminSettings, buyerUser } = useApp()
   const navigate = useNavigate()
   const [imgIdx, setImgIdx] = useState(0)
   const [payOpen, setPayOpen] = useState(false)
   const [successOpen, setSuccessOpen] = useState(searchParams.get('purchased') === 'true')
   const [loading, setLoading] = useState(false)
-  const [buyer, setBuyer] = useState({ name: '', email: '' })
+  const [buyer, setBuyer] = useState({ name: buyerUser?.name || '', email: buyerUser?.email || '' })
   const [errors, setErrors] = useState({})
 
   const puppy = puppies.find(p => p.id === id)
@@ -65,7 +65,7 @@ export default function PuppyDetailPage() {
       const res = await fetch(`${API}/payfast/puppy-checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ puppy_id: puppy.id, buyer_name: buyer.name, buyer_email: buyer.email }),
+        body: JSON.stringify({ puppy_id: puppy.id, buyer_name: buyer.name, buyer_email: buyer.email, buyer_id: buyerUser?.id || '' }),
       })
       const { payfast_url, ...fields } = await res.json()
       const form = document.createElement('form')
@@ -184,7 +184,7 @@ export default function PuppyDetailPage() {
 
           {isSold ? (
             <div className="w-full py-4 bg-divider text-center font-body text-sm text-muted tracking-widest uppercase">This puppy has been sold</div>
-          ) : (
+          ) : buyerUser ? (
             <>
               <button
                 onClick={() => setPayOpen(true)}
@@ -197,6 +197,22 @@ export default function PuppyDetailPage() {
                 <span className="font-body text-xs text-muted">🔒 Secure SA payments via PayFast</span>
               </div>
             </>
+          ) : (
+            <div className="border border-divider p-5 text-center space-y-3">
+              <UserCircle className="w-8 h-8 text-muted mx-auto" />
+              <p className="font-body text-sm text-espresso font-semibold">Create an account to purchase</p>
+              <p className="font-body text-xs text-muted">A free buyer account lets you purchase puppies and track your orders.</p>
+              <div className="flex gap-3 justify-center">
+                <Link to="/buyer/signup" state={{ from: `/puppies/${id}` }}
+                  className="btn-primary text-xs tracking-widest uppercase py-2.5 px-5">
+                  Create Account
+                </Link>
+                <Link to="/buyer/login" state={{ from: `/puppies/${id}` }}
+                  className="btn-secondary text-xs tracking-widest uppercase py-2.5 px-5">
+                  Sign In
+                </Link>
+              </div>
+            </div>
           )}
         </div>
       </div>

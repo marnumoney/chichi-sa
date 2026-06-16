@@ -72,12 +72,14 @@ export function AppProvider({ children }) {
   const [kennels, setKennels] = useState([])
   const [puppies, setPuppies] = useState([])
   const [sellers, setSellers] = useState([])
+  const [buyers, setBuyers] = useState([])
   const [transactions, setTransactions] = useState([])
   const [testimonials, setTestimonials] = useState([])
   const [adminSettings, setAdminSettings] = useState({})
   const [legalContent, setLegalContent] = useState('')
   const [adminUser, setAdminUser] = useState(null)
   const [sellerUser, setSellerUser] = useState(null)
+  const [buyerUser, setBuyerUser] = useState(null)
   const [loadingPublic, setLoadingPublic] = useState(true)
 
   // ── Public data loaders ───────────────────────────────────────────────────
@@ -126,17 +128,29 @@ export function AppProvider({ children }) {
         }
       })
     }
+    if (role === 'buyer') {
+      apiFetch('/buyer/me').then(async res => {
+        if (res.ok) {
+          const data = normalize(await res.json())
+          setBuyerUser(data.buyer)
+        } else {
+          localStorage.removeItem('token')
+          localStorage.removeItem('role')
+        }
+      })
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Admin data loaders ────────────────────────────────────────────────────
   const loadAdminData = useCallback(async () => {
-    const [kRes, sRes, tRes, txRes, setRes, legRes] = await Promise.all([
+    const [kRes, sRes, tRes, txRes, setRes, legRes, bRes] = await Promise.all([
       apiFetch('/admin/kennels'),
       apiFetch('/admin/sellers'),
       apiFetch('/admin/testimonials'),
       apiFetch('/admin/transactions'),
       apiFetch('/admin/settings'),
       apiFetch('/admin/legal'),
+      apiFetch('/admin/buyers'),
     ])
     if (kRes.ok) setKennels(normalize(await kRes.json()))
     if (sRes.ok) setSellers(normalize(await sRes.json()))
@@ -144,6 +158,7 @@ export function AppProvider({ children }) {
     if (txRes.ok) setTransactions(normalize(await txRes.json()))
     if (setRes.ok) setAdminSettings(normalize(await setRes.json()))
     if (legRes.ok) { const d = normalize(await legRes.json()); setLegalContent(d.content) }
+    if (bRes.ok) setBuyers(normalize(await bRes.json()))
   }, [])
 
   // ── Auth ──────────────────────────────────────────────────────────────────
@@ -193,6 +208,36 @@ export function AppProvider({ children }) {
     localStorage.removeItem('token')
     localStorage.removeItem('role')
     setSellerUser(null)
+  }
+
+  const signupBuyer = async (data) => {
+    const res = await apiFetch('/auth/buyer/signup', { method: 'POST', body: data })
+    const json = await res.json()
+    if (!res.ok) throw new Error(json.detail || 'Signup failed')
+    const { token, buyer } = normalize(json)
+    localStorage.setItem('token', token)
+    localStorage.setItem('role', 'buyer')
+    setBuyerUser(buyer)
+    return buyer
+  }
+
+  const loginBuyer = async (email, password) => {
+    const res = await apiFetch('/auth/buyer/login', { method: 'POST', body: { email, password } })
+    if (!res.ok) {
+      const err = await res.json()
+      return { success: false, error: err.detail || 'Invalid credentials.' }
+    }
+    const { token, buyer } = normalize(await res.json())
+    localStorage.setItem('token', token)
+    localStorage.setItem('role', 'buyer')
+    setBuyerUser(buyer)
+    return { success: true }
+  }
+
+  const logoutBuyer = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('role')
+    setBuyerUser(null)
   }
 
   const signupSeller = async (formData) => {
@@ -376,7 +421,8 @@ export function AppProvider({ children }) {
 
   return (
     <AppContext.Provider value={{
-      kennels, puppies, sellers, adminSettings, legalContent, transactions, testimonials, loadingPublic,
+      kennels, puppies, sellers, buyers, adminSettings, legalContent, transactions, testimonials, loadingPublic,
+      buyerUser, signupBuyer, loginBuyer, logoutBuyer,
       addTestimonial, removeTestimonial,
       adminUser, sellerUser,
       loginAdmin, loginSeller, logoutAdmin, logoutSeller,

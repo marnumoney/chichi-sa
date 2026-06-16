@@ -151,6 +151,14 @@ def create_tables(conn):
             seller_paid_date TEXT,
             commission_paid_date TEXT
         )""",
+        """CREATE TABLE IF NOT EXISTS buyers (
+            id TEXT PRIMARY KEY,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            name TEXT NOT NULL,
+            phone TEXT DEFAULT '',
+            joined_date TEXT
+        )""",
         """CREATE TABLE IF NOT EXISTS testimonials (
             id TEXT PRIMARY KEY,
             kennel_id TEXT,
@@ -197,6 +205,8 @@ def create_tables(conn):
         ('account_type', "TEXT DEFAULT ''"),
     ]:
         _add_column(conn, is_pg, 'kennels', col, defn)
+
+    _add_column(conn, is_pg, 'transactions', 'buyer_id', "TEXT DEFAULT ''")
 
     for col, defn in [
         ('kennel_name', "TEXT DEFAULT ''"),

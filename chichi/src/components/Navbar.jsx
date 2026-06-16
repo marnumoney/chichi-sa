@@ -7,7 +7,7 @@ import { useApp } from '../context/AppContext'
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [portalOpen, setPortalOpen] = useState(false)
-  const { adminUser, sellerUser, logoutAdmin, logoutSeller } = useApp()
+  const { adminUser, sellerUser, buyerUser, logoutAdmin, logoutSeller, logoutBuyer } = useApp()
   const dropdownRef = useRef(null)
   const navigate = useNavigate()
 
@@ -25,11 +25,12 @@ export default function Navbar() {
   const handleLogout = () => {
     if (adminUser) { logoutAdmin(); navigate('/') }
     if (sellerUser) { logoutSeller(); navigate('/') }
+    if (buyerUser) { logoutBuyer(); navigate('/') }
     setPortalOpen(false)
   }
 
-  const activeUser = adminUser || sellerUser
-  const activeLabel = adminUser ? 'Admin' : sellerUser ? sellerUser.kennel?.name || 'Seller' : null
+  const activeUser = adminUser || sellerUser || buyerUser
+  const activeLabel = adminUser ? 'Admin' : sellerUser ? sellerUser.kennel?.name || 'Seller' : buyerUser ? buyerUser.name?.split(' ')[0] : null
 
   return (
     <header className="bg-cream/95 backdrop-blur border-b border-divider sticky top-0 z-50">
@@ -106,6 +107,31 @@ export default function Navbar() {
                     </Link>
                   )}
 
+                  {/* Buyer section */}
+                  <div className="px-3 py-2 border-t border-b border-divider">
+                    <p className="font-body text-[9px] text-muted uppercase tracking-widest font-semibold">Buyer</p>
+                  </div>
+                  {buyerUser ? (
+                    <Link to="/buyer" onClick={() => setPortalOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 font-body text-sm text-espresso hover:bg-cream transition-colors">
+                      <User className="w-4 h-4 text-sienna flex-shrink-0" />
+                      My Purchases
+                    </Link>
+                  ) : (
+                    <>
+                      <Link to="/buyer/login" onClick={() => setPortalOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 font-body text-sm text-espresso hover:bg-cream transition-colors">
+                        <User className="w-4 h-4 text-sienna flex-shrink-0" />
+                        Buyer Login
+                      </Link>
+                      <Link to="/buyer/signup" onClick={() => setPortalOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 font-body text-sm text-espresso hover:bg-cream transition-colors">
+                        <PenLine className="w-4 h-4 text-sage flex-shrink-0" />
+                        Create Buyer Account
+                      </Link>
+                    </>
+                  )}
+
                   {/* Seller section */}
                   <div className="px-3 py-2 border-t border-b border-divider">
                     <p className="font-body text-[9px] text-muted uppercase tracking-widest font-semibold">Breeder</p>
@@ -180,6 +206,17 @@ export default function Navbar() {
                 <Link to="/admin" onClick={() => setMobileOpen(false)} className="block font-body text-sm text-espresso py-1">Admin Dashboard</Link>
               ) : (
                 <Link to="/admin/login" onClick={() => setMobileOpen(false)} className="block font-body text-sm text-espresso py-1">Admin Login</Link>
+              )}
+            </div>
+            <div className="pt-2 border-t border-divider space-y-2">
+              <p className="font-body text-[9px] text-muted uppercase tracking-widest font-semibold">Buyer</p>
+              {buyerUser ? (
+                <Link to="/buyer" onClick={() => setMobileOpen(false)} className="block font-body text-sm text-espresso py-1">My Purchases</Link>
+              ) : (
+                <>
+                  <Link to="/buyer/login" onClick={() => setMobileOpen(false)} className="block font-body text-sm text-espresso py-1">Buyer Login</Link>
+                  <Link to="/buyer/signup" onClick={() => setMobileOpen(false)} className="block font-body text-sm text-espresso py-1">Create Buyer Account</Link>
+                </>
               )}
             </div>
             <div className="pt-2 border-t border-divider space-y-2">

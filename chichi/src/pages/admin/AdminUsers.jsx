@@ -92,20 +92,12 @@ function SellerModal({ seller, kennels, open, onClose, onSave, title }) {
 }
 
 export default function AdminUsers() {
-  const { sellers, kennels, transactions, approveSeller, adminAddSeller, adminEditSeller, adminRemoveSeller } = useApp()
+  const { sellers, buyers, kennels, transactions, approveSeller, adminAddSeller, adminEditSeller, adminRemoveSeller } = useApp()
   const [tab, setTab] = useState('Sellers')
   const [addOpen, setAddOpen] = useState(false)
   const [editTarget, setEditTarget] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [docsTarget, setDocsTarget] = useState(null)
-
-  const buyers = Object.values(
-    transactions.reduce((acc, t) => {
-      if (!acc[t.buyerEmail]) acc[t.buyerEmail] = { name: t.buyerName, email: t.buyerEmail, purchases: [] }
-      acc[t.buyerEmail].purchases.push(t)
-      return acc
-    }, {})
-  )
 
   const statusBadge = (status) => {
     if (status === 'approved') return <span className="badge-available px-2 py-0.5">Approved</span>
@@ -201,31 +193,32 @@ export default function AdminUsers() {
       {tab === 'Buyers' && (
         <div className="bg-white border border-divider overflow-hidden">
           {buyers.length === 0 ? (
-            <p className="px-5 py-12 text-center font-body text-sm text-muted">No buyers yet.</p>
+            <p className="px-5 py-12 text-center font-body text-sm text-muted">No registered buyers yet.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full font-body text-sm">
                 <thead>
                   <tr className="bg-cream border-b border-divider">
-                    {['Name', 'Email', 'Purchases', 'Total Spent', 'Last Purchase'].map(h => (
+                    {['Name', 'Email', 'Phone', 'Joined', 'Purchases', 'Total Spent'].map(h => (
                       <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-muted uppercase tracking-widest">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-divider">
-                  {buyers.map(b => (
-                    <tr key={b.email} className="hover:bg-cream/30 transition-colors">
-                      <td className="px-5 py-3 font-semibold text-espresso">{b.name}</td>
-                      <td className="px-5 py-3 text-muted text-xs">{b.email}</td>
-                      <td className="px-5 py-3 text-xs">
-                        {b.purchases.map(p => (
-                          <div key={p.id} className="text-espresso">{p.puppyName} <span className="text-muted">({p.kennelName})</span></div>
-                        ))}
-                      </td>
-                      <td className="px-5 py-3 font-semibold text-espresso">R{b.purchases.reduce((a, p) => a + p.amount, 0).toLocaleString()}</td>
-                      <td className="px-5 py-3 text-muted text-xs">{b.purchases[b.purchases.length - 1]?.date}</td>
-                    </tr>
-                  ))}
+                  {buyers.map(b => {
+                    const buyerTxns = transactions.filter(t => t.buyerId === b.id)
+                    const totalSpent = buyerTxns.reduce((a, t) => a + (t.amount || 0), 0)
+                    return (
+                      <tr key={b.id} className="hover:bg-cream/30 transition-colors">
+                        <td className="px-5 py-3 font-semibold text-espresso">{b.name}</td>
+                        <td className="px-5 py-3 text-muted text-xs">{b.email}</td>
+                        <td className="px-5 py-3 text-muted text-xs">{b.phone || '—'}</td>
+                        <td className="px-5 py-3 text-muted text-xs">{b.joinedDate}</td>
+                        <td className="px-5 py-3 text-xs text-espresso">{b.purchaseCount ?? buyerTxns.length}</td>
+                        <td className="px-5 py-3 font-semibold text-espresso">R{totalSpent.toLocaleString()}</td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
