@@ -193,6 +193,13 @@ def create_tables(conn):
         except Exception:
             conn.rollback()
 
+    # One-time fix: correct kennel kfd8d9a29 which was created with hardcoded defaults
+    conn.execute("""
+        UPDATE kennels SET name = 'Wihan Howe Kennel', registry = 'Canine SA'
+        WHERE id = 'kfd8d9a29' AND (name != 'Wihan Howe Kennel' OR registry != 'Canine SA')
+    """)
+    conn.commit()
+
 
 # ── Row parsers ───────────────────────────────────────────────────────────────
 
