@@ -3,13 +3,15 @@
 const SITE_ID=document.currentScript?.getAttribute('data-site-id')||'unknown';
 const AGENT=document.currentScript?.getAttribute('data-agent')||'http://localhost:3001';
 const SID=typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2);
+// Read role from localStorage — set by chichi auth on login ('admin'|'seller'|'buyer'|null)
+const USER_ROLE=(function(){try{return localStorage.getItem('role')||'public';}catch{return 'public';}})();
 const s={siteId:SITE_ID,sessionId:SID,start:Date.now(),url:location.href,errors:[],lastActivity:Date.now(),scrollDepth:0,rageClicks:{}};
 function send(payload){
-  const body=JSON.stringify({...payload,siteId:SITE_ID,sessionId:SID});
+  const body=JSON.stringify({...payload,siteId:SITE_ID,sessionId:SID,userRole:USER_ROLE});
   if(navigator.sendBeacon)navigator.sendBeacon(AGENT+'/api/agent/ingest',body);
   else fetch(AGENT+'/api/agent/ingest',{method:'POST',headers:{'Content-Type':'application/json'},body,keepalive:true}).catch(()=>{});
 }
-function emit(type,data){send({kind:'event',event:{type,data,ts:Date.now(),url:location.href},session:{siteId:SITE_ID,sessionId:SID,url:s.url,scrollDepth:s.scrollDepth,duration:Date.now()-s.start}});}
+function emit(type,data){send({kind:'event',event:{type,data,ts:Date.now(),url:location.href},session:{siteId:SITE_ID,sessionId:SID,url:s.url,scrollDepth:s.scrollDepth,duration:Date.now()-s.start,userRole:USER_ROLE}});}
 document.addEventListener('click',e=>{
   const t=e.target.closest('button,a,input,[role="button"]')||e.target;
   const k=Math.round(e.clientX/20)+'-'+Math.round(e.clientY/20);

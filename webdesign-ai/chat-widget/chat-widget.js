@@ -3,6 +3,7 @@
 const SITE_ID=document.currentScript?.getAttribute('data-site-id')||'unknown';
 const AGENT=document.currentScript?.getAttribute('data-agent')||'http://localhost:3001';
 const NAME=document.currentScript?.getAttribute('data-name')||'Website Support';
+const USER_ROLE=(function(){try{return localStorage.getItem('role')||'public';}catch{return 'public';}})();
 
 const style=document.createElement('style');
 style.textContent=`
@@ -85,7 +86,7 @@ async function sendMsg(text){
     const r=await fetch(AGENT+'/api/chat',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({siteId:SITE_ID,messages:hist,currentPage:location.href,pageErrors:window._aiErrors||[]}),
+      body:JSON.stringify({siteId:SITE_ID,messages:hist,currentPage:location.href,pageErrors:window._aiErrors||[],userRole:USER_ROLE}),
     });
     const d=await r.json();
     t.remove();addMsg('assistant',d.reply||"I'm on it — fixing that now.");

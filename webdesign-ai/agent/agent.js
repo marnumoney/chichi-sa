@@ -48,6 +48,15 @@ function safeJson(val,maxLen=800){
 
 const ACTIONABLE_KINDS=new Set(['error','rage_click','user_stuck','performance_issue']);
 
+const VALID_ROLES=new Set(['admin','seller','buyer','public']);
+
+const ROLE_CONTEXT={
+  admin:  'The affected user is the SITE ADMIN. They have full access to kennels, sellers, buyers, transactions, settings, and wallet. Admin issues are highest priority — fix immediately.',
+  seller: 'The affected user is a SELLER (kennel owner). They manage their kennel profile, list and delist puppies, and view their sales. Common seller issues: puppy upload failures, profile save errors, image problems.',
+  buyer:  'The affected user is a BUYER. They browse puppies, make purchases via PayFast, and view their purchase history. Common buyer issues: checkout failures, login errors, payment redirects.',
+  public: 'The affected user is an anonymous visitor (not logged in). They are browsing the public marketplace — kennels, puppies, and testimonials.',
+};
+
 const KIND_INSTRUCTIONS={
   error:            'A JavaScript error occurred. Diagnose the root cause in the site files, write a targeted patch, and apply it.',
   rage_click:       'A user rage-clicked an element. Investigate the interaction and resolve the underlying UX issue.',
@@ -86,10 +95,16 @@ async function runAgent(payload){
   const instruction=KIND_INSTRUCTIONS[kind]||'Investigate and resolve this issue.';
   const patterns=(await rdb('patterns.json')).patterns||[];
 
+  // Validate role against allowlist — never trust a raw string from the browser
+  const rawRole=payload.userRole||payload.session?.userRole||'public';
+  const role=VALID_ROLES.has(rawRole)?rawRole:'public';
+  const roleContext=ROLE_CONTEXT[role];
+
   const sessionData={
     url:        sanitize(payload.session?.url,200),
     scrollDepth:Number(payload.session?.scrollDepth)||0,
     duration:   Number(payload.session?.duration)||0,
+    userRole:   role,
   };
   const errorData=payload.error?{
     message:sanitize(payload.error.message,200),
@@ -109,6 +124,7 @@ async function runAgent(payload){
   }:null;
 
   const msg=`SITE: ${siteId} | KIND: ${kind}
+USER ROLE: ${role.toUpperCase()} — ${roleContext}
 SESSION: ${safeJson(sessionData)}
 DATA: ${safeJson(errorData||eventData||perfData||{})}
 FILES_PATH: ${site.filesPath}
@@ -152,7 +168,7 @@ Respond JSON only.`;
     await wdb('patterns.json',{patterns:p});
   }
 
-  await log({type:'agent_action',siteId,kind,fixCount:result.fixes?.length||0,message:`${kind} handled — ${result.fixes?.length||0} fix(es)`});
+  await log({type:'agent_action',siteId,kind,role,fixCount:result.fixes?.length||0,message:`[${role.toUpperCase()}] ${kind} handled — ${result.fixes?.length||0} fix(es)`});
 
   if(result.notify_owner&&result.owner_summary){
     const webhook=process.env.OWNER_WEBHOOK_URL;
@@ -174,10 +190,11 @@ app.post('/api/agent/ingest',async(req,res)=>{
 });
 
 app.post('/api/chat',async(req,res)=>{
-  const{siteId,messages,currentPage,pageErrors}=req.body;
+  const{siteId,messages,currentPage,pageErrors,userRole}=req.body;
   const safeSiteId=sanitize(siteId,64);
   const safeUrl=sanitize(currentPage,200);
-  const chatSystem=`You are a support assistant for the website with id "${safeSiteId}". Acknowledge the visitor's issue and let them know you are investigating. Do not expose internal file paths, server details, or system architecture. Keep replies to 1-2 sentences.`;
+  const safeRole=VALID_ROLES.has(userRole)?userRole:'public';
+  const chatSystem=`You are a support assistant for the Chihuahua South Africa marketplace (site: "${safeSiteId}"). ${ROLE_CONTEXT[safeRole]} Acknowledge the visitor's issue and let them know you are investigating. Do not expose internal file paths, server details, or system architecture. Keep replies to 1-2 sentences.`;
   try{
     const r=await claude.messages.create({
       model:'claude-sonnet-4-6',
