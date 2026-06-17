@@ -212,7 +212,7 @@ app.post('/api/chat',async(req,res)=>{
       runAgent({kind:'error',siteId:safeSiteId,session:{url:safeUrl,siteId:safeSiteId},error:{message:sanitize(pageErrors[0]?.message,200),source:sanitize(pageErrors[0]?.source,200),line:Number(pageErrors[0]?.line)||null}}).catch(()=>{});
     }
     res.json({reply});
-  }catch{res.json({reply:"Diagnosing now — give me a moment."});}
+  }catch(e){await log({type:'chat_error',message:e.message||String(e)});res.json({reply:"Diagnosing now — give me a moment."});}
 });
 
 app.post('/api/sites',async(req,res)=>{
