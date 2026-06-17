@@ -1,8 +1,10 @@
 (function(){
 'use strict';
-const SITE_ID=document.currentScript?.getAttribute('data-site-id')||'unknown';
-const AGENT=document.currentScript?.getAttribute('data-agent')||'http://localhost:3001';
-const NAME=document.currentScript?.getAttribute('data-name')||'Website Support';
+// document.currentScript is null for async scripts — query by data attribute instead
+const _s=document.querySelector('script[data-site-id][src*="chat-widget"]');
+const SITE_ID=_s?.getAttribute('data-site-id')||'unknown';
+const AGENT=_s?.getAttribute('data-agent')||'https://webdesign-ai.onrender.com';
+const NAME=_s?.getAttribute('data-name')||'Website Support';
 const USER_ROLE=(function(){try{return localStorage.getItem('role')||'public';}catch{return 'public';}})();
 
 const style=document.createElement('style');
