@@ -1,5 +1,17 @@
 services:
   - type: web
+    name: webdesign-ai
+    runtime: node
+    rootDir: webdesign-ai
+    buildCommand: npm install
+    startCommand: node agent/agent.js
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OWNER_EMAIL
+        value: marnupersonal53@gmail.com
+
+  - type: web
     name: chichi-api
     runtime: python
     rootDir: chichi-api

@@ -1,0 +1,9 @@
+{
+  "logs": [
+    {
+      "type": "startup",
+      "message": "Agent started",
+      "ts": "2026-06-17T02:21:30.794Z"
+    }
+  ]
+}
