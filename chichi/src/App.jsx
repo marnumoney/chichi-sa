@@ -28,6 +28,8 @@ import PayMembership from './pages/PayMembership'
 import BuyerSignup from './pages/buyer/BuyerSignup'
 import BuyerLogin from './pages/buyer/BuyerLogin'
 import BuyerDashboard from './pages/buyer/BuyerDashboard'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 
 function ProtectedAdmin({ children }) {
   const { adminUser } = useApp()
@@ -77,6 +79,8 @@ export default function App() {
       <Route path="/buyer/signup" element={<BuyerSignup />} />
       <Route path="/buyer/login" element={<BuyerLogin />} />
       <Route path="/buyer" element={<ProtectedBuyer><BuyerDashboard /></ProtectedBuyer>} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       <Route path="/pay/membership" element={<PayMembership />} />
       <Route path="/seller/signup" element={<SellerSignup />} />

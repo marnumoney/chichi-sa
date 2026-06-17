@@ -209,6 +209,13 @@ def create_tables(conn):
     _add_column(conn, is_pg, 'transactions', 'buyer_id', "TEXT DEFAULT ''")
 
     for col, defn in [
+        ('reset_token', "TEXT DEFAULT ''"),
+        ('reset_token_expiry', "TEXT DEFAULT ''"),
+    ]:
+        _add_column(conn, is_pg, 'buyers', col, defn)
+        _add_column(conn, is_pg, 'sellers', col, defn)
+
+    for col, defn in [
         ('kennel_name', "TEXT DEFAULT ''"),
         ('registry', "TEXT DEFAULT 'KUSA'"),
         ('phone', "TEXT DEFAULT ''"),

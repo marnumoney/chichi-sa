@@ -1,9 +1,11 @@
 import json
 import os
+import secrets
 import sqlite3
 import uuid
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr
 from typing import Optional
@@ -11,6 +13,8 @@ from typing import Optional
 from auth import create_token, hash_password, verify_password
 from database import get_db, parse_seller
 from models import LoginRequest, SignupRequest
+
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
 
 
 class BuyerSignupRequest(BaseModel):
@@ -107,3 +111,102 @@ def buyer_login(body: LoginRequest, db: sqlite3.Connection = Depends(get_db)):
     buyer.pop('password_hash', None)
     token = create_token({'buyer_id': buyer['id']})
     return {'token': token, 'buyer': buyer}
+
+
+async def _send_reset_email(email: str, reset_link: str, name: str):
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            await client.post(
+                f'https://formsubmit.co/ajax/{email}',
+                headers={'Content-Type': 'application/json', 'Accept': 'application/json'},
+                json={
+                    '_subject': 'Reset your Chihuahua SA password',
+                    'message': (
+                        f'Hi {name},\n\n'
+                        f'We received a request to reset your password.\n\n'
+                        f'Click the link below to set a new password (valid for 1 hour):\n\n'
+                        f'{reset_link}\n\n'
+                        f'If you did not request this, you can safely ignore this email.\n\n'
+                        f'— Chihuahua South Africa'
+                    ),
+                },
+            )
+    except Exception:
+        pass  # Don't block the response if email fails
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+@router.post('/buyer/forgot-password')
+async def buyer_forgot_password(body: ForgotPasswordRequest, db: sqlite3.Connection = Depends(get_db)):
+    email = body.email
+    row = db.execute('SELECT * FROM buyers WHERE email = ?', (email,)).fetchone()
+    # Always return 200 so we don't reveal whether the email exists
+    if not row:
+        return {'ok': True}
+    buyer = dict(row)
+    token = secrets.token_urlsafe(32)
+    expiry = (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
+    db.execute('UPDATE buyers SET reset_token = ?, reset_token_expiry = ? WHERE id = ?',
+               (token, expiry, buyer['id']))
+    db.commit()
+    reset_link = f"{FRONTEND_URL}/reset-password?token={token}&type=buyer"
+    await _send_reset_email(buyer['email'], reset_link, buyer['name'])
+    return {'ok': True}
+
+
+@router.post('/buyer/reset-password')
+def buyer_reset_password(body: dict, db: sqlite3.Connection = Depends(get_db)):
+    token = body.get('token', '')
+    new_password = body.get('password', '')
+    if len(new_password) < 8:
+        raise HTTPException(status_code=400, detail='Password must be at least 8 characters')
+    row = db.execute('SELECT * FROM buyers WHERE reset_token = ?', (token,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=400, detail='Invalid or expired reset link')
+    buyer = dict(row)
+    expiry = buyer.get('reset_token_expiry', '')
+    if not expiry or datetime.fromisoformat(expiry) < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail='Reset link has expired')
+    db.execute("UPDATE buyers SET password_hash = ?, reset_token = '', reset_token_expiry = '' WHERE id = ?",
+               (hash_password(new_password), buyer['id']))
+    db.commit()
+    return {'ok': True}
+
+
+@router.post('/seller/forgot-password')
+async def seller_forgot_password(body: ForgotPasswordRequest, db: sqlite3.Connection = Depends(get_db)):
+    email = body.email
+    row = db.execute('SELECT * FROM sellers WHERE email = ?', (email,)).fetchone()
+    if not row:
+        return {'ok': True}
+    seller = dict(row)
+    token = secrets.token_urlsafe(32)
+    expiry = (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
+    db.execute('UPDATE sellers SET reset_token = ?, reset_token_expiry = ? WHERE id = ?',
+               (token, expiry, seller['id']))
+    db.commit()
+    reset_link = f"{FRONTEND_URL}/reset-password?token={token}&type=seller"
+    await _send_reset_email(seller['email'], reset_link, seller['name'] or 'Breeder')
+    return {'ok': True}
+
+
+@router.post('/seller/reset-password')
+def seller_reset_password(body: dict, db: sqlite3.Connection = Depends(get_db)):
+    token = body.get('token', '')
+    new_password = body.get('password', '')
+    if len(new_password) < 8:
+        raise HTTPException(status_code=400, detail='Password must be at least 8 characters')
+    row = db.execute('SELECT * FROM sellers WHERE reset_token = ?', (token,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=400, detail='Invalid or expired reset link')
+    seller = dict(row)
+    expiry = seller.get('reset_token_expiry', '')
+    if not expiry or datetime.fromisoformat(expiry) < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail='Reset link has expired')
+    db.execute("UPDATE sellers SET password_hash = ?, reset_token = '', reset_token_expiry = '' WHERE id = ?",
+               (hash_password(new_password), seller['id']))
+    db.commit()
+    return {'ok': True}
