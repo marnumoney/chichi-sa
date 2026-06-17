@@ -11,6 +11,7 @@ const __dirname=path.dirname(fileURLToPath(import.meta.url));
 const ROOT=path.join(__dirname,'..');
 const app=express();
 app.use(express.json({limit:'2mb'}));
+app.use(express.text({type:'text/plain',limit:'2mb'}));
 app.use(cors());
 
 const noCache=(_,res,next)=>{res.setHeader('Cache-Control','no-cache, no-store, must-revalidate');next();};
@@ -183,11 +184,13 @@ Respond JSON only.`;
 
 app.post('/api/agent/ingest',async(req,res)=>{
   res.json({received:true,ts:Date.now()});
-  const kind=req.body?.kind;
+  // Accept both application/json and text/plain (some browsers send beacon as text/plain)
+  const payload=typeof req.body==='string'?JSON.parse(req.body||'{}'):req.body||{};
+  const kind=payload?.kind;
   if(ACTIONABLE_KINDS.has(kind)){
-    runAgent(req.body).catch(async e=>log({type:'agent_error',message:e.message}));
+    runAgent(payload).catch(async e=>log({type:'agent_error',message:e.message}));
   }else{
-    await log({type:'passive',siteId:sanitize(req.body?.siteId,64),kind:sanitize(kind,32),message:`${sanitize(kind,32)} on ${sanitize(req.body?.session?.url,200)||'?'}`});
+    await log({type:'passive',siteId:sanitize(payload?.siteId,64),kind:sanitize(kind,32),message:`${sanitize(kind,32)} on ${sanitize(payload?.session?.url,200)||'?'}`});
   }
 });
 
