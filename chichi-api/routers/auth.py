@@ -113,26 +113,39 @@ def buyer_login(body: LoginRequest, db: sqlite3.Connection = Depends(get_db)):
     return {'token': token, 'buyer': buyer}
 
 
-async def _send_reset_email(email: str, reset_link: str, name: str):
+def _send_reset_email(email: str, reset_link: str, name: str):
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
+    smtp_user = os.getenv('SMTP_USER', 'chihuahuasouthafrica@gmail.com')
+    smtp_pass = os.getenv('SMTP_PASSWORD', '')
+    if not smtp_pass:
+        print(f'[email] SMTP_PASSWORD not set — reset link: {reset_link}')
+        return
+
+    body = (
+        f'Hi {name},\n\n'
+        f'We received a request to reset your Chihuahua SA password.\n\n'
+        f'Click the link below to set a new password (valid for 1 hour):\n\n'
+        f'{reset_link}\n\n'
+        f'If you did not request this, you can safely ignore this email.\n\n'
+        f'— Chihuahua South Africa'
+    )
+    msg = MIMEMultipart()
+    msg['From'] = f'Chihuahua South Africa <{smtp_user}>'
+    msg['To'] = email
+    msg['Subject'] = 'Reset your Chihuahua SA password'
+    msg.attach(MIMEText(body, 'plain'))
+
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            await client.post(
-                f'https://formsubmit.co/ajax/{email}',
-                headers={'Content-Type': 'application/json', 'Accept': 'application/json'},
-                json={
-                    '_subject': 'Reset your Chihuahua SA password',
-                    'message': (
-                        f'Hi {name},\n\n'
-                        f'We received a request to reset your password.\n\n'
-                        f'Click the link below to set a new password (valid for 1 hour):\n\n'
-                        f'{reset_link}\n\n'
-                        f'If you did not request this, you can safely ignore this email.\n\n'
-                        f'— Chihuahua South Africa'
-                    ),
-                },
-            )
-    except Exception:
-        pass  # Don't block the response if email fails
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.send_message(msg)
+        print(f'[email] Reset email sent to {email}')
+    except Exception as e:
+        print(f'[email] Failed to send to {email}: {e}')
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -153,7 +166,7 @@ async def buyer_forgot_password(body: ForgotPasswordRequest, db: sqlite3.Connect
                (token, expiry, buyer['id']))
     db.commit()
     reset_link = f"{FRONTEND_URL}/reset-password?token={token}&type=buyer"
-    await _send_reset_email(buyer['email'], reset_link, buyer['name'])
+    _send_reset_email(buyer['email'], reset_link, buyer['name'])
     return {'ok': True}
 
 
@@ -189,7 +202,7 @@ async def seller_forgot_password(body: ForgotPasswordRequest, db: sqlite3.Connec
                (token, expiry, seller['id']))
     db.commit()
     reset_link = f"{FRONTEND_URL}/reset-password?token={token}&type=seller"
-    await _send_reset_email(seller['email'], reset_link, seller['name'] or 'Breeder')
+    _send_reset_email(seller['email'], reset_link, seller['name'] or 'Breeder')
     return {'ok': True}
 
 
