@@ -215,6 +215,123 @@ app.get('/api/dashboard',async(req,res)=>{
 
 app.get('/health',(_,res)=>res.json({status:'autonomous',uptime:process.uptime(),ts:new Date().toISOString()}));
 
+app.get('/',(_,res)=>{
+  res.setHeader('Content-Type','text/html');
+  res.send(DASHBOARD_HTML);
+});
+
+const DASHBOARD_HTML=`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Webdesign AI — Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d14;color:#e2e2f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+header{background:#13131f;border-bottom:1px solid #1e1e30;padding:18px 28px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:10}
+header h1{font-size:17px;font-weight:600;letter-spacing:-.3px}
+#status-txt{font-size:12px;color:#6b6b8a;margin-left:auto}
+#dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px #22c55e;animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:24px 28px 0}
+.card{background:#13131f;border:1px solid #1e1e30;border-radius:12px;padding:18px 20px}
+.card .label{font-size:11px;color:#6b6b8a;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.card .val{font-size:28px;font-weight:700;letter-spacing:-1px}
+.card .sub{font-size:11px;color:#6b6b8a;margin-top:4px}
+.sites .val{color:#38bdf8}.fixes .val{color:#22c55e}.patterns .val{color:#a78bfa}.uptime .val{color:#fb923c}
+.feed-wrap{padding:20px 28px 28px}
+.feed-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.feed-header h2{font-size:13px;font-weight:600;color:#9090b0}
+#refresh-note{font-size:11px;color:#6b6b8a}
+#feed{display:flex;flex-direction:column;gap:6px}
+.row{background:#13131f;border:1px solid #1e1e30;border-radius:9px;padding:11px 14px;display:grid;grid-template-columns:150px 140px 1fr;gap:12px;align-items:center;animation:fi .25s ease}
+@keyframes fi{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+.ts{font-size:11px;color:#6b6b8a;font-variant-numeric:tabular-nums}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap}
+.t-fix_applied{background:#14331e;color:#22c55e;border:1px solid #166534}
+.t-agent_action{background:#0f2344;color:#38bdf8;border:1px solid #075985}
+.t-pattern_learned{background:#2e1065;color:#a78bfa;border:1px solid #5b21b6}
+.t-agent_error{background:#3b0f0f;color:#f87171;border:1px solid #991b1b}
+.t-startup{background:#082838;color:#67e8f9;border:1px solid #0e7490}
+.t-owner_notified{background:#2d1a00;color:#fb923c;border:1px solid #92400e}
+.t-self_improved{background:#1a1042;color:#c4b5fd;border:1px solid #4c1d95}
+.t-rejected{background:#1f1200;color:#fbbf24;border:1px solid #78350f}
+.t-passive{background:#131320;color:#6b6b8a;border:1px solid #1e1e30}
+.t-skill_installed{background:#0b2d1e;color:#34d399;border:1px solid #065f46}
+.t-default{background:#1a1a2e;color:#9090b0;border:1px solid #2a2a40}
+.msg{font-size:12px;color:#c8c8e0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{text-align:center;color:#6b6b8a;font-size:13px;padding:48px 0;grid-column:1/-1}
+</style>
+</head>
+<body>
+<header>
+  <div id="dot"></div>
+  <h1>Webdesign AI — Autonomous Agent</h1>
+  <span id="status-txt">connecting…</span>
+</header>
+<div class="stats">
+  <div class="card sites"><div class="label">Sites Monitored</div><div class="val" id="s-sites">—</div><div class="sub">registered</div></div>
+  <div class="card fixes"><div class="label">Files Fixed</div><div class="val" id="s-fixes">—</div><div class="sub">autonomous patches</div></div>
+  <div class="card patterns"><div class="label">Patterns Learned</div><div class="val" id="s-patterns">—</div><div class="sub">from past fixes</div></div>
+  <div class="card uptime"><div class="label">Uptime</div><div class="val" id="s-uptime">—</div><div class="sub">hours running</div></div>
+</div>
+<div class="feed-wrap">
+  <div class="feed-header">
+    <h2>Live Activity Feed</h2>
+    <span id="refresh-note">auto-refreshes every 3s</span>
+  </div>
+  <div id="feed"></div>
+</div>
+<script>
+const KNOWN=['fix_applied','agent_action','pattern_learned','agent_error','startup','owner_notified','self_improved','rejected','passive','skill_installed'];
+function fmtTs(ts){
+  const d=new Date(ts);
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' '+
+         d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+function fmtUptime(s){
+  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60);
+  return h>0?h+'h '+m+'m':m+'m';
+}
+function makeRow(log){
+  const row=document.createElement('div');row.className='row';
+  const ts=document.createElement('span');ts.className='ts';ts.textContent=fmtTs(log.ts);
+  const b=document.createElement('span');
+  const t=log.type||'log';
+  b.className='badge '+(KNOWN.includes(t)?'t-'+t:'t-default');
+  b.textContent=t.replace(/_/g,' ');
+  const msg=document.createElement('span');msg.className='msg';msg.textContent=log.message||'';
+  row.append(ts,b,msg);
+  return row;
+}
+async function refresh(){
+  try{
+    const d=await fetch('/api/dashboard').then(r=>r.json());
+    document.getElementById('s-sites').textContent=d.siteCount??0;
+    document.getElementById('s-fixes').textContent=d.fixCount??0;
+    document.getElementById('s-patterns').textContent=d.patternCount??0;
+    document.getElementById('s-uptime').textContent=fmtUptime(d.uptime??0);
+    document.getElementById('status-txt').textContent='updated '+new Date().toLocaleTimeString('en-GB');
+    const feed=document.getElementById('feed');
+    while(feed.firstChild)feed.removeChild(feed.firstChild);
+    if(!d.recentLogs||!d.recentLogs.length){
+      const empty=document.createElement('div');empty.className='empty';
+      empty.textContent='No activity yet — waiting for events from your sites…';
+      feed.appendChild(empty);
+    }else{
+      d.recentLogs.forEach(l=>feed.appendChild(makeRow(l)));
+    }
+  }catch{
+    document.getElementById('status-txt').textContent='connection error — retrying…';
+  }
+}
+refresh();
+setInterval(refresh,3000);
+</script>
+</body>
+</html>`;
+
 cron.schedule('0 2 * * *',async()=>{
   const logs=(await rdb('logs.json')).logs||[];
   const fixes=logs.filter(l=>l.type==='fix_applied').slice(0,30);
