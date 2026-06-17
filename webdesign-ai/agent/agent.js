@@ -5,6 +5,7 @@ import path from 'path';
 import cors from 'cors';
 import cron from 'node-cron';
 import { fileURLToPath } from 'url';
+import SITES_CONFIG from '../sites.config.js';
 
 const __dirname=path.dirname(fileURLToPath(import.meta.url));
 const ROOT=path.join(__dirname,'..');
@@ -385,5 +386,15 @@ app.listen(PORT,async()=>{
   console.log(`  ╚══════════════════════════════════════════════╝\n`);
   console.log(`  Health:    http://localhost:${PORT}/health`);
   console.log(`  Dashboard: http://localhost:${PORT}/api/dashboard\n`);
-  await log({type:'startup',message:'Agent started'});
+  // Seed known sites from config so the database survives deploys
+  const sites=await rdb('sites.json');
+  let seeded=0;
+  for(const site of SITES_CONFIG){
+    if(!sites[site.siteId]){
+      sites[site.siteId]={...site,registeredAt:new Date().toISOString()};
+      seeded++;
+    }
+  }
+  if(seeded>0){await wdb('sites.json',sites);await log({type:'startup',message:`Agent started — auto-registered ${seeded} site(s)`});}
+  else{await log({type:'startup',message:'Agent started'});}
 });
