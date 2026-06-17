@@ -13,8 +13,9 @@ const app=express();
 app.use(express.json({limit:'2mb'}));
 app.use(cors());
 
-app.use('/tracker.js',express.static(path.join(ROOT,'tracker/tracker.js')));
-app.use('/chat-widget.js',express.static(path.join(ROOT,'chat-widget/chat-widget.js')));
+const noCache=(_,res,next)=>{res.setHeader('Cache-Control','no-cache, no-store, must-revalidate');next();};
+app.use('/tracker.js',noCache,express.static(path.join(ROOT,'tracker/tracker.js')));
+app.use('/chat-widget.js',noCache,express.static(path.join(ROOT,'chat-widget/chat-widget.js')));
 
 try{
   const env=await fs.readFile(path.join(ROOT,'.env'),'utf8');
