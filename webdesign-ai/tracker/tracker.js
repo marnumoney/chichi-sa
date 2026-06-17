@@ -10,8 +10,9 @@ const USER_ROLE=(function(){try{return localStorage.getItem('role')||'public';}c
 const s={siteId:SITE_ID,sessionId:SID,start:Date.now(),url:location.href,errors:[],lastActivity:Date.now(),scrollDepth:0,rageClicks:{}};
 function send(payload){
   const body=JSON.stringify({...payload,siteId:SITE_ID,sessionId:SID,userRole:USER_ROLE});
-  if(navigator.sendBeacon)navigator.sendBeacon(AGENT+'/api/agent/ingest',body);
-  else fetch(AGENT+'/api/agent/ingest',{method:'POST',headers:{'Content-Type':'application/json'},body,keepalive:true}).catch(()=>{});
+  // sendBeacon defaults to text/plain — Express json() ignores it. Send as Blob with correct type.
+  if(navigator.sendBeacon){navigator.sendBeacon(AGENT+'/api/agent/ingest',new Blob([body],{type:'application/json'}));}
+  else{fetch(AGENT+'/api/agent/ingest',{method:'POST',headers:{'Content-Type':'application/json'},body,keepalive:true}).catch(()=>{});}
 }
 function emit(type,data){send({kind:'event',event:{type,data,ts:Date.now(),url:location.href},session:{siteId:SITE_ID,sessionId:SID,url:s.url,scrollDepth:s.scrollDepth,duration:Date.now()-s.start,userRole:USER_ROLE}});}
 document.addEventListener('click',e=>{
