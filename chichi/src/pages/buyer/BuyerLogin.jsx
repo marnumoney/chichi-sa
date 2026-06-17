@@ -42,7 +42,10 @@ export default function BuyerLogin() {
             <input required type="email" className="input-field" placeholder="your@email.com" value={form.email} onChange={set('email')} />
           </div>
           <div>
-            <label className="label">Password</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="label mb-0">Password</label>
+              <Link to="/forgot-password?type=buyer" className="font-body text-xs text-sienna hover:underline">Forgot password?</Link>
+            </div>
             <input required type="password" className="input-field" placeholder="Your password" value={form.password} onChange={set('password')} />
           </div>
           <button type="submit" disabled={loading}
@@ -51,10 +54,7 @@ export default function BuyerLogin() {
           </button>
         </form>
 
-        <p className="font-body text-sm text-muted text-center mt-4">
-          <Link to="/forgot-password?type=buyer" className="text-sienna hover:underline text-xs">Forgot your password?</Link>
-        </p>
-        <p className="font-body text-sm text-muted text-center mt-3">
+        <p className="font-body text-sm text-muted text-center mt-6">
           New here?{' '}
           <Link to="/buyer/signup" className="text-sienna hover:underline font-semibold">Create an account</Link>
         </p>

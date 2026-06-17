@@ -69,7 +69,10 @@ export default function SellerLogin() {
               <input type="email" required className="input-field" value={email} onChange={e => setEmail(e.target.value)} />
             </div>
             <div>
-              <label className="label">Password</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="label mb-0">Password</label>
+                <Link to="/forgot-password?type=seller" className="font-body text-xs text-sienna hover:underline">Forgot password?</Link>
+              </div>
               <div className="relative">
                 <input
                   type={showPw ? 'text' : 'password'}
@@ -92,10 +95,7 @@ export default function SellerLogin() {
 
           <div className="flex items-center justify-between mt-6 font-body text-xs text-muted">
             <Link to="/seller/signup" className="hover:text-sienna transition-colors">New breeder? Apply →</Link>
-            <Link to="/forgot-password?type=seller" className="hover:text-sienna transition-colors">Forgot password?</Link>
-          </div>
-          <div className="mt-3 text-center">
-            <Link to="/" className="font-body text-xs text-muted hover:text-sienna transition-colors">Back to site</Link>
+            <Link to="/" className="hover:text-sienna transition-colors">Back to site</Link>
           </div>
         </div>
       </div>
