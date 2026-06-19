@@ -125,7 +125,11 @@ export function AppProvider({ children }) {
         } else {
           localStorage.removeItem('token')
           localStorage.removeItem('role')
+          return
         }
+      })
+      apiFetch('/seller/transactions').then(async res => {
+        if (res.ok) setTransactions(normalize(await res.json()))
       })
     }
     if (role === 'buyer') {
@@ -188,12 +192,13 @@ export function AppProvider({ children }) {
     }
     const raw = await res.json()
     const { token } = raw
-    // API returns { token, seller: { ...fields, kennel: {...} } }
-    // kennel is nested inside seller — normalize handles the whole tree
     const seller = normalize(raw.seller)
     localStorage.setItem('token', token)
     localStorage.setItem('role', 'seller')
     setSellerUser(seller)
+    apiFetch('/seller/transactions').then(async r => {
+      if (r.ok) setTransactions(normalize(await r.json()))
+    })
     return { success: true }
   }
 
@@ -208,6 +213,7 @@ export function AppProvider({ children }) {
     localStorage.removeItem('token')
     localStorage.removeItem('role')
     setSellerUser(null)
+    setTransactions([])
   }
 
   const signupBuyer = async (data) => {
@@ -282,7 +288,10 @@ export function AppProvider({ children }) {
 
   const updateSellerDocuments = async (documents) => {
     const res = await apiFetch('/seller/documents', { method: 'PUT', body: documents })
-    if (res.ok) setSellerUser(prev => ({ ...prev, documents }))
+    if (res.ok) {
+      const saved = normalize(await res.json())
+      setSellerUser(prev => ({ ...prev, documents: saved }))
+    }
   }
 
   const updateSellerProfile = async (updates) => {
@@ -376,7 +385,7 @@ export function AppProvider({ children }) {
 
   // ── Admin — testimonials ──────────────────────────────────────────────────
   const addTestimonial = async (data) => {
-    await apiFetch('/admin/testimonials', {
+    await apiFetch('/testimonials', {
       method: 'POST',
       body: data,
     })
@@ -395,11 +404,13 @@ export function AppProvider({ children }) {
   }
 
   const markSellerPaid = async (txnId) => {
-    await releasePayment(txnId)
+    await apiFetch(`/admin/transactions/${txnId}/mark-seller-paid`, { method: 'POST' })
+    await loadAdminData()
   }
 
   const markCommissionPaid = async (txnId) => {
-    await releasePayment(txnId)
+    await apiFetch(`/admin/transactions/${txnId}/mark-commission-paid`, { method: 'POST' })
+    await loadAdminData()
   }
 
   // ── Admin — settings & legal ──────────────────────────────────────────────
@@ -422,6 +433,7 @@ export function AppProvider({ children }) {
   return (
     <AppContext.Provider value={{
       kennels, puppies, sellers, buyers, adminSettings, legalContent, transactions, testimonials, loadingPublic,
+      loadPuppies,
       buyerUser, signupBuyer, loginBuyer, logoutBuyer,
       addTestimonial, removeTestimonial,
       adminUser, sellerUser,

@@ -47,9 +47,12 @@ export default function SellerLayout() {
         <LogoCompact light />
         {kennel && (
           <div className="flex items-center gap-2 mt-3">
-            <div className="w-6 h-6 flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0"
+            <div className="w-6 h-6 flex-shrink-0 overflow-hidden"
               style={{ backgroundColor: kennel.color || '#8B7355' }}>
-              {kennel.initials ?? '??'}
+              {kennel.logo
+                ? <img src={kennel.logo} alt={kennel.name} className="w-full h-full object-cover" />
+                : <span className="w-full h-full flex items-center justify-center text-white text-[8px] font-bold">{kennel.initials ?? '??'}</span>
+              }
             </div>
             <div className="min-w-0">
               <p className="font-body text-[10px] font-semibold text-cream/80 truncate leading-tight">{kennel.name}</p>

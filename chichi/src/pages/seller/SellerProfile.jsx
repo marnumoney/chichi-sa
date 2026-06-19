@@ -1,21 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
 import { Save, Check, Copy, Upload, Landmark, FileText, X, FileCheck, ExternalLink } from 'lucide-react'
-
-const CLOUDINARY_CLOUD = 'dzq8vzby8'
-const CLOUDINARY_PRESET = 'Chihuahua south africa'
-
-async function uploadToCloudinary(file) {
-  const fd = new FormData()
-  fd.append('file', file)
-  fd.append('upload_preset', CLOUDINARY_PRESET)
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`, {
-    method: 'POST',
-    body: fd,
-  })
-  const data = await res.json()
-  return data.secure_url
-}
+import { uploadFile as uploadToCloudinary } from '../../utils/cloudinary'
 
 const SA_BANKS = [
   'ABSA Bank', 'Capitec Bank', 'FNB (First National Bank)', 'Nedbank',
@@ -41,7 +27,8 @@ export default function SellerProfile() {
   })
   const [saved, setSaved] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [logoPreview, setLogoPreview] = useState(null)
+  const [logoPreview, setLogoPreview] = useState(kennel?.logo ?? null)
+  const [logoUploading, setLogoUploading] = useState(false)
   const [docsSaved, setDocsSaved] = useState(false)
   const [docsUploading, setDocsUploading] = useState(false)
   const [docsError, setDocsError] = useState('')
@@ -64,6 +51,7 @@ export default function SellerProfile() {
       branchCode: kennel.branchCode ?? '',
       accountType: kennel.accountType ?? '',
     })
+    setLogoPreview(kennel.logo ?? null)
   }, [kennel?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }))
@@ -81,9 +69,20 @@ export default function SellerProfile() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const handleLogoUpload = (e) => {
+  const handleLogoUpload = async (e) => {
     const file = e.target.files[0]
-    if (file) setLogoPreview(URL.createObjectURL(file))
+    if (!file) return
+    setLogoPreview(URL.createObjectURL(file))
+    setLogoUploading(true)
+    try {
+      const url = await uploadToCloudinary(file)
+      await updateSellerProfile({ logo: url })
+      setLogoPreview(url)
+    } catch {
+      setLogoPreview(kennel?.logo ?? null)
+    } finally {
+      setLogoUploading(false)
+    }
   }
 
   const hasChanges = Object.keys(form).some(k => form[k] !== (kennel?.[k] ?? ''))
@@ -101,21 +100,21 @@ export default function SellerProfile() {
           <h3 className="font-body font-semibold text-sm text-espresso mb-4">Kennel Logo</h3>
           <div className="flex items-center gap-5">
             <div
-              className="w-20 h-20 flex items-center justify-center text-white font-bold text-lg overflow-hidden flex-shrink-0"
+              className="w-20 h-20 overflow-hidden flex-shrink-0 flex items-center justify-center text-white font-bold text-lg"
               style={{ backgroundColor: kennel?.color ?? '#8B7355' }}
             >
               {logoPreview
                 ? <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
-                : kennel?.initials ?? '??'
+                : <span>{kennel?.initials ?? '??'}</span>
               }
             </div>
             <div>
               <p className="font-body text-sm text-espresso font-semibold mb-1">{kennel?.name}</p>
-              <p className="font-body text-xs text-muted mb-3">{logoPreview ? 'Custom logo uploaded' : 'Using initials placeholder'}</p>
-              <label className="flex items-center gap-2 btn-outline text-xs tracking-widest uppercase cursor-pointer py-2 px-4">
+              <p className="font-body text-xs text-muted mb-3">{logoPreview ? 'Custom logo saved' : 'Using initials placeholder'}</p>
+              <label className={`flex items-center gap-2 btn-outline text-xs tracking-widest uppercase cursor-pointer py-2 px-4 ${logoUploading ? 'opacity-60 pointer-events-none' : ''}`}>
                 <Upload className="w-3.5 h-3.5" />
-                Upload Logo
-                <input type="file" accept="image/*" className="sr-only" onChange={handleLogoUpload} />
+                {logoUploading ? 'Saving…' : 'Upload Logo'}
+                <input type="file" accept="image/*" className="sr-only" onChange={handleLogoUpload} disabled={logoUploading} />
               </label>
             </div>
           </div>
@@ -232,9 +231,9 @@ export default function SellerProfile() {
           {(() => {
             const docs = sellerUser?.documents || {}
             const existing = [
-              docs.kennel_cert && { url: docs.kennel_cert, label: 'Kennel Certificate' },
-              ...(docs.sire_certs || []).map((u, i) => ({ url: u, label: `Sire Certificate ${i + 1}` })),
-              ...(docs.dam_certs || []).map((u, i) => ({ url: u, label: `Dam Certificate ${i + 1}` })),
+              docs.kennelCert && { url: docs.kennelCert, label: 'Kennel Certificate' },
+              ...(docs.sireCerts || []).map((u, i) => ({ url: u, label: `Sire Certificate ${i + 1}` })),
+              ...(docs.damCerts || []).map((u, i) => ({ url: u, label: `Dam Certificate ${i + 1}` })),
             ].filter(Boolean)
             return existing.length > 0 ? (
               <div>
@@ -325,14 +324,14 @@ export default function SellerProfile() {
                   try {
                     const existing = sellerUser?.documents || {}
                     const [kennelUrl, ...sireUrls] = await Promise.all([
-                      newKennelCert ? uploadToCloudinary(newKennelCert) : Promise.resolve(existing.kennel_cert || null),
+                      newKennelCert ? uploadToCloudinary(newKennelCert) : Promise.resolve(existing.kennelCert || null),
                       ...newSireCerts.map(uploadToCloudinary),
                     ])
                     const damUrls = await Promise.all(newDamCerts.map(uploadToCloudinary))
                     const documents = {
-                      kennel_cert: kennelUrl,
-                      sire_certs: [...(existing.sire_certs || []), ...sireUrls.filter(Boolean)],
-                      dam_certs: [...(existing.dam_certs || []), ...damUrls.filter(Boolean)],
+                      kennelCert: kennelUrl,
+                      sireCerts: [...(existing.sireCerts || []), ...sireUrls.filter(Boolean)],
+                      damCerts: [...(existing.damCerts || []), ...damUrls.filter(Boolean)],
                     }
                     await updateSellerDocuments(documents)
                     setNewKennelCert(null)

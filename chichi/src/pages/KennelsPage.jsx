@@ -46,8 +46,11 @@ function KennelSection({ kennel, puppies, testimonials, transactions, addTestimo
   return (
     <div className="mb-14">
       <div className="flex flex-col sm:flex-row gap-5 items-start p-6 bg-white border border-divider mb-5">
-        <div className="w-16 h-16 flex items-center justify-center text-white font-bold text-lg font-body flex-shrink-0" style={{ backgroundColor: kennel.color }}>
-          {kennel.initials}
+        <div className="w-16 h-16 flex-shrink-0 overflow-hidden" style={{ backgroundColor: kennel.color }}>
+          {kennel.logo
+            ? <img src={kennel.logo} alt={kennel.name} className="w-full h-full object-cover" />
+            : <span className="w-full h-full flex items-center justify-center text-white font-bold text-lg font-body">{kennel.initials}</span>
+          }
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">

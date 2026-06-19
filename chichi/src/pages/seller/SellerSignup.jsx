@@ -3,22 +3,9 @@ import { Link } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import { CheckCircle, Loader2, Upload, FileCheck, X, Eye, EyeOff } from 'lucide-react'
 import { Logo } from '../../components/Logo'
+import { uploadFile as uploadToCloudinary } from '../../utils/cloudinary'
 
 const FORMSUBMIT_EMAIL = 'Chihuahuasouthafrica@gmail.com'
-const CLOUDINARY_CLOUD = 'dzq8vzby8'
-const CLOUDINARY_PRESET = 'Chihuahua south africa'
-
-async function uploadToCloudinary(file) {
-  const fd = new FormData()
-  fd.append('file', file)
-  fd.append('upload_preset', CLOUDINARY_PRESET)
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`, {
-    method: 'POST',
-    body: fd,
-  })
-  const data = await res.json()
-  return data.secure_url
-}
 
 export default function SellerSignup() {
   const { signupSeller } = useApp()

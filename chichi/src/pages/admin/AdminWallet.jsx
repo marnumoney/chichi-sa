@@ -30,8 +30,25 @@ function StatCard({ icon: Icon, label, value, sub, color }) {
 }
 
 function ReleaseModalContent({ txn, kennel, adminSettings, onSellerPaid, onCommissionPaid, onBothPaid, onClose }) {
+  const [loading, setLoading] = useState(null) // 'seller' | 'commission' | 'both'
   const sellerHasBanking = kennel?.accountNumber
   const adminHasBanking = adminSettings.adminAccountNumber
+
+  const handleSellerPaid = async () => {
+    setLoading('seller')
+    await onSellerPaid()
+    setLoading(null)
+  }
+  const handleCommissionPaid = async () => {
+    setLoading('commission')
+    await onCommissionPaid()
+    setLoading(null)
+  }
+  const handleBothPaid = async () => {
+    setLoading('both')
+    await onBothPaid()
+    setLoading(null)
+  }
 
   return (
     <div className="space-y-4">
@@ -67,9 +84,9 @@ function ReleaseModalContent({ txn, kennel, adminSettings, onSellerPaid, onCommi
             <CheckCircle className="w-4 h-4" /> Paid on {txn.sellerPaidDate}
           </div>
         ) : (
-          <button onClick={onSellerPaid}
-            className="flex items-center gap-2 bg-espresso text-cream font-body text-xs font-semibold tracking-widest uppercase px-4 py-2 hover:bg-sienna transition-colors">
-            <Check className="w-3.5 h-3.5" /> Mark Seller EFT Done — R{txn.sellerPayout.toLocaleString()}
+          <button onClick={handleSellerPaid} disabled={!!loading}
+            className="flex items-center gap-2 bg-espresso text-cream font-body text-xs font-semibold tracking-widest uppercase px-4 py-2 hover:bg-sienna transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <Check className="w-3.5 h-3.5" /> {loading === 'seller' ? 'Saving…' : `Mark Seller EFT Done — R${txn.sellerPayout.toLocaleString()}`}
           </button>
         )}
       </div>
@@ -99,17 +116,17 @@ function ReleaseModalContent({ txn, kennel, adminSettings, onSellerPaid, onCommi
             <CheckCircle className="w-4 h-4" /> Paid on {txn.commissionPaidDate}
           </div>
         ) : (
-          <button onClick={onCommissionPaid}
-            className="flex items-center gap-2 bg-sienna text-white font-body text-xs font-semibold tracking-widest uppercase px-4 py-2 hover:bg-sienna-dark transition-colors">
-            <Check className="w-3.5 h-3.5" /> Mark Commission EFT Done — R{txn.commission.toLocaleString()}
+          <button onClick={handleCommissionPaid} disabled={!!loading}
+            className="flex items-center gap-2 bg-sienna text-white font-body text-xs font-semibold tracking-widest uppercase px-4 py-2 hover:bg-sienna-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <Check className="w-3.5 h-3.5" /> {loading === 'commission' ? 'Saving…' : `Mark Commission EFT Done — R${txn.commission.toLocaleString()}`}
           </button>
         )}
       </div>
 
       {!txn.sellerPaid && !txn.commissionPaid && (
-        <button onClick={onBothPaid}
-          className="w-full bg-sage text-white font-body text-xs font-semibold tracking-widest uppercase py-3 hover:bg-sage-dark transition-colors flex items-center justify-center gap-2">
-          <Check className="w-4 h-4" /> Mark Both EFTs Done
+        <button onClick={handleBothPaid} disabled={!!loading}
+          className="w-full bg-sage text-white font-body text-xs font-semibold tracking-widest uppercase py-3 hover:bg-sage-dark transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+          <Check className="w-4 h-4" /> {loading === 'both' ? 'Saving…' : 'Mark Both EFTs Done'}
         </button>
       )}
 
@@ -323,7 +340,7 @@ export default function AdminWallet() {
         <h3 className="font-body font-semibold text-sm text-espresso mb-4">Per Transaction — 2 EFTs Required</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { step: '1', label: 'Buyer Pays Full Amount', desc: 'e.g. R15,000 — lands in an escrow/holding account', color: 'bg-espresso' },
+            { step: '1', label: 'Buyer Pays Full Amount', desc: 'e.g. R15,000 — processed via PayFast, pending admin release', color: 'bg-espresso' },
             { step: '2', label: 'EFT Seller Payout', desc: 'e.g. R13,800 → to seller\'s bank account', color: 'bg-sage' },
             { step: '3', label: 'EFT Commission to Admin', desc: 'e.g. R1,200 → to admin\'s bank account above', color: 'bg-sienna' },
           ].map(({ step, label, desc, color }) => (

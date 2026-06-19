@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
-import { Plus, Trash2, X, Check, Upload, Landmark, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Trash2, X, Check, Upload, Landmark, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 import Modal from '../../components/Modal'
+import { uploadImage, uploadImages } from '../../utils/cloudinary'
 
 const SA_BANKS = [
   'ABSA Bank', 'Capitec Bank', 'FNB (First National Bank)', 'Nedbank',
@@ -124,6 +125,8 @@ export default function SellerPuppies() {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [imagePreviews, setImagePreviews] = useState([])
+  const [uploadingImages, setUploadingImages] = useState(false)
+  const [uploadError, setUploadError] = useState(null)
   const [commissionModal, setCommissionModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
 
@@ -144,21 +147,51 @@ export default function SellerPuppies() {
     }))
   }
 
-  const handleImages = (e) => {
-    const files = Array.from(e.target.files)
-    const urls = files.map(f => URL.createObjectURL(f))
-    setImagePreviews(urls)
-    setForm(f => ({ ...f, images: urls }))
+  const handleImages = async (e) => {
+    const files = e.target.files
+    if (!files.length) return
+    // Show local previews immediately while uploading
+    const localPreviews = Array.from(files).map(f => URL.createObjectURL(f))
+    setImagePreviews(localPreviews)
+    setUploadingImages(true)
+    setUploadError(null)
+    try {
+      const urls = await uploadImages(files)
+      setImagePreviews(urls)
+      setForm(f => ({ ...f, images: urls }))
+    } catch (err) {
+      setUploadError('Image upload failed. Check your internet connection and try again.')
+      setImagePreviews([])
+      setForm(f => ({ ...f, images: [] }))
+    } finally {
+      setUploadingImages(false)
+    }
   }
 
-  const handleSireImage = (e) => {
+  const handleSireImage = async (e) => {
     const file = e.target.files[0]
-    if (file) setForm(f => ({ ...f, sireImage: URL.createObjectURL(file) }))
+    if (!file) return
+    const localPreview = URL.createObjectURL(file)
+    setForm(f => ({ ...f, sireImage: localPreview }))
+    try {
+      const url = await uploadImage(file)
+      setForm(f => ({ ...f, sireImage: url }))
+    } catch {
+      setForm(f => ({ ...f, sireImage: null }))
+    }
   }
 
-  const handleDamImage = (e) => {
+  const handleDamImage = async (e) => {
     const file = e.target.files[0]
-    if (file) setForm(f => ({ ...f, damImage: URL.createObjectURL(file) }))
+    if (!file) return
+    const localPreview = URL.createObjectURL(file)
+    setForm(f => ({ ...f, damImage: localPreview }))
+    try {
+      const url = await uploadImage(file)
+      setForm(f => ({ ...f, damImage: url }))
+    } catch {
+      setForm(f => ({ ...f, damImage: null }))
+    }
   }
 
   const handleFormSubmit = (e) => {
@@ -173,7 +206,7 @@ export default function SellerPuppies() {
       kennelId: sellerUser.kennelId,
       price: Number(form.price),
       breedingRightsPrice: Number(form.breedingRightsPrice || 0),
-      images: imagePreviews.length > 0 ? imagePreviews : [`https://picsum.photos/seed/${Date.now()}/600/400`],
+      images: form.images.length > 0 ? form.images : [],
     })
     setCommissionModal(false)
     setShowForm(false)
@@ -348,11 +381,18 @@ export default function SellerPuppies() {
           {/* Puppy photos */}
           <div>
             <label className="label mb-3">Puppy Photos</label>
-            <label className="flex items-center gap-3 border-2 border-dashed border-divider hover:border-sienna/40 p-6 cursor-pointer transition-colors">
-              <Upload className="w-5 h-5 text-muted" />
-              <span className="font-body text-sm text-muted">Click to upload puppy photos (multiple allowed)</span>
-              <input type="file" accept="image/*" multiple className="sr-only" onChange={handleImages} />
+            <label className={`flex items-center gap-3 border-2 border-dashed p-6 transition-colors ${uploadingImages ? 'border-sienna/40 cursor-wait' : 'border-divider hover:border-sienna/40 cursor-pointer'}`}>
+              {uploadingImages
+                ? <Loader2 className="w-5 h-5 text-sienna animate-spin" />
+                : <Upload className="w-5 h-5 text-muted" />}
+              <span className="font-body text-sm text-muted">
+                {uploadingImages ? 'Uploading photos…' : 'Click to upload puppy photos (multiple allowed)'}
+              </span>
+              <input type="file" accept="image/*" multiple className="sr-only" onChange={handleImages} disabled={uploadingImages} />
             </label>
+            {uploadError && (
+              <p className="font-body text-xs text-red-500 mt-1">{uploadError}</p>
+            )}
             {imagePreviews.length > 0 && (
               <div className="flex gap-2 mt-2 flex-wrap">
                 {imagePreviews.map((url, i) => (

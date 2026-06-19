@@ -207,6 +207,7 @@ def create_tables(conn):
         _add_column(conn, is_pg, 'kennels', col, defn)
 
     _add_column(conn, is_pg, 'transactions', 'buyer_id', "TEXT DEFAULT ''")
+    _add_column(conn, is_pg, 'kennels', 'logo', "TEXT DEFAULT ''")
 
     for col, defn in [
         ('reset_token', "TEXT DEFAULT ''"),
@@ -223,17 +224,6 @@ def create_tables(conn):
         ('documents', "TEXT DEFAULT '{}'"),
     ]:
         _add_column(conn, is_pg, 'sellers', col, defn)
-
-    # Data fix: correct kennel created before signup fields were stored
-    try:
-        conn.execute("""
-            UPDATE kennels SET name = 'Wihan Howe Kennel', registry = 'Canine SA'
-            WHERE id = 'kfd8d9a29'
-              AND (name != 'Wihan Howe Kennel' OR registry != 'Canine SA')
-        """)
-        conn.commit()
-    except Exception:
-        conn.rollback()
 
 
 # ── Row parsers ───────────────────────────────────────────────────────────────

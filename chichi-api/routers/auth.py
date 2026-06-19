@@ -51,13 +51,12 @@ def seller_login(body: LoginRequest, db: sqlite3.Connection = Depends(get_db)):
     if seller['status'] == 'pending_payment':
         raise HTTPException(status_code=403, detail='Membership payment outstanding')
     token = create_token({'seller_id': seller['id']})
-    seller.pop('password_hash')
     kennel = None
     if seller.get('kennel_id'):
         k = db.execute('SELECT * FROM kennels WHERE id = ?', (seller['kennel_id'],)).fetchone()
         if k:
             kennel = dict(k)
-    return {'token': token, 'seller': {**seller, 'kennel': kennel}}
+    return {'token': token, 'seller': {**parse_seller(row), 'kennel': kennel}}
 
 
 @router.post('/seller/signup', status_code=201)

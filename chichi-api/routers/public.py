@@ -1,9 +1,12 @@
 import sqlite3
+import uuid
+from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from database import get_db, parse_puppy
+from models import TestimonialCreate
 
 router = APIRouter()
 
@@ -62,6 +65,17 @@ def get_puppy(puppy_id: str, db: sqlite3.Connection = Depends(get_db)):
 def list_testimonials(db: sqlite3.Connection = Depends(get_db)):
     rows = db.execute('SELECT * FROM testimonials ORDER BY date DESC').fetchall()
     return [dict(r) for r in rows]
+
+
+@router.post('/testimonials', status_code=201)
+def submit_testimonial(body: TestimonialCreate, db: sqlite3.Connection = Depends(get_db)):
+    tid = f't{uuid.uuid4().hex[:8]}'
+    db.execute(
+        'INSERT INTO testimonials (id, kennel_id, buyer_name, stars, text, date) VALUES (?,?,?,?,?,?)',
+        (tid, body.kennel_id, body.buyer_name, body.stars, body.text, date.today().isoformat())
+    )
+    db.commit()
+    return dict(db.execute('SELECT * FROM testimonials WHERE id = ?', (tid,)).fetchone())
 
 
 @router.get('/legal')

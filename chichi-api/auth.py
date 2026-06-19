@@ -8,7 +8,7 @@ import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from database import get_db
+from database import get_db, parse_seller
 
 _secret = os.getenv('SECRET_KEY')
 if not _secret:
@@ -65,9 +65,7 @@ def get_current_seller(
     row = db.execute('SELECT * FROM sellers WHERE id = ?', (seller_id,)).fetchone()
     if not row:
         raise HTTPException(status_code=404, detail='Seller not found')
-    seller = dict(row)
-    seller.pop('password_hash', None)
-    return seller
+    return parse_seller(row)
 
 
 def get_current_buyer(

@@ -19,7 +19,7 @@ function getAge(dob) {
 export default function PuppyDetailPage() {
   const { id } = useParams()
   const [searchParams] = useSearchParams()
-  const { puppies, kennels, adminSettings, buyerUser } = useApp()
+  const { puppies, kennels, adminSettings, buyerUser, loadPuppies } = useApp()
   const navigate = useNavigate()
   const [imgIdx, setImgIdx] = useState(0)
   const [payOpen, setPayOpen] = useState(false)
@@ -27,6 +27,13 @@ export default function PuppyDetailPage() {
   const [loading, setLoading] = useState(false)
   const [buyer, setBuyer] = useState({ name: buyerUser?.name || '', email: buyerUser?.email || '' })
   const [errors, setErrors] = useState({})
+
+  // After PayFast redirect, refresh puppies so sold status is current
+  useEffect(() => {
+    if (searchParams.get('purchased') === 'true') {
+      loadPuppies()
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const puppy = puppies.find(p => p.id === id)
   if (!puppy) {
@@ -163,8 +170,11 @@ export default function PuppyDetailPage() {
 
           {kennel && (
             <div className="flex items-center gap-3 p-4 bg-white border border-divider mb-6">
-              <div className="w-10 h-10 flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: kennel.color }}>
-                {kennel.initials}
+              <div className="w-10 h-10 flex-shrink-0 overflow-hidden" style={{ backgroundColor: kennel.color }}>
+                {kennel.logo
+                  ? <img src={kennel.logo} alt={kennel.name} className="w-full h-full object-cover" />
+                  : <span className="w-full h-full flex items-center justify-center text-white text-xs font-bold">{kennel.initials}</span>
+                }
               </div>
               <div className="min-w-0 flex-1">
                 <p className="font-body font-semibold text-sm text-espresso">{kennel.name}</p>

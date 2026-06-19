@@ -219,7 +219,7 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
             { num: '01', title: 'Browse & Discover', desc: 'Explore Chihuahuas from KUSA and Canine SA registered kennels across South Africa. Filter by coat type, registry, and colour.' },
-            { num: '02', title: 'Purchase Securely', desc: 'Buy directly through the platform. Payment is held securely until delivery is confirmed. Breeder receives funds minus commission.' },
+            { num: '02', title: 'Purchase Securely', desc: 'Buy directly through the platform via PayFast. Funds are released to the breeder by the Chihuahua South Africa team once delivery is confirmed.' },
             { num: '03', title: 'Connect & Collect', desc: 'Once purchased, you\'re directly connected with the breeder to arrange collection or transport to your home.' },
           ].map(({ num, title, desc }) => (
             <div key={num} className="relative pl-6 border-l-2 border-divider">

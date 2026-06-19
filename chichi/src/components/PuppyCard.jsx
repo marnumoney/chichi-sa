@@ -12,10 +12,18 @@ function getAge(dob) {
   return `${Math.floor(months / 12)}yr old`
 }
 
-function KennelInitials({ kennel }) {
+function KennelAvatar({ kennel, size = 'sm' }) {
+  const dim = size === 'sm' ? 'w-7 h-7 text-[9px]' : 'w-10 h-10 text-xs'
+  if (kennel?.logo) {
+    return (
+      <div className={`${dim} overflow-hidden flex-shrink-0`}>
+        <img src={kennel.logo} alt={kennel.name} className="w-full h-full object-cover" />
+      </div>
+    )
+  }
   return (
     <div
-      className="w-7 h-7 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
+      className={`${dim} flex items-center justify-center text-white font-bold flex-shrink-0`}
       style={{ backgroundColor: kennel?.color || '#8B7355' }}
     >
       {kennel?.initials || '??'}
@@ -71,7 +79,7 @@ export default function PuppyCard({ puppy }) {
 
         {/* Kennel */}
         <div className="flex items-center gap-2 mb-4">
-          <KennelInitials kennel={kennel} />
+          <KennelAvatar kennel={kennel} />
           <div className="min-w-0">
             <p className="font-body text-xs font-semibold text-espresso truncate">{kennel?.name}</p>
             <div className="flex items-center gap-1">

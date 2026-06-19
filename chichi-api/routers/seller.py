@@ -6,7 +6,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 
 from auth import get_current_seller
-from database import get_db, parse_puppy
+from database import get_db, parse_puppy, parse_transaction
 from models import KennelUpdate, PuppyCreate
 
 router = APIRouter()
@@ -55,6 +55,20 @@ def update_documents(
     )
     db.commit()
     return body
+
+
+@router.get('/transactions')
+def get_seller_transactions(
+    seller: dict = Depends(get_current_seller),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    if not seller.get('kennel_id'):
+        return []
+    rows = db.execute(
+        'SELECT * FROM transactions WHERE kennel_id = ? ORDER BY date DESC',
+        (seller['kennel_id'],)
+    ).fetchall()
+    return [parse_transaction(r) for r in rows]
 
 
 @router.get('/puppies')

@@ -440,6 +440,7 @@ def admin_release_transaction(
     _: dict = Depends(get_current_admin),
     db: sqlite3.Connection = Depends(get_db),
 ):
+    """Mark both seller payout and commission as paid in one action."""
     today = date.today().isoformat()
     db.execute("""
         UPDATE transactions
@@ -452,6 +453,44 @@ def admin_release_transaction(
     if not row:
         raise HTTPException(status_code=404, detail='Transaction not found')
     return parse_transaction(row)
+
+
+@router.post('/transactions/{txn_id}/mark-seller-paid')
+def admin_mark_seller_paid(
+    txn_id: str,
+    _: dict = Depends(get_current_admin),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    """Mark only the seller payout as transferred."""
+    today = date.today().isoformat()
+    row = db.execute('SELECT * FROM transactions WHERE id = ?', (txn_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail='Transaction not found')
+    db.execute(
+        'UPDATE transactions SET seller_paid = 1, seller_paid_date = ? WHERE id = ?',
+        (today, txn_id)
+    )
+    db.commit()
+    return parse_transaction(db.execute('SELECT * FROM transactions WHERE id = ?', (txn_id,)).fetchone())
+
+
+@router.post('/transactions/{txn_id}/mark-commission-paid')
+def admin_mark_commission_paid(
+    txn_id: str,
+    _: dict = Depends(get_current_admin),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    """Mark only the admin commission as collected."""
+    today = date.today().isoformat()
+    row = db.execute('SELECT * FROM transactions WHERE id = ?', (txn_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail='Transaction not found')
+    db.execute(
+        'UPDATE transactions SET commission_paid = 1, commission_paid_date = ? WHERE id = ?',
+        (today, txn_id)
+    )
+    db.commit()
+    return parse_transaction(db.execute('SELECT * FROM transactions WHERE id = ?', (txn_id,)).fetchone())
 
 
 @router.get('/buyers')

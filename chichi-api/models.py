@@ -66,6 +66,7 @@ class KennelUpdate(BaseModel):
     account_number: Optional[str] = None
     branch_code: Optional[str] = None
     account_type: Optional[str] = None
+    logo: Optional[str] = None
 
 
 class SellerCreate(BaseModel):
