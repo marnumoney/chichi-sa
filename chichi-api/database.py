@@ -118,11 +118,14 @@ def create_tables(conn):
             price REAL,
             sold INTEGER DEFAULT 0,
             breeding_rights INTEGER DEFAULT 0,
+            breeding_rights_price REAL DEFAULT 0,
             images TEXT DEFAULT '[]',
             pedigree TEXT DEFAULT '{}',
             health TEXT DEFAULT '[]',
             description TEXT,
-            registration_no TEXT
+            registration_no TEXT,
+            sire_image TEXT,
+            dam_image TEXT
         )""",
         """CREATE TABLE IF NOT EXISTS sellers (
             id TEXT PRIMARY KEY,
@@ -225,6 +228,13 @@ def create_tables(conn):
     ]:
         _add_column(conn, is_pg, 'sellers', col, defn)
 
+    for col, defn in [
+        ('sire_image', "TEXT DEFAULT ''"),
+        ('dam_image', "TEXT DEFAULT ''"),
+        ('breeding_rights_price', 'REAL DEFAULT 0'),
+    ]:
+        _add_column(conn, is_pg, 'puppies', col, defn)
+
 
 # ── Row parsers ───────────────────────────────────────────────────────────────
 
@@ -235,6 +245,9 @@ def parse_puppy(row) -> dict:
     d['health'] = json.loads(d.get('health') or '[]')
     d['sold'] = bool(d.get('sold', 0))
     d['breeding_rights'] = bool(d.get('breeding_rights', 0))
+    d['breeding_rights_price'] = d.get('breeding_rights_price') or 0
+    d['sire_image'] = d.get('sire_image') or ''
+    d['dam_image'] = d.get('dam_image') or ''
     return d
 
 

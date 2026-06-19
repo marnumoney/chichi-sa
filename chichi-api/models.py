@@ -26,11 +26,14 @@ class PuppyCreate(BaseModel):
     dob: str
     price: float
     breeding_rights: bool = False
+    breeding_rights_price: float = 0
     images: List[str] = []
     pedigree: dict = {}
     health: List[str] = []
     description: str = ''
     registration_no: str = ''
+    sire_image: str = ''
+    dam_image: str = ''
 
 
 class KennelCreate(BaseModel):

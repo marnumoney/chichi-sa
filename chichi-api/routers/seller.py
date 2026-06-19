@@ -94,13 +94,15 @@ def add_puppy(
     db.execute("""
         INSERT INTO puppies
         (id, kennel_id, name, coat_type, gender, color, dob, price, sold,
-         breeding_rights, images, pedigree, health, description, registration_no)
-        VALUES (?,?,?,?,?,?,?,?,0,?,?,?,?,?,?)
+         breeding_rights, breeding_rights_price, images, pedigree, health,
+         description, registration_no, sire_image, dam_image)
+        VALUES (?,?,?,?,?,?,?,?,0,?,?,?,?,?,?,?,?,?)
     """, (
         puppy_id, seller['kennel_id'], body.name, body.coat_type, body.gender,
         body.color, body.dob, body.price, int(body.breeding_rights),
+        body.breeding_rights_price,
         json.dumps(body.images), json.dumps(body.pedigree), json.dumps(body.health),
-        body.description, body.registration_no,
+        body.description, body.registration_no, body.sire_image, body.dam_image,
     ))
     db.commit()
     row = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()

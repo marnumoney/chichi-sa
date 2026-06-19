@@ -11,7 +11,7 @@ export async function uploadImage(file) {
   fd.append('upload_preset', UPLOAD_PRESET)
   fd.append('folder', 'chichi-puppies')
 
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
     method: 'POST',
     body: fd,
   })
