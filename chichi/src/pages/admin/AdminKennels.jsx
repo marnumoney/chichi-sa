@@ -1,8 +1,58 @@
 import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
-import { Check, X, Pencil, Copy, ExternalLink, Plus, Trash2, Download } from 'lucide-react'
+import { Check, X, Pencil, Copy, ExternalLink, Plus, Trash2, Download, FileText } from 'lucide-react'
 import Modal from '../../components/Modal'
 import { exportCsv } from '../../utils/exportCsv'
+
+function DocsModal({ seller, open, onClose }) {
+  const docs = seller?.documents || {}
+  const kennelCert = docs.kennelCert
+  const sireCerts = docs.sireCerts || []
+  const damCerts = docs.damCerts || []
+  const hasAny = kennelCert || sireCerts.length > 0 || damCerts.length > 0
+
+  const DocLink = ({ url, label }) => (
+    <a href={url} target="_blank" rel="noopener noreferrer"
+      className="flex items-center gap-2 px-3 py-2.5 border border-divider hover:border-sienna hover:bg-cream transition-colors group">
+      <FileText className="w-4 h-4 text-muted group-hover:text-sienna flex-shrink-0" />
+      <span className="font-body text-xs text-espresso flex-1 truncate">{label}</span>
+      <ExternalLink className="w-3.5 h-3.5 text-muted group-hover:text-sienna flex-shrink-0" />
+    </a>
+  )
+
+  return (
+    <Modal open={open} onClose={onClose} title={`Documents — ${seller?.name}`} maxWidth="max-w-lg">
+      {!hasAny ? (
+        <p className="font-body text-sm text-muted py-4 text-center">No documents uploaded.</p>
+      ) : (
+        <div className="space-y-5">
+          {kennelCert && (
+            <div>
+              <p className="font-body text-xs font-semibold uppercase tracking-widest text-muted mb-2">Kennel Registration Certificate</p>
+              <DocLink url={kennelCert} label="View certificate" />
+            </div>
+          )}
+          {sireCerts.length > 0 && (
+            <div>
+              <p className="font-body text-xs font-semibold uppercase tracking-widest text-muted mb-2">Sire Certificates ({sireCerts.length})</p>
+              <div className="space-y-1.5">
+                {sireCerts.map((url, i) => <DocLink key={i} url={url} label={`Sire certificate ${i + 1}`} />)}
+              </div>
+            </div>
+          )}
+          {damCerts.length > 0 && (
+            <div>
+              <p className="font-body text-xs font-semibold uppercase tracking-widest text-muted mb-2">Dam Certificates ({damCerts.length})</p>
+              <div className="space-y-1.5">
+                {damCerts.map((url, i) => <DocLink key={i} url={url} label={`Dam certificate ${i + 1}`} />)}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </Modal>
+  )
+}
 
 const TABS = ['All', 'Pending', 'KUSA', 'Canine SA']
 
@@ -88,6 +138,7 @@ export default function AdminKennels() {
   const [addOpen, setAddOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [copiedId, setCopiedId] = useState(null)
+  const [docsTarget, setDocsTarget] = useState(null)
 
   const pendingSellers = sellers.filter(s => s.status === 'pending_verification')
   const awaitingPayment = sellers.filter(s => s.status === 'pending_payment')
@@ -151,6 +202,13 @@ export default function AdminKennels() {
                   <p className="font-body text-xs text-muted">{s.email} · Applied {s.joinedDate}</p>
                 </div>
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => setDocsTarget(s)}
+                    className="flex items-center gap-1.5 bg-cream border border-divider text-espresso font-body text-xs font-semibold px-3 py-1.5 hover:border-sienna hover:text-sienna transition-colors"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    View Docs
+                  </button>
                   <button
                     onClick={() => approveSeller(s.id)}
                     className="flex items-center gap-1.5 bg-sage text-white font-body text-xs font-semibold px-3 py-1.5 hover:bg-sage-dark transition-colors"
@@ -360,6 +418,8 @@ export default function AdminKennels() {
           onSave={(form) => { adminEditKennel(editFull.id, form); setEditFull(null) }}
         />
       )}
+
+      <DocsModal seller={docsTarget} open={!!docsTarget} onClose={() => setDocsTarget(null)} />
 
       {/* Remove kennel confirmation */}
       <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Remove Kennel">
