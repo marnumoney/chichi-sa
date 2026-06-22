@@ -288,10 +288,12 @@ export function AppProvider({ children }) {
 
   const updateSellerDocuments = async (documents) => {
     const res = await apiFetch('/seller/documents', { method: 'PUT', body: documents })
-    if (res.ok) {
-      const saved = normalize(await res.json())
-      setSellerUser(prev => ({ ...prev, documents: saved }))
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}))
+      throw new Error(e.detail || 'Failed to save documents')
     }
+    const saved = normalize(await res.json())
+    setSellerUser(prev => ({ ...prev, documents: saved }))
   }
 
   const updateSellerProfile = async (updates) => {

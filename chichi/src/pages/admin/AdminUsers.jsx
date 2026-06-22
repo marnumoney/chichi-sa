@@ -42,9 +42,9 @@ function BuyerModal({ buyer, transactions, open, onClose }) {
 
 function DocsModal({ seller, open, onClose }) {
   const docs = seller?.documents || {}
-  const kennelCert = docs.kennel_cert
-  const sireCerts = docs.sire_certs || []
-  const damCerts = docs.dam_certs || []
+  const kennelCert = docs.kennelCert
+  const sireCerts = docs.sireCerts || []
+  const damCerts = docs.damCerts || []
   const hasAny = kennelCert || sireCerts.length > 0 || damCerts.length > 0
 
   const DocLink = ({ url, label }) => (
