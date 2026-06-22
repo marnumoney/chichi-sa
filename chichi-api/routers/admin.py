@@ -1,11 +1,14 @@
+import os
 import random
 import re
 import sqlite3
 import uuid
 from datetime import date, timedelta
+from typing import List
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 
 from payfast_helper import FRONTEND_URL
 
@@ -17,6 +20,36 @@ from models import (KennelCreate, KennelUpdate, LegalUpdate, SellerCreate,
 router = APIRouter()
 
 _PALETTE = ['#B5651D', '#4A7C59', '#C49A1D', '#7C5C4A', '#2A1F14', '#6B4A7C']
+
+
+class BroadcastRequest(BaseModel):
+    subject: str
+    message: str
+    seller_ids: List[str]
+
+
+def _send_email(to: str, name: str, subject: str, body_text: str):
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+    smtp_user = os.getenv('SMTP_USER', 'chihuahuasouthafrica@gmail.com')
+    smtp_pass = os.getenv('SMTP_PASSWORD', '')
+    if not smtp_pass:
+        print(f'[email] SMTP_PASSWORD not set — skipping email to {to}')
+        return
+    msg = MIMEMultipart()
+    msg['From'] = f'Chihuahua South Africa <{smtp_user}>'
+    msg['To'] = to
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body_text, 'plain'))
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.send_message(msg)
+        print(f'[email] Sent to {to}')
+    except Exception as e:
+        print(f'[email] Failed to send to {to}: {e}')
 
 
 def _slugify(text: str) -> str:
@@ -235,6 +268,36 @@ async def admin_approve_seller(
     return result
 
 
+@router.patch('/sellers/{seller_id}/reject')
+def admin_reject_seller(
+    seller_id: str,
+    _: dict = Depends(get_current_admin),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    seller = db.execute('SELECT * FROM sellers WHERE id = ?', (seller_id,)).fetchone()
+    if not seller:
+        raise HTTPException(status_code=404, detail='Seller not found')
+    seller = dict(seller)
+    db.execute("UPDATE sellers SET status = 'rejected' WHERE id = ?", (seller_id,))
+    db.commit()
+    _send_email(
+        seller['email'],
+        seller.get('name') or 'Breeder',
+        'Your Chihuahua SA application — update',
+        (
+            f"Hi {seller.get('name') or 'Breeder'},\n\n"
+            f"Thank you for applying to list your kennel on Chihuahua South Africa.\n\n"
+            f"After reviewing your application, we are unable to approve it at this time.\n\n"
+            f"If you believe this was an error or would like to provide additional information, "
+            f"please contact us at chihuahuasouthafrica@gmail.com.\n\n"
+            f"— Chihuahua South Africa"
+        ),
+    )
+    result = dict(db.execute('SELECT * FROM sellers WHERE id = ?', (seller_id,)).fetchone())
+    result.pop('password_hash')
+    return result
+
+
 @router.post('/sellers/{seller_id}/send-payment-email')
 async def admin_send_payment_email(
     seller_id: str,
@@ -297,6 +360,23 @@ def admin_pay_membership(
     result = dict(db.execute('SELECT * FROM sellers WHERE id = ?', (seller_id,)).fetchone())
     result.pop('password_hash')
     return result
+
+
+@router.post('/broadcast')
+def admin_broadcast(
+    body: BroadcastRequest,
+    _: dict = Depends(get_current_admin),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    sent = 0
+    for seller_id in body.seller_ids:
+        row = db.execute('SELECT * FROM sellers WHERE id = ?', (seller_id,)).fetchone()
+        if not row:
+            continue
+        seller = dict(row)
+        _send_email(seller['email'], seller.get('name') or 'Breeder', body.subject, body.message)
+        sent += 1
+    return {'ok': True, 'sent': sent}
 
 
 # ── Puppies ───────────────────────────────────────────────────────────────────

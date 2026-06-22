@@ -141,6 +141,7 @@ export default function AdminUsers() {
     if (status === 'approved') return <span className="badge-available px-2 py-0.5">Approved</span>
     if (status === 'pending_verification') return <span className="bg-amber-100 text-amber-700 text-[10px] font-bold tracking-widest uppercase px-2 py-0.5">Pending Verify</span>
     if (status === 'pending_payment') return <span className="bg-blue-100 text-blue-700 text-[10px] font-bold tracking-widest uppercase px-2 py-0.5">Pending Payment</span>
+    if (status === 'rejected') return <span className="badge-sold px-2 py-0.5">Rejected</span>
     return null
   }
 

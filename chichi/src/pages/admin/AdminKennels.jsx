@@ -131,7 +131,7 @@ function CommissionModal({ kennel, open, onClose, onSave }) {
 }
 
 export default function AdminKennels() {
-  const { kennels, sellers, approveKennel, rejectKennel, updateKennelCommission, approveSeller, adminAddKennel, adminEditKennel, adminRemoveKennel } = useApp()
+  const { kennels, sellers, approveKennel, rejectKennel, updateKennelCommission, approveSeller, rejectSeller, adminAddKennel, adminEditKennel, adminRemoveKennel } = useApp()
   const [tab, setTab] = useState('All')
   const [editKennel, setEditKennel] = useState(null)
   const [editFull, setEditFull] = useState(null)
@@ -216,7 +216,7 @@ export default function AdminKennels() {
                     <Check className="w-3.5 h-3.5" />
                     Approve → Generate Payment Link
                   </button>
-                  <button className="flex items-center gap-1.5 bg-red-100 text-red-700 font-body text-xs font-semibold px-3 py-1.5 hover:bg-red-200 transition-colors">
+                  <button onClick={() => rejectSeller(s.id)} className="flex items-center gap-1.5 bg-red-100 text-red-700 font-body text-xs font-semibold px-3 py-1.5 hover:bg-red-200 transition-colors">
                     <X className="w-3.5 h-3.5" />
                     Reject
                   </button>

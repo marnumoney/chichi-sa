@@ -2,10 +2,8 @@ import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import { Send, CheckCircle, Loader2 } from 'lucide-react'
 
-const ADMIN_EMAIL = 'Chihuahuasouthafrica@gmail.com'
-
 export default function AdminBroadcast() {
-  const { sellers, kennels } = useApp()
+  const { sellers, kennels, broadcastSellers } = useApp()
   const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
   const [target, setTarget] = useState('all')
@@ -25,25 +23,13 @@ export default function AdminBroadcast() {
     e.preventDefault()
     if (!subject || !message || recipients.length === 0) return
     setLoading(true)
-
-    for (const seller of recipients) {
-      const kennel = kennels.find(k => k.id === seller.kennelId)
-      try {
-        await fetch(`https://formsubmit.co/ajax/${ADMIN_EMAIL}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({
-            _subject: `📢 Chihuahua SA — ${subject}`,
-            _cc: seller.email,
-            'To': seller.name,
-            'Kennel': kennel?.name ?? '',
-            'Message': message,
-            'From': 'Chihuahua South Africa Admin',
-          }),
-        })
-      } catch {/* continue */ }
-    }
-
+    try {
+      await broadcastSellers(
+        `📢 Chihuahua SA — ${subject}`,
+        message,
+        recipients.map(s => s.id),
+      )
+    } catch {/* email failure must not block UI */ }
     setLoading(false)
     setSent(true)
     setSubject('')

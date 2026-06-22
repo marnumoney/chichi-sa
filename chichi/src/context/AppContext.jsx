@@ -373,6 +373,20 @@ export function AppProvider({ children }) {
     await loadAdminData()
   }
 
+  const rejectSeller = async (sellerId) => {
+    await apiFetch(`/admin/sellers/${sellerId}/reject`, { method: 'PATCH' })
+    await loadAdminData()
+  }
+
+  const broadcastSellers = async (subject, message, sellerIds) => {
+    const res = await apiFetch('/admin/broadcast', {
+      method: 'POST',
+      body: { subject, message, sellerIds },
+    })
+    if (!res.ok) throw new Error('Broadcast failed')
+    return res.json()
+  }
+
   const payMembership = async (sellerId) => {
     await apiFetch(`/admin/sellers/${sellerId}/pay-membership`, { method: 'PATCH' })
     await loadAdminData()
@@ -441,7 +455,7 @@ export function AppProvider({ children }) {
       adminUser, sellerUser,
       loginAdmin, loginSeller, logoutAdmin, logoutSeller,
       purchasePuppy, releasePayment, markSellerPaid, markCommissionPaid,
-      approveSeller, approveKennel, rejectKennel,
+      approveSeller, rejectSeller, approveKennel, rejectKennel, broadcastSellers,
       updateKennelCommission, addPuppy, delistPuppy,
       updateLegal, updateAdminSettings, signupSeller, updateSellerProfile, updateSellerDocuments,
       payMembership,
