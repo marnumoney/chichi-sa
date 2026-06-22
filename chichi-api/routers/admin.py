@@ -6,7 +6,6 @@ import uuid
 from datetime import date, timedelta
 from typing import List
 
-import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
@@ -207,7 +206,7 @@ def admin_delete_seller(
 
 
 @router.patch('/sellers/{seller_id}/approve')
-async def admin_approve_seller(
+def admin_approve_seller(
     seller_id: str,
     _: dict = Depends(get_current_admin),
     db: sqlite3.Connection = Depends(get_db),
@@ -239,29 +238,19 @@ async def admin_approve_seller(
     db.commit()
 
     payment_link = f'{FRONTEND_URL}/pay/membership?seller={seller_id}'
-    try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            await client.post(
-                f'https://formsubmit.co/ajax/{seller["email"]}',
-                headers={'Content-Type': 'application/json', 'Accept': 'application/json'},
-                json={
-                    '_subject': 'Your Chihuahua SA application has been approved — payment required',
-                    'name': seller['name'],
-                    'kennel': kennel_name,
-                    'registry': registry,
-                    'message': (
-                        f'Hi {seller["name"]},\n\n'
-                        f'Your application for {kennel_name} ({registry}) has been approved by our admin team.\n\n'
-                        f'To activate your seller account and start listing puppies, please complete your annual membership payment:\n\n'
-                        f'{payment_link}\n\n'
-                        f'Once payment is confirmed your portal will be activated automatically.\n\n'
-                        f'— Chihuahua South Africa'
-                    ),
-                    '_replyto': seller['email'],
-                },
-            )
-    except Exception:
-        pass  # email failure must not block the approval
+    _send_email(
+        seller['email'],
+        seller.get('name') or 'Breeder',
+        'Your Chihuahua SA application has been approved — payment required',
+        (
+            f"Hi {seller.get('name') or 'Breeder'},\n\n"
+            f"Your application for {kennel_name} ({registry}) has been approved by our admin team.\n\n"
+            f"To activate your seller account and start listing puppies, please complete your annual membership payment:\n\n"
+            f"{payment_link}\n\n"
+            f"Once payment is confirmed your portal will be activated automatically.\n\n"
+            f"— Chihuahua South Africa"
+        ),
+    )
 
     result = dict(db.execute('SELECT * FROM sellers WHERE id = ?', (seller_id,)).fetchone())
     result.pop('password_hash')
@@ -299,7 +288,7 @@ def admin_reject_seller(
 
 
 @router.post('/sellers/{seller_id}/send-payment-email')
-async def admin_send_payment_email(
+def admin_send_payment_email(
     seller_id: str,
     _: dict = Depends(get_current_admin),
     db: sqlite3.Connection = Depends(get_db),
@@ -316,26 +305,19 @@ async def admin_send_payment_email(
     kennel_name = (kennel or {}).get('name') or seller.get('kennel_name') or f"{seller['name']}'s Kennel"
     registry = (kennel or {}).get('registry') or seller.get('registry') or 'KUSA'
     payment_link = f'{FRONTEND_URL}/pay/membership?seller={seller_id}'
-    async with httpx.AsyncClient(timeout=10) as client:
-        await client.post(
-            f'https://formsubmit.co/ajax/{seller["email"]}',
-            headers={'Content-Type': 'application/json', 'Accept': 'application/json'},
-            json={
-                '_subject': 'Your Chihuahua SA account is approved — complete your payment',
-                'name': seller['name'],
-                'kennel': kennel_name,
-                'registry': registry,
-                'message': (
-                    f'Hi {seller["name"]},\n\n'
-                    f'Your application for {kennel_name} ({registry}) has been approved!\n\n'
-                    f'To activate your seller account and start listing puppies, please complete your annual membership payment:\n\n'
-                    f'{payment_link}\n\n'
-                    f'Once payment is confirmed your portal will be activated automatically.\n\n'
-                    f'— Chihuahua South Africa'
-                ),
-                '_replyto': 'chihuahuasouthafrica@gmail.com',
-            },
-        )
+    _send_email(
+        seller['email'],
+        seller.get('name') or 'Breeder',
+        'Your Chihuahua SA account is approved — complete your payment',
+        (
+            f"Hi {seller.get('name') or 'Breeder'},\n\n"
+            f"Your application for {kennel_name} ({registry}) has been approved!\n\n"
+            f"To activate your seller account and start listing puppies, please complete your annual membership payment:\n\n"
+            f"{payment_link}\n\n"
+            f"Once payment is confirmed your portal will be activated automatically.\n\n"
+            f"— Chihuahua South Africa"
+        ),
+    )
     return {'ok': True, 'email': seller['email'], 'payment_link': payment_link}
 
 
