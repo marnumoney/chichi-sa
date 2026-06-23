@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { CheckCircle, Loader2 } from 'lucide-react'
 
-const ADMIN_EMAIL = 'Chihuahuasouthafrica@gmail.com'
+const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
@@ -16,17 +16,12 @@ export default function ContactPage() {
     setLoading(true)
     setError(false)
     try {
-      await fetch(`https://formsubmit.co/ajax/${ADMIN_EMAIL}`, {
+      const res = await fetch(`${API}/contact`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          _subject: `ChiSA Enquiry — ${form.subject}`,
-          'Name': form.name,
-          'Email': form.email,
-          'Subject': form.subject,
-          'Message': form.message,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
       })
+      if (!res.ok) setError(true)
     } catch { setError(true) }
     setLoading(false)
     setSent(true)
@@ -40,7 +35,7 @@ export default function ContactPage() {
         </div>
         <h1 className="font-display text-3xl font-semibold text-espresso mb-3">Message Sent!</h1>
         <p className="font-body text-sm text-muted">Thank you for reaching out. We'll get back to you within 1–2 business days.</p>
-        {error && <p className="font-body text-xs text-amber-600 mt-3">Email delivery issue — please also reach us at {ADMIN_EMAIL}</p>}
+        {error && <p className="font-body text-xs text-amber-600 mt-3">Email delivery issue — please also reach us at chihuahuasouthafrica@gmail.com</p>}
       </div>
     )
   }

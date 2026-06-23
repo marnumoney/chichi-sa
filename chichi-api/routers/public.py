@@ -1,3 +1,4 @@
+import os
 import sqlite3
 import uuid
 from datetime import date
@@ -82,6 +83,43 @@ def submit_testimonial(body: TestimonialCreate, db: sqlite3.Connection = Depends
 def get_legal(db: sqlite3.Connection = Depends(get_db)):
     row = db.execute('SELECT content FROM legal_text WHERE id = 1').fetchone()
     return {'content': row['content'] if row else ''}
+
+
+def _send_contact_email(name: str, email: str, subject: str, message: str):
+    import smtplib
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+    smtp_user = os.getenv('SMTP_USER', 'chihuahuasouthafrica@gmail.com')
+    smtp_pass = os.getenv('SMTP_PASSWORD', '')
+    if not smtp_pass:
+        print(f'[email] SMTP_PASSWORD not set — contact from {email}: {subject}')
+        return
+    msg = MIMEMultipart()
+    msg['From'] = f'Chihuahua South Africa <{smtp_user}>'
+    msg['To'] = smtp_user
+    msg['Reply-To'] = email
+    msg['Subject'] = f'ChiSA Enquiry — {subject}'
+    msg.attach(MIMEText(f'From: {name} <{email}>\n\nSubject: {subject}\n\n{message}', 'plain'))
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.send_message(msg)
+        print(f'[email] Contact form email received from {email}')
+    except Exception as e:
+        print(f'[email] Failed to send contact email: {e}')
+
+
+@router.post('/contact')
+def submit_contact(body: dict):
+    name = (body.get('name') or '').strip()
+    email = (body.get('email') or '').strip()
+    subject = (body.get('subject') or '').strip()
+    message = (body.get('message') or '').strip()
+    if not name or not email or not subject or not message:
+        raise HTTPException(status_code=400, detail='All fields are required')
+    _send_contact_email(name, email, subject, message)
+    return {'ok': True}
 
 
 @router.get('/sellers/{seller_id}/payment-info')

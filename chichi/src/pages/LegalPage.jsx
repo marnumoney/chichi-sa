@@ -62,11 +62,16 @@ export default function LegalPage() {
         <p className="font-body text-sm text-muted">Click any section to expand. Last updated by admin.</p>
       </div>
       <div className="space-y-2">
-        {sections.map((s, i) => (
-          <Accordion key={i} title={s.title}>
-            <div className="pt-3 space-y-1.5">{renderLines(s.lines)}</div>
-          </Accordion>
-        ))}
+        {sections.length > 0
+          ? sections.map((s, i) => (
+              <Accordion key={i} title={s.title}>
+                <div className="pt-3 space-y-1.5">{renderLines(s.lines)}</div>
+              </Accordion>
+            ))
+          : legalContent
+            ? <div className="bg-white border border-divider p-6 space-y-1.5">{renderLines(legalContent.split('\n'))}</div>
+            : <p className="font-body text-sm text-muted">No terms & conditions have been published yet.</p>
+        }
       </div>
     </div>
   )
