@@ -274,10 +274,14 @@ export function AppProvider({ children }) {
 
   // ── Seller actions ────────────────────────────────────────────────────────
   const addPuppy = async (puppyData) => {
-    await apiFetch('/seller/puppies', {
+    const res = await apiFetch('/seller/puppies', {
       method: 'POST',
       body: puppyData,
     })
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}))
+      throw new Error(e.detail || 'Failed to add puppy')
+    }
     await loadPuppies()
   }
 

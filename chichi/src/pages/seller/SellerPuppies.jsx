@@ -127,6 +127,9 @@ export default function SellerPuppies() {
   const [imagePreviews, setImagePreviews] = useState([])
   const [uploadingImages, setUploadingImages] = useState(false)
   const [uploadError, setUploadError] = useState(null)
+  const [uploadingSire, setUploadingSire] = useState(false)
+  const [uploadingDam, setUploadingDam] = useState(false)
+  const [addError, setAddError] = useState(null)
   const [commissionModal, setCommissionModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
 
@@ -173,11 +176,14 @@ export default function SellerPuppies() {
     if (!file) return
     const localPreview = URL.createObjectURL(file)
     setForm(f => ({ ...f, sireImage: localPreview }))
+    setUploadingSire(true)
     try {
       const url = await uploadImage(file)
       setForm(f => ({ ...f, sireImage: url }))
     } catch {
       setForm(f => ({ ...f, sireImage: null }))
+    } finally {
+      setUploadingSire(false)
     }
   }
 
@@ -186,11 +192,14 @@ export default function SellerPuppies() {
     if (!file) return
     const localPreview = URL.createObjectURL(file)
     setForm(f => ({ ...f, damImage: localPreview }))
+    setUploadingDam(true)
     try {
       const url = await uploadImage(file)
       setForm(f => ({ ...f, damImage: url }))
     } catch {
       setForm(f => ({ ...f, damImage: null }))
+    } finally {
+      setUploadingDam(false)
     }
   }
 
@@ -200,18 +209,26 @@ export default function SellerPuppies() {
     setCommissionModal(true)
   }
 
-  const handleConfirmAdd = () => {
-    addPuppy({
-      ...form,
-      kennelId: sellerUser.kennelId,
-      price: Number(form.price),
-      breedingRightsPrice: Number(form.breedingRightsPrice || 0),
-      images: form.images.length > 0 ? form.images : [],
-    })
-    setCommissionModal(false)
-    setShowForm(false)
-    setForm(EMPTY_FORM)
-    setImagePreviews([])
+  const handleConfirmAdd = async () => {
+    setAddError(null)
+    try {
+      await addPuppy({
+        ...form,
+        kennelId: sellerUser.kennelId,
+        price: Number(form.price),
+        breedingRightsPrice: Number(form.breedingRightsPrice || 0),
+        images: form.images.length > 0 ? form.images : [],
+        sireImage: form.sireImage || '',
+        damImage: form.damImage || '',
+      })
+      setCommissionModal(false)
+      setShowForm(false)
+      setForm(EMPTY_FORM)
+      setImagePreviews([])
+    } catch (err) {
+      setCommissionModal(false)
+      setAddError(err.message || 'Failed to add puppy. Please try again.')
+    }
   }
 
   return (
@@ -405,9 +422,11 @@ export default function SellerPuppies() {
           {/* Sire & Dam photos */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label mb-3">Sire (Father) Photo</label>
-              <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-divider hover:border-sienna/40 p-4 cursor-pointer transition-colors min-h-[120px]">
-                {form.sireImage ? (
+              <label className="label mb-3">Sire (Father) Photo <span className="text-muted font-normal">(optional)</span></label>
+              <label className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed border-divider hover:border-sienna/40 p-4 cursor-pointer transition-colors min-h-[120px] ${uploadingSire ? 'opacity-60 pointer-events-none' : ''}`}>
+                {uploadingSire ? (
+                  <Loader2 className="w-5 h-5 text-sienna animate-spin" />
+                ) : form.sireImage ? (
                   <img src={form.sireImage} alt="Sire" className="w-full h-28 object-cover" />
                 ) : (
                   <>
@@ -415,16 +434,18 @@ export default function SellerPuppies() {
                     <span className="font-body text-xs text-muted text-center">Upload photo of the Sire</span>
                   </>
                 )}
-                <input type="file" accept="image/*" className="sr-only" onChange={handleSireImage} />
+                <input type="file" accept="image/*" className="sr-only" onChange={handleSireImage} disabled={uploadingSire} />
               </label>
-              {form.sireImage && (
+              {form.sireImage && !uploadingSire && (
                 <button type="button" onClick={() => setForm(f => ({ ...f, sireImage: null }))} className="font-body text-xs text-red-500 hover:underline mt-1">Remove</button>
               )}
             </div>
             <div>
-              <label className="label mb-3">Dam (Mother) Photo</label>
-              <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-divider hover:border-sienna/40 p-4 cursor-pointer transition-colors min-h-[120px]">
-                {form.damImage ? (
+              <label className="label mb-3">Dam (Mother) Photo <span className="text-muted font-normal">(optional)</span></label>
+              <label className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed border-divider hover:border-sienna/40 p-4 cursor-pointer transition-colors min-h-[120px] ${uploadingDam ? 'opacity-60 pointer-events-none' : ''}`}>
+                {uploadingDam ? (
+                  <Loader2 className="w-5 h-5 text-sienna animate-spin" />
+                ) : form.damImage ? (
                   <img src={form.damImage} alt="Dam" className="w-full h-28 object-cover" />
                 ) : (
                   <>
@@ -432,15 +453,20 @@ export default function SellerPuppies() {
                     <span className="font-body text-xs text-muted text-center">Upload photo of the Dam</span>
                   </>
                 )}
-                <input type="file" accept="image/*" className="sr-only" onChange={handleDamImage} />
+                <input type="file" accept="image/*" className="sr-only" onChange={handleDamImage} disabled={uploadingDam} />
               </label>
-              {form.damImage && (
+              {form.damImage && !uploadingDam && (
                 <button type="button" onClick={() => setForm(f => ({ ...f, damImage: null }))} className="font-body text-xs text-red-500 hover:underline mt-1">Remove</button>
               )}
             </div>
           </div>
 
-          <button type="submit" className="btn-primary text-xs tracking-widest uppercase py-3.5 px-8">
+          {addError && (
+            <p className="font-body text-xs text-red-600 bg-red-50 border border-red-200 px-3 py-2">{addError}</p>
+          )}
+
+          <button type="submit" disabled={uploadingImages || uploadingSire || uploadingDam}
+            className={`btn-primary text-xs tracking-widest uppercase py-3.5 px-8 ${(uploadingImages || uploadingSire || uploadingDam) ? 'opacity-60 cursor-not-allowed' : ''}`}>
             Review & Confirm Listing
           </button>
         </form>
