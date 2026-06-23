@@ -2,6 +2,7 @@ import os
 import requests
 import json
 import sys
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
@@ -22,7 +23,8 @@ def get_bars(symbol, timeframe="1Day", limit=60):
     if not ALPACA_KEY or not ALPACA_SECRET:
         raise RuntimeError("APCA_API_KEY_ID and APCA_API_SECRET_KEY must be set in .env")
     url = f"{DATA_URL}/v2/stocks/{symbol}/bars"
-    params = {"timeframe": timeframe, "limit": limit, "adjustment": "raw"}
+    start = (datetime.now(timezone.utc) - timedelta(days=90)).strftime("%Y-%m-%d")
+    params = {"timeframe": timeframe, "limit": limit, "adjustment": "raw", "start": start, "feed": "iex"}
     response = requests.get(url, headers=_headers(), params=params)
     response.raise_for_status()
     return response.json()
