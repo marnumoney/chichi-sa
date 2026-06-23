@@ -33,8 +33,8 @@ def test_validate_order_uses_default_5pct_for_unknown_symbol():
 def test_validate_order_violates_cash_reserve():
     from trade import validate_order
     positions = [{"market_value": "7500.0"}]
-    # 7500 already invested + 1000 new = 8500/10000 = 85% > 80%
-    valid, msg = validate_order("AAPL", 5, "buy", 200.0, 10000.0, positions, WATCHLIST)
+    # 3 * 200 = 600 = 6% < 8% AAPL cap (allocation ok); 7500 + 600 = 8100/10000 = 81% > 80%
+    valid, msg = validate_order("AAPL", 3, "buy", 200.0, 10000.0, positions, WATCHLIST)
     assert not valid
     assert "cash reserve" in msg
 
@@ -101,3 +101,20 @@ def test_place_sell_limit_order():
 
     mock_sell.assert_called_once_with("NVDA", 2, 846.00, timeInForce="gfd")
     assert result["id"] == "def456"
+
+
+def test_validate_order_fresh_portfolio_enforces_allocation_cap():
+    from trade import validate_order
+    positions = []
+    # 30 * 250 = 7500 = 75% of 10000 — under 80% cash reserve but WAY over 5% default cap
+    valid, msg = validate_order("TSLA", 30, "buy", 250.0, 10000.0, positions, WATCHLIST)
+    assert not valid
+    assert "5%" in msg
+
+
+def test_validate_order_zero_account_value():
+    from trade import validate_order
+    positions = []
+    valid, msg = validate_order("AAPL", 1, "buy", 100.0, 0.0, positions, WATCHLIST)
+    assert not valid
+    assert "zero" in msg

@@ -16,18 +16,16 @@ def _rh_login():
     r.login(os.getenv("ROBINHOOD_USERNAME"), os.getenv("ROBINHOOD_PASSWORD"))
 
 
-def validate_order(symbol, qty, side, current_price, account_value, current_positions, watchlist):
+def validate_order(symbol, qty, side, current_price, account_value, current_positions, watchlist, cash_reserve_pct=0.80):
     if side == "sell":
         return True, "Order validated"
 
+    if account_value <= 0:
+        return False, "Cannot validate order: account value is zero or negative"
+
     order_value = qty * current_price
-    total_invested = sum(float(p.get("market_value", 0)) for p in current_positions)
 
-    # Check cash reserve first when there are existing positions (total portfolio risk)
-    if total_invested > 0 and (total_invested + order_value) / account_value > 0.80:
-        return False, "Order would violate 20% cash reserve requirement"
-
-    # Check per-symbol allocation cap (single-order risk)
+    # Per-symbol allocation cap (always checked first)
     allocation_pct = (order_value / account_value) * 100
     symbol_max = next(
         (w["max_allocation_pct"] for w in watchlist if w["symbol"] == symbol), 5
@@ -35,8 +33,9 @@ def validate_order(symbol, qty, side, current_price, account_value, current_posi
     if allocation_pct > symbol_max:
         return False, f"Order exceeds {symbol_max}% allocation limit: {allocation_pct:.1f}%"
 
-    # Check cash reserve for fresh portfolios (no existing positions)
-    if total_invested == 0 and order_value / account_value > 0.80:
+    # Cash reserve: total invested + this order must leave >= 20% cash
+    total_invested = sum(float(p.get("market_value", 0)) for p in current_positions)
+    if (total_invested + order_value) / account_value > cash_reserve_pct:
         return False, "Order would violate 20% cash reserve requirement"
 
     return True, "Order validated"
@@ -91,17 +90,22 @@ if __name__ == "__main__":
                 wl = json.load(f)
 
             portfolio = get_portfolio()
+            cash_reserve_pct = wl.get("cash_reserve_pct", 20) / 100
             valid, msg = validate_order(
                 symbol, qty, side, limit_price,
                 portfolio["total_value"],
                 portfolio["positions"],
                 wl["watchlist"],
+                cash_reserve_pct=cash_reserve_pct,
             )
             if not valid:
                 print(json.dumps({"error": msg, "order_placed": False}))
                 sys.exit(0)
 
             result = place_order(symbol, qty, side, limit_price)
+            if result is None:
+                print(json.dumps({"error": "Robinhood rejected the order (returned None)", "order_placed": False}))
+                sys.exit(1)
             print(json.dumps({**result, "order_placed": True}))
 
     except Exception as e:
