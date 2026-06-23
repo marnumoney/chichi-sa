@@ -32,8 +32,8 @@ class PuppyCreate(BaseModel):
     health: List[str] = []
     description: str = ''
     registration_no: str = ''
-    sire_image: Optional[str] = ''
-    dam_image: Optional[str] = ''
+    sire_image: str
+    dam_image: str
 
 
 class KennelCreate(BaseModel):

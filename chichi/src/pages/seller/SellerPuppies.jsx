@@ -206,6 +206,15 @@ export default function SellerPuppies() {
   const handleFormSubmit = (e) => {
     e.preventDefault()
     if (form.breedingRights === null) return
+    setAddError(null)
+    if (!form.sireImage || form.sireImage.startsWith('blob:')) {
+      setAddError('A photo of the sire (father) is required for admin verification.')
+      return
+    }
+    if (!form.damImage || form.damImage.startsWith('blob:')) {
+      setAddError('A photo of the dam (mother) is required for admin verification.')
+      return
+    }
     setCommissionModal(true)
   }
 
@@ -218,8 +227,6 @@ export default function SellerPuppies() {
         price: Number(form.price),
         breedingRightsPrice: Number(form.breedingRightsPrice || 0),
         images: form.images.length > 0 ? form.images : [],
-        sireImage: form.sireImage || '',
-        damImage: form.damImage || '',
       })
       setCommissionModal(false)
       setShowForm(false)
@@ -422,7 +429,7 @@ export default function SellerPuppies() {
           {/* Sire & Dam photos */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label mb-3">Sire (Father) Photo <span className="text-muted font-normal">(optional)</span></label>
+              <label className="label mb-3">Sire (Father) Photo *</label>
               <label className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed border-divider hover:border-sienna/40 p-4 cursor-pointer transition-colors min-h-[120px] ${uploadingSire ? 'opacity-60 pointer-events-none' : ''}`}>
                 {uploadingSire ? (
                   <Loader2 className="w-5 h-5 text-sienna animate-spin" />
@@ -441,7 +448,7 @@ export default function SellerPuppies() {
               )}
             </div>
             <div>
-              <label className="label mb-3">Dam (Mother) Photo <span className="text-muted font-normal">(optional)</span></label>
+              <label className="label mb-3">Dam (Mother) Photo *</label>
               <label className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed border-divider hover:border-sienna/40 p-4 cursor-pointer transition-colors min-h-[120px] ${uploadingDam ? 'opacity-60 pointer-events-none' : ''}`}>
                 {uploadingDam ? (
                   <Loader2 className="w-5 h-5 text-sienna animate-spin" />
