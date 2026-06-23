@@ -13,7 +13,7 @@ LOGFILE="$LOG_DIR/trading-session-$DATE.log"
 cd "$AGENT_DIR"
 source "$AGENT_DIR/.env" 2>/dev/null || true
 
-exec "$CLAUDE_BIN" --print "Run the trading session.
+exec "$CLAUDE_BIN" --dangerously-skip-permissions --print "Run the trading session.
 
 Steps:
 1. Run \`python scripts/trade.py status\`. If is_open is false, append 'Market closed — trading session skipped.' to journal/$DATE.md and stop.

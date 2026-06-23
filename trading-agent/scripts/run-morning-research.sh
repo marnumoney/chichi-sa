@@ -13,7 +13,7 @@ LOGFILE="$LOG_DIR/morning-research-$DATE.log"
 cd "$AGENT_DIR"
 source "$AGENT_DIR/.env" 2>/dev/null || true
 
-exec "$CLAUDE_BIN" --print "Run the morning research routine.
+exec "$CLAUDE_BIN" --dangerously-skip-permissions --print "Run the morning research routine.
 
 Steps:
 1. Run \`python scripts/trade.py status\` and parse the JSON. If is_open is false, write a one-line note to journal/$DATE.md (create it if it does not exist) saying 'Market closed — no research today.' then stop.

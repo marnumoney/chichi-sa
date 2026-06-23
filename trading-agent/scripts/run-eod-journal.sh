@@ -13,7 +13,7 @@ LOGFILE="$LOG_DIR/eod-journal-$DATE.log"
 cd "$AGENT_DIR"
 source "$AGENT_DIR/.env" 2>/dev/null || true
 
-exec "$CLAUDE_BIN" --print "Run the end-of-day journal routine.
+exec "$CLAUDE_BIN" --dangerously-skip-permissions --print "Run the end-of-day journal routine.
 
 Steps:
 1. Run \`python scripts/trade.py portfolio\` to get final positions and account value.
