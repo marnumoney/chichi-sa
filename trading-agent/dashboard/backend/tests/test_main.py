@@ -41,3 +41,13 @@ def test_get_portfolio_handles_trade_error():
         mock_run.return_value.stderr = "Connection error"
         response = client.get("/portfolio")
     assert response.status_code == 502
+
+
+def test_get_portfolio_handles_invalid_json():
+    client = get_client()
+    with patch("main.subprocess.run") as mock_run:
+        mock_run.return_value.returncode = 0
+        mock_run.return_value.stdout = "WARNING: something\nnot json"
+        mock_run.return_value.stderr = ""
+        response = client.get("/portfolio")
+    assert response.status_code == 502
