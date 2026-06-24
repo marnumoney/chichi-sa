@@ -40,3 +40,27 @@ export async function fetchPrices() {
   if (!res.ok) throw new Error('Failed to fetch prices')
   return res.json()
 }
+
+export async function fetchMarket() {
+  const res = await fetch('/market')
+  if (!res.ok) throw new Error('Failed to fetch market status')
+  return res.json()
+}
+
+export async function fetchOrders() {
+  const res = await fetch('/orders')
+  if (!res.ok) throw new Error('Failed to fetch orders')
+  return res.json()
+}
+
+export async function fetchNews() {
+  const res = await fetch('/news')
+  if (!res.ok) throw new Error('Failed to fetch news')
+  return res.json()
+}
+
+export async function fetchHistory() {
+  const res = await fetch('/history')
+  if (!res.ok) throw new Error('Failed to fetch history')
+  return res.json()
+}

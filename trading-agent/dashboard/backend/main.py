@@ -77,6 +77,80 @@ def update_watchlist(body: dict):
     return body
 
 
+@app.get("/market")
+def get_market():
+    result = subprocess.run(
+        [sys.executable, "scripts/trade.py", "status"],
+        cwd=BASE_DIR, capture_output=True, text=True, timeout=15,
+    )
+    if result.returncode != 0:
+        raise HTTPException(status_code=502, detail=result.stderr or "status failed")
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=502, detail=f"invalid JSON: {e}")
+
+
+def _alpaca_headers():
+    return {
+        "APCA-API-KEY-ID": os.getenv("APCA_API_KEY_ID", ""),
+        "APCA-API-SECRET-KEY": os.getenv("APCA_API_SECRET_KEY", ""),
+    }
+
+
+@app.get("/orders")
+def get_orders():
+    base = os.getenv("APCA_BASE_URL", "https://paper-api.alpaca.markets")
+    try:
+        resp = httpx.get(
+            f"{base}/v2/orders",
+            params={"status": "all", "limit": 25, "direction": "desc"},
+            headers=_alpaca_headers(),
+            timeout=10,
+        )
+        resp.raise_for_status()
+    except httpx.HTTPError as e:
+        raise HTTPException(status_code=502, detail=f"Alpaca orders failed: {e}")
+    return resp.json()
+
+
+@app.get("/news")
+def get_news():
+    watchlist_path = BASE_DIR / "watchlist.json"
+    watchlist = json.loads(watchlist_path.read_text())
+    symbols = [w["symbol"] for w in watchlist.get("watchlist", [])]
+    if not symbols:
+        return []
+    try:
+        resp = httpx.get(
+            "https://data.alpaca.markets/v1beta1/news",
+            params={"symbols": ",".join(symbols), "limit": 20, "sort": "desc"},
+            headers=_alpaca_headers(),
+            timeout=10,
+        )
+        resp.raise_for_status()
+    except httpx.HTTPError as e:
+        raise HTTPException(status_code=502, detail=f"Alpaca news failed: {e}")
+    data = resp.json()
+    return data.get("news", []) if isinstance(data, dict) else data
+
+
+@app.get("/history")
+def get_history():
+    base = os.getenv("APCA_BASE_URL", "https://paper-api.alpaca.markets")
+    try:
+        resp = httpx.get(
+            f"{base}/v2/account/portfolio/history",
+            params={"period": "1M", "timeframe": "1D", "intraday_reporting": "market_hours"},
+            headers=_alpaca_headers(),
+            timeout=10,
+        )
+        resp.raise_for_status()
+    except httpx.HTTPError as e:
+        raise HTTPException(status_code=502, detail=f"Alpaca history failed: {e}")
+    return resp.json()
+
+
 @app.get("/prices")
 def get_prices():
     watchlist_path = BASE_DIR / "watchlist.json"
@@ -85,14 +159,13 @@ def get_prices():
     if not symbols:
         return {}
 
-    key = os.getenv("APCA_API_KEY_ID", "")
-    secret = os.getenv("APCA_API_SECRET_KEY", "")
-    url = "https://data.alpaca.markets/v2/stocks/snapshots"
-    params = {"symbols": ",".join(symbols), "feed": "iex"}
-    headers = {"APCA-API-KEY-ID": key, "APCA-API-SECRET-KEY": secret}
-
     try:
-        resp = httpx.get(url, params=params, headers=headers, timeout=10)
+        resp = httpx.get(
+            "https://data.alpaca.markets/v2/stocks/snapshots",
+            params={"symbols": ",".join(symbols), "feed": "iex"},
+            headers=_alpaca_headers(),
+            timeout=10,
+        )
         resp.raise_for_status()
     except httpx.HTTPError as e:
         raise HTTPException(status_code=502, detail=f"Alpaca snapshot failed: {e}")

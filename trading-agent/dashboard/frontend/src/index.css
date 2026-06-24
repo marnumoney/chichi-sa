@@ -184,3 +184,78 @@ tr:last-child td { border-bottom: none; }
   font-size: 0.75rem;
 }
 .live-stat-label { font-size: 0.65rem; color: #718096; margin-bottom: 1px; }
+
+/* Market clock */
+.market-clock {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #a0aec0;
+  white-space: nowrap;
+}
+.market-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot-open { background: #68d391; box-shadow: 0 0 6px #68d391; }
+.dot-closed { background: #fc8181; }
+.market-status-label { font-weight: 700; font-size: 0.75rem; }
+.market-countdown { color: #718096; }
+
+/* Chart tooltip */
+.chart-tooltip {
+  background: #1a1f2e;
+  border: 1px solid #2d3748;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+}
+.chart-tooltip-date { color: #718096; margin-bottom: 2px; }
+
+/* Orders feed */
+.orders-list { display: flex; flex-direction: column; gap: 0.4rem; }
+.order-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #1e2533;
+  font-size: 0.8rem;
+}
+.order-row:last-child { border-bottom: none; }
+.order-row-left { display: flex; align-items: center; gap: 0.5rem; }
+.order-row-right { display: flex; align-items: center; gap: 0.5rem; text-align: right; }
+.order-side { font-weight: 700; font-size: 0.7rem; }
+.order-symbol { font-weight: 600; color: #e2e8f0; }
+.order-qty { color: #718096; }
+.order-price { color: #e2e8f0; }
+.order-status { font-size: 0.7rem; text-transform: capitalize; }
+.order-time { color: #4a5568; font-size: 0.7rem; }
+
+/* News feed */
+.news-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.news-item { border-bottom: 1px solid #1e2533; padding-bottom: 0.75rem; }
+.news-item:last-child { border-bottom: none; padding-bottom: 0; }
+.news-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
+.news-symbols { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.news-tag {
+  background: #2d3748;
+  color: #90cdf4;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.news-age { font-size: 0.7rem; color: #4a5568; }
+.news-headline {
+  display: block;
+  font-size: 0.82rem;
+  color: #e2e8f0;
+  text-decoration: none;
+  line-height: 1.4;
+  margin-bottom: 0.25rem;
+}
+.news-headline:hover { color: #90cdf4; text-decoration: underline; }
+.news-summary { font-size: 0.75rem; color: #718096; line-height: 1.5; }
