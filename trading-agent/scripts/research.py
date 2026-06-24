@@ -7,6 +7,14 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
+
+def load_config(path=None):
+    if path is None:
+        path = os.path.join(os.path.dirname(__file__), '..', 'config.json')
+    with open(path) as f:
+        return json.load(f)
+
+
 ALPACA_KEY = os.getenv("APCA_API_KEY_ID")
 ALPACA_SECRET = os.getenv("APCA_API_SECRET_KEY")
 DATA_URL = "https://data.alpaca.markets"
@@ -53,12 +61,15 @@ if __name__ == "__main__":
 
     try:
         if action == "bars":
+            config = load_config()
+            ma_short = config["ma_short_period"]
+            ma_long = config["ma_long_period"]
             bars = get_bars(symbol)
             print(json.dumps({
                 "symbol": symbol,
                 "bars": bars,
-                "ma20": calculate_ma(bars, 20),
-                "ma50": calculate_ma(bars, 50),
+                f"ma{ma_short}": calculate_ma(bars, ma_short),
+                f"ma{ma_long}": calculate_ma(bars, ma_long),
             }))
         elif action == "news":
             print(json.dumps(get_news(symbol)))

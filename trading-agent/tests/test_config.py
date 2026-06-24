@@ -4,6 +4,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
 import json
 import pytest
 from trade import load_config, validate_order
+from research import load_config as research_load_config, calculate_ma
 
 WATCHLIST = [
     {"symbol": "SPY",  "max_allocation_pct": 15},
@@ -51,3 +52,19 @@ def test_validate_order_max_default_allocation_boundary():
     valid, msg = validate_order("TSLA", 6, "buy", 100.0, 10000.0, [], WATCHLIST)
     assert not valid
     assert "5%" in msg
+
+
+def test_research_load_config_returns_ma_periods(tmp_path):
+    config_data = {
+        "stop_loss_pct": 8,
+        "limit_order_slippage_pct": 0.2,
+        "ma_short_period": 10,
+        "ma_long_period": 30,
+        "cash_reserve_pct": 20,
+        "max_default_allocation_pct": 5,
+    }
+    config_file = tmp_path / "config.json"
+    config_file.write_text(json.dumps(config_data))
+    result = research_load_config(str(config_file))
+    assert result["ma_short_period"] == 10
+    assert result["ma_long_period"] == 30
