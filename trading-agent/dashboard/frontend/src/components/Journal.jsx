@@ -10,19 +10,27 @@ export default function Journal() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    fetchJournalDates()
-      .then(data => {
-        setDates(data.dates)
-        if (data.dates.length > 0) setSelected(data.dates[0])
-      })
-      .catch(e => setError(e.message))
+    const load = () =>
+      fetchJournalDates()
+        .then(data => {
+          setDates(data.dates)
+          if (data.dates.length > 0) setSelected(prev => prev ?? data.dates[0])
+        })
+        .catch(e => setError(e.message))
+    load()
+    const id = setInterval(load, 30000)
+    return () => clearInterval(id)
   }, [])
 
   useEffect(() => {
     if (!selected) return
-    fetchJournalEntry(selected)
-      .then(data => setContent(data.content))
-      .catch(e => setError(e.message))
+    const load = () =>
+      fetchJournalEntry(selected)
+        .then(data => setContent(data.content))
+        .catch(e => setError(e.message))
+    load()
+    const id = setInterval(load, 30000)
+    return () => clearInterval(id)
   }, [selected])
 
   if (error) return <div className="error">Error: {error}</div>

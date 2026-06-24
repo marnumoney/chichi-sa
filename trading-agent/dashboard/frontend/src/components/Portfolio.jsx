@@ -6,9 +6,10 @@ export default function Portfolio() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    fetchPortfolio()
-      .then(setData)
-      .catch(e => setError(e.message))
+    const load = () => fetchPortfolio().then(setData).catch(e => setError(e.message))
+    load()
+    const id = setInterval(load, 30000)
+    return () => clearInterval(id)
   }, [])
 
   if (error) return <div className="error">Error: {error}</div>
