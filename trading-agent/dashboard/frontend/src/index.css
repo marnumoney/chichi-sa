@@ -112,3 +112,27 @@ tr:last-child td { border-bottom: none; }
 
 .validation-error { color: #fc8181; font-size: 0.875rem; margin-top: 0.5rem; }
 .save-success { color: #68d391; font-size: 0.875rem; margin-top: 0.5rem; }
+
+.price-ticker {
+  display: flex;
+  gap: 0;
+  background: #111520;
+  border-bottom: 1px solid #2d3748;
+  padding: 0.4rem 2rem;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0 1.25rem;
+  border-right: 1px solid #2d3748;
+  font-size: 0.8rem;
+}
+.ticker-item:first-child { padding-left: 0; }
+.ticker-item:last-child { border-right: none; }
+
+.ticker-symbol { font-weight: 600; color: #90cdf4; }
+.ticker-price { color: #e2e8f0; }

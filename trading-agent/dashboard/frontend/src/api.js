@@ -34,3 +34,9 @@ export async function saveWatchlist(body) {
   }
   return res.json()
 }
+
+export async function fetchPrices() {
+  const res = await fetch('/prices')
+  if (!res.ok) throw new Error('Failed to fetch prices')
+  return res.json()
+}

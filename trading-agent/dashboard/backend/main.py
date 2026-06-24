@@ -1,10 +1,16 @@
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 
+import httpx
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+
+BASE_DIR = Path(__file__).parent.parent.parent  # trading-agent/
+load_dotenv(BASE_DIR / ".env")
 
 app = FastAPI()
 
@@ -14,8 +20,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-BASE_DIR = Path(__file__).parent.parent.parent  # trading-agent/
 
 
 @app.get("/portfolio")
@@ -71,3 +75,33 @@ def update_watchlist(body: dict):
     path = BASE_DIR / "watchlist.json"
     path.write_text(json.dumps(body, indent=2))
     return body
+
+
+@app.get("/prices")
+def get_prices():
+    watchlist_path = BASE_DIR / "watchlist.json"
+    watchlist = json.loads(watchlist_path.read_text())
+    symbols = [w["symbol"] for w in watchlist.get("watchlist", [])]
+    if not symbols:
+        return {}
+
+    key = os.getenv("APCA_API_KEY_ID", "")
+    secret = os.getenv("APCA_API_SECRET_KEY", "")
+    url = "https://data.alpaca.markets/v2/stocks/snapshots"
+    params = {"symbols": ",".join(symbols), "feed": "iex"}
+    headers = {"APCA-API-KEY-ID": key, "APCA-API-SECRET-KEY": secret}
+
+    try:
+        resp = httpx.get(url, params=params, headers=headers, timeout=10)
+        resp.raise_for_status()
+    except httpx.HTTPError as e:
+        raise HTTPException(status_code=502, detail=f"Alpaca snapshot failed: {e}")
+
+    data = resp.json()
+    result = {}
+    for sym, snap in data.items():
+        price = snap.get("latestTrade", {}).get("p") or snap.get("dailyBar", {}).get("c")
+        prev_close = snap.get("prevDailyBar", {}).get("c")
+        change_pct = (price - prev_close) / prev_close * 100 if price and prev_close else None
+        result[sym] = {"price": price, "change_pct": change_pct}
+    return result

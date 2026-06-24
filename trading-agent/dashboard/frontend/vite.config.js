@@ -9,6 +9,7 @@ export default defineConfig({
       '/portfolio': 'http://localhost:8001',
       '/journal': 'http://localhost:8001',
       '/watchlist': 'http://localhost:8001',
+      '/prices': 'http://localhost:8001',
     },
   },
 })

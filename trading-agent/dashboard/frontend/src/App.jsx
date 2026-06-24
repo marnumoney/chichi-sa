@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import Portfolio from './components/Portfolio.jsx'
 import Journal from './components/Journal.jsx'
 import Watchlist from './components/Watchlist.jsx'
+import PriceTicker from './components/PriceTicker.jsx'
 
 const TABS = ['Portfolio', 'Journal', 'Watchlist']
 
@@ -24,6 +25,7 @@ export default function App() {
           ))}
         </nav>
       </header>
+      <PriceTicker />
       <main className="main">
         {tab === 'Portfolio' && <Portfolio />}
         {tab === 'Journal' && <Journal />}
