@@ -6,6 +6,14 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
+
+def load_config(path=None):
+    if path is None:
+        path = os.path.join(os.path.dirname(__file__), '..', 'config.json')
+    with open(path) as f:
+        return json.load(f)
+
+
 ALPACA_KEY = os.getenv("APCA_API_KEY_ID")
 ALPACA_SECRET = os.getenv("APCA_API_SECRET_KEY")
 ALPACA_BASE_URL = os.getenv("APCA_BASE_URL", "https://paper-api.alpaca.markets")
@@ -18,7 +26,7 @@ def _headers():
     }
 
 
-def validate_order(symbol, qty, side, current_price, account_value, current_positions, watchlist, cash_reserve_pct=0.80):
+def validate_order(symbol, qty, side, current_price, account_value, current_positions, watchlist, cash_reserve_pct=0.80, max_default_allocation_pct=5):
     if side == "sell":
         return True, "Order validated"
 
@@ -30,7 +38,7 @@ def validate_order(symbol, qty, side, current_price, account_value, current_posi
     # Per-symbol allocation cap (always checked first)
     allocation_pct = (order_value / account_value) * 100
     symbol_max = next(
-        (w["max_allocation_pct"] for w in watchlist if w["symbol"] == symbol), 5
+        (w["max_allocation_pct"] for w in watchlist if w["symbol"] == symbol), max_default_allocation_pct
     )
     if allocation_pct > symbol_max:
         return False, f"Order exceeds {symbol_max}% allocation limit: {allocation_pct:.1f}%"
@@ -115,14 +123,17 @@ if __name__ == "__main__":
             with open(wl_path) as f:
                 wl = json.load(f)
 
+            config = load_config()
             portfolio = get_portfolio()
-            cash_reserve_pct = wl.get("cash_reserve_pct", 20) / 100
+            cash_reserve_pct = config["cash_reserve_pct"] / 100
+            max_default_allocation_pct = config["max_default_allocation_pct"]
             valid, msg = validate_order(
                 symbol, qty, side, limit_price,
                 portfolio["total_value"],
                 portfolio["positions"],
                 wl["watchlist"],
                 cash_reserve_pct=cash_reserve_pct,
+                max_default_allocation_pct=max_default_allocation_pct,
             )
             if not valid:
                 print(json.dumps({"error": msg, "order_placed": False}))
