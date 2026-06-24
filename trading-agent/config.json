@@ -1,0 +1,8 @@
+{
+  "stop_loss_pct": 8,
+  "limit_order_slippage_pct": 0.2,
+  "ma_short_period": 20,
+  "ma_long_period": 50,
+  "cash_reserve_pct": 20,
+  "max_default_allocation_pct": 5
+}
