@@ -2,29 +2,28 @@
   "watchlist": [
     {
       "symbol": "SPY",
-      "description": "S&P 500 ETF — baseline market exposure",
+      "description": "S&P 500 ETF \u2014 baseline market exposure",
       "max_allocation_pct": 15
     },
     {
       "symbol": "QQQ",
-      "description": "Nasdaq ETF — tech sector exposure",
+      "description": "Nasdaq ETF \u2014 tech sector exposure",
       "max_allocation_pct": 10
     },
     {
       "symbol": "NVDA",
-      "description": "GPU/AI infrastructure — high conviction holding",
+      "description": "GPU/AI infrastructure \u2014 high conviction holding",
       "max_allocation_pct": 8
     },
     {
       "symbol": "AAPL",
-      "description": "Large cap tech — stability anchor",
+      "description": "Large cap tech \u2014 stability anchor",
       "max_allocation_pct": 8
     },
     {
       "symbol": "MSFT",
-      "description": "Cloud/enterprise — AI infrastructure play",
+      "description": "Cloud/enterprise \u2014 AI infrastructure play",
       "max_allocation_pct": 8
     }
-  ],
-  "cash_reserve_pct": 20
+  ]
 }
