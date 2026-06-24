@@ -46,7 +46,7 @@ def validate_order(symbol, qty, side, current_price, account_value, current_posi
     # Cash reserve: total invested + this order must leave >= cash_reserve_pct cash
     total_invested = sum(float(p.get("market_value", 0)) for p in current_positions)
     if (total_invested + order_value) / account_value > cash_reserve_pct:
-        return False, "Order would violate 20% cash reserve requirement"
+        return False, f"Order would violate {round((1 - cash_reserve_pct) * 100)}% cash reserve requirement"
 
     return True, "Order validated"
 

@@ -23,10 +23,7 @@ def test_load_config_returns_all_keys(tmp_path):
     config_file = tmp_path / "config.json"
     config_file.write_text(json.dumps(config_data))
     result = load_config(str(config_file))
-    assert result["stop_loss_pct"] == 8
-    assert result["ma_short_period"] == 20
-    assert result["cash_reserve_pct"] == 20
-    assert result["max_default_allocation_pct"] == 5
+    assert result == config_data
 
 
 def test_load_config_reads_default_path():
@@ -46,10 +43,11 @@ def test_validate_order_uses_config_max_default_allocation():
     assert "3%" in msg
 
 
-def test_validate_order_default_max_allocation_is_5():
-    # Default max_default_allocation_pct=5; 3*200=600=6% > 5% — should fail
-    valid, msg = validate_order(
-        "TSLA", 3, "buy", 200.0, 10000.0, [], WATCHLIST
-    )
+def test_validate_order_max_default_allocation_boundary():
+    # 5*100=500=5% of 10000 — exactly at the 5% default cap, should pass
+    valid, _ = validate_order("TSLA", 5, "buy", 100.0, 10000.0, [], WATCHLIST)
+    assert valid
+    # 6*100=600=6% of 10000 — just over 5% default cap, should fail
+    valid, msg = validate_order("TSLA", 6, "buy", 100.0, 10000.0, [], WATCHLIST)
     assert not valid
     assert "5%" in msg
