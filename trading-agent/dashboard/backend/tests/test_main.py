@@ -91,3 +91,58 @@ def test_get_journal_entry(tmp_path):
 def test_get_journal_entry_not_found():
     response = get_client().get("/journal/1999-01-01")
     assert response.status_code == 404
+
+
+def test_get_watchlist(tmp_path):
+    watchlist_data = {
+        "watchlist": [{"symbol": "SPY", "description": "S&P 500", "max_allocation_pct": 15}],
+        "cash_reserve_pct": 20
+    }
+    (tmp_path / "watchlist.json").write_text(json.dumps(watchlist_data))
+    original = main_module.BASE_DIR
+    main_module.BASE_DIR = tmp_path
+    try:
+        response = get_client().get("/watchlist")
+        assert response.status_code == 200
+        assert response.json()["watchlist"][0]["symbol"] == "SPY"
+    finally:
+        main_module.BASE_DIR = original
+
+
+def test_put_watchlist_valid(tmp_path):
+    (tmp_path / "watchlist.json").write_text('{"watchlist": [], "cash_reserve_pct": 20}')
+    original = main_module.BASE_DIR
+    main_module.BASE_DIR = tmp_path
+    try:
+        body = {
+            "watchlist": [
+                {"symbol": "SPY", "description": "S&P 500", "max_allocation_pct": 15},
+                {"symbol": "AAPL", "description": "Apple", "max_allocation_pct": 8},
+            ],
+            "cash_reserve_pct": 20
+        }
+        response = get_client().put("/watchlist", json=body)
+        assert response.status_code == 200
+        written = json.loads((tmp_path / "watchlist.json").read_text())
+        assert written["watchlist"][0]["symbol"] == "SPY"
+    finally:
+        main_module.BASE_DIR = original
+
+
+def test_put_watchlist_exceeds_80pct(tmp_path):
+    (tmp_path / "watchlist.json").write_text('{"watchlist": [], "cash_reserve_pct": 20}')
+    original = main_module.BASE_DIR
+    main_module.BASE_DIR = tmp_path
+    try:
+        body = {
+            "watchlist": [
+                {"symbol": "SPY", "max_allocation_pct": 50},
+                {"symbol": "QQQ", "max_allocation_pct": 40},
+            ],
+            "cash_reserve_pct": 20
+        }
+        response = get_client().put("/watchlist", json=body)
+        assert response.status_code == 400
+        assert "80%" in response.json()["detail"]
+    finally:
+        main_module.BASE_DIR = original

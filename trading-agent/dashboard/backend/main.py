@@ -51,3 +51,23 @@ def get_journal_entry(date: str):
     if not path.exists():
         raise HTTPException(status_code=404, detail="Journal entry not found")
     return {"date": date, "content": path.read_text()}
+
+
+@app.get("/watchlist")
+def get_watchlist():
+    path = BASE_DIR / "watchlist.json"
+    return json.loads(path.read_text())
+
+
+@app.put("/watchlist")
+def update_watchlist(body: dict):
+    watchlist = body.get("watchlist", [])
+    total = sum(float(w.get("max_allocation_pct", 0)) for w in watchlist)
+    if total > 80:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Total allocation {total:.1f}% exceeds 80% limit"
+        )
+    path = BASE_DIR / "watchlist.json"
+    path.write_text(json.dumps(body, indent=2))
+    return body
