@@ -52,5 +52,25 @@ module.exports = {
         PATH: "/home/marnu/.local/bin:/usr/local/bin:/usr/bin:/bin",
       },
     },
+    {
+      name: "trading-daily-reflection",
+      script: "/home/marnu/trading-agent/scripts/run-daily-reflection.sh",
+      cron_restart: "30 20 * * 1-5",
+      autorestart: false,
+      watch: false,
+      env: {
+        PATH: "/home/marnu/.local/bin:/usr/local/bin:/usr/bin:/bin",
+      },
+    },
+    {
+      name: "trading-weekly-review",
+      script: "/home/marnu/trading-agent/scripts/run-weekly-review.sh",
+      cron_restart: "45 20 * * 5",
+      autorestart: false,
+      watch: false,
+      env: {
+        PATH: "/home/marnu/.local/bin:/usr/local/bin:/usr/bin:/bin",
+      },
+    },
   ],
 };
