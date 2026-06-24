@@ -40,5 +40,17 @@ module.exports = {
         PATH: "/home/marnu/.local/bin:/usr/local/bin:/usr/bin:/bin",
       },
     },
+    {
+      name: "trading-dashboard-api",
+      script: "/home/marnu/.local/bin/uvicorn",
+      args: "main:app --host 127.0.0.1 --port 8001",
+      cwd: "/home/marnu/trading-agent/dashboard/backend",
+      interpreter: "none",
+      autorestart: true,
+      watch: false,
+      env: {
+        PATH: "/home/marnu/.local/bin:/usr/local/bin:/usr/bin:/bin",
+      },
+    },
   ],
 };

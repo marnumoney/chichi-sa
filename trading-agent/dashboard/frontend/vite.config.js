@@ -6,9 +6,9 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '/portfolio': 'http://localhost:8000',
-      '/journal': 'http://localhost:8000',
-      '/watchlist': 'http://localhost:8000',
+      '/portfolio': 'http://localhost:8001',
+      '/journal': 'http://localhost:8001',
+      '/watchlist': 'http://localhost:8001',
     },
   },
 })
