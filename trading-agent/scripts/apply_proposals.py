@@ -136,6 +136,9 @@ def apply_watchlist(proposal, watchlist_path=None):
             items.append(entry)
             print(f"  watchlist.json: added {symbol} ({max_alloc}%)")
         else:
+            if not any(w["symbol"] == symbol for w in items):
+                print(f"ERROR: Cannot update {symbol} — symbol not found in watchlist")
+                sys.exit(1)
             for i, w in enumerate(items):
                 if w["symbol"] == symbol:
                     items[i] = {**w, **entry}

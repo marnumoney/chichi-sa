@@ -70,7 +70,6 @@ def test_research_load_config_returns_ma_periods(tmp_path):
     assert result["ma_long_period"] == 30
 
 
-import subprocess
 from apply_proposals import parse_proposals, apply_parameter, apply_watchlist
 
 
