@@ -51,3 +51,43 @@ def test_get_portfolio_handles_invalid_json():
         mock_run.return_value.stderr = ""
         response = client.get("/portfolio")
     assert response.status_code == 502
+
+
+import main as main_module
+
+
+def test_list_journal_returns_dates_descending(tmp_path):
+    journal_dir = tmp_path / "journal"
+    journal_dir.mkdir()
+    (journal_dir / "2026-06-23.md").write_text("day 1")
+    (journal_dir / "2026-06-24.md").write_text("day 2")
+    (journal_dir / "summary.md").write_text("summary")  # must be excluded
+    original = main_module.BASE_DIR
+    main_module.BASE_DIR = tmp_path
+    try:
+        response = get_client().get("/journal")
+        assert response.status_code == 200
+        assert response.json()["dates"] == ["2026-06-24", "2026-06-23"]
+    finally:
+        main_module.BASE_DIR = original
+
+
+def test_get_journal_entry(tmp_path):
+    journal_dir = tmp_path / "journal"
+    journal_dir.mkdir()
+    (journal_dir / "2026-06-23.md").write_text("# Trade Journal\nContent here")
+    original = main_module.BASE_DIR
+    main_module.BASE_DIR = tmp_path
+    try:
+        response = get_client().get("/journal/2026-06-23")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["date"] == "2026-06-23"
+        assert "Content here" in data["content"]
+    finally:
+        main_module.BASE_DIR = original
+
+
+def test_get_journal_entry_not_found():
+    response = get_client().get("/journal/1999-01-01")
+    assert response.status_code == 404

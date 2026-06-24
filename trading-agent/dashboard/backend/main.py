@@ -33,3 +33,21 @@ def get_portfolio():
         return json.loads(result.stdout)
     except json.JSONDecodeError as e:
         raise HTTPException(status_code=502, detail=f"trade.py returned invalid JSON: {e}")
+
+
+@app.get("/journal")
+def list_journal():
+    journal_dir = BASE_DIR / "journal"
+    dates = sorted(
+        [f.stem for f in journal_dir.glob("*.md") if f.stem != "summary"],
+        reverse=True,
+    )
+    return {"dates": dates}
+
+
+@app.get("/journal/{date}")
+def get_journal_entry(date: str):
+    path = BASE_DIR / "journal" / f"{date}.md"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Journal entry not found")
+    return {"date": date, "content": path.read_text()}
