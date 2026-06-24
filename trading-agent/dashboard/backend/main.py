@@ -100,8 +100,23 @@ def get_prices():
     data = resp.json()
     result = {}
     for sym, snap in data.items():
-        price = snap.get("latestTrade", {}).get("p") or snap.get("dailyBar", {}).get("c")
-        prev_close = snap.get("prevDailyBar", {}).get("c")
+        trade = snap.get("latestTrade", {})
+        quote = snap.get("latestQuote", {})
+        bar = snap.get("dailyBar", {})
+        prev = snap.get("prevDailyBar", {})
+
+        price = trade.get("p") or bar.get("c")
+        prev_close = prev.get("c")
         change_pct = (price - prev_close) / prev_close * 100 if price and prev_close else None
-        result[sym] = {"price": price, "change_pct": change_pct}
+
+        result[sym] = {
+            "price": price,
+            "change_pct": change_pct,
+            "open": bar.get("o"),
+            "high": bar.get("h"),
+            "low": bar.get("l"),
+            "volume": bar.get("v"),
+            "bid": quote.get("bp"),
+            "ask": quote.get("ap"),
+        }
     return result
