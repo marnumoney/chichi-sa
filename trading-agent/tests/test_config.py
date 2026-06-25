@@ -54,6 +54,24 @@ def test_validate_order_max_default_allocation_boundary():
     assert "5%" in msg
 
 
+def test_validate_order_invest_cap_derived_correctly():
+    # config cash_reserve_pct=20 means invest_cap = 1.0 - 0.20 = 0.80,
+    # NOT 0.20 — the correct derivation allows up to 80% of portfolio invested.
+    wl = [{"symbol": "SPY", "max_allocation_pct": 15}]
+    existing = [{"market_value": 6500}]  # 65% already invested
+    # Order 1 SPY share at $500 → total = 7000/10000 = 70% < 80% cap → passes
+    correct_invest_cap = 1.0 - (20 / 100)
+    valid, _ = validate_order("SPY", 1, "buy", 500.0, 10000.0, existing, wl,
+                              cash_reserve_pct=correct_invest_cap)
+    assert valid
+
+    # With the inverted (buggy) value 0.20, the same order would be rejected
+    buggy_invest_cap = 20 / 100
+    valid, _ = validate_order("SPY", 1, "buy", 500.0, 10000.0, existing, wl,
+                              cash_reserve_pct=buggy_invest_cap)
+    assert not valid
+
+
 def test_research_load_config_returns_ma_periods(tmp_path):
     config_data = {
         "stop_loss_pct": 8,

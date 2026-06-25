@@ -2,8 +2,8 @@
 // Cron expressions are in UTC. User timezone: Africa/Johannesburg (UTC+2)
 // Target timezone for schedules: America/New_York (ET = UTC-4 in summer, UTC-5 in winter)
 //
-// Summer (EDT, UTC-4):  9:45 AM ET = 13:45 UTC | 10:00 AM ET = 14:00 UTC | 4:15 PM ET = 20:15 UTC
-// Winter (EST, UTC-5): 9:45 AM ET = 14:45 UTC | 10:00 AM ET = 15:00 UTC | 4:15 PM ET = 21:15 UTC
+// Summer (EDT, UTC-4):  9:45 AM ET = 13:45 UTC | 10:00 AM ET = 14:00 UTC | 4:15 PM ET = 20:15 UTC | 5:00 PM ET = 21:00 UTC | 5:15 PM ET = 21:15 UTC
+// Winter (EST, UTC-5): 9:45 AM ET = 14:45 UTC | 10:00 AM ET = 15:00 UTC | 4:15 PM ET = 21:15 UTC | 5:00 PM ET = 22:00 UTC | 5:15 PM ET = 22:15 UTC
 //
 // NOTE: Update cron expressions each time DST changes (Mar & Nov).
 // Current setting: EDT (summer, UTC-4) — valid until ~first Sunday of November.
@@ -55,7 +55,7 @@ module.exports = {
     {
       name: "trading-daily-reflection",
       script: "/home/marnu/trading-agent/scripts/run-daily-reflection.sh",
-      cron_restart: "30 20 * * 1-5",
+      cron_restart: "0 21 * * 1-5",
       autorestart: false,
       watch: false,
       env: {

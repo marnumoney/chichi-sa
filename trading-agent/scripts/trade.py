@@ -125,14 +125,14 @@ if __name__ == "__main__":
 
             config = load_config()
             portfolio = get_portfolio()
-            cash_reserve_pct = config["cash_reserve_pct"] / 100
+            invest_cap = 1.0 - (config["cash_reserve_pct"] / 100)
             max_default_allocation_pct = config["max_default_allocation_pct"]
             valid, msg = validate_order(
                 symbol, qty, side, limit_price,
                 portfolio["total_value"],
                 portfolio["positions"],
                 wl["watchlist"],
-                cash_reserve_pct=cash_reserve_pct,
+                cash_reserve_pct=invest_cap,
                 max_default_allocation_pct=max_default_allocation_pct,
             )
             if not valid:

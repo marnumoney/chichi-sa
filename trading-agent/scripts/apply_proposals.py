@@ -82,6 +82,14 @@ def apply_parameter(proposal, config_path=None):
     config = json.loads(path.read_text())
     old    = config.get(key)
     config[key] = int(value) if value == int(value) else value
+
+    if key in ("ma_short_period", "ma_long_period"):
+        short = config.get("ma_short_period", 0)
+        long_ = config.get("ma_long_period", float("inf"))
+        if short >= long_:
+            print(f"ERROR: ma_short_period ({short}) must be < ma_long_period ({long_})")
+            sys.exit(1)
+
     path.write_text(json.dumps(config, indent=2) + '\n')
     print(f"  config.json: {key} {old} -> {config[key]}")
     return path
@@ -212,7 +220,7 @@ def main():
                 break
 
     ids_str = ' '.join(applied)
-    summary = '; '.join(summaries[:2])
+    summary = '; '.join(summaries[:2]) if summaries else ids_str
     msg     = f"self-improvement: apply {ids_str} — {summary}"
 
     subprocess.run(['git', 'add'] + list(dict.fromkeys(modified)), check=True, cwd=BASE_DIR)
