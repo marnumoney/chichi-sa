@@ -7,7 +7,7 @@ function toCamel(str) {
   return str.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
 }
 
-function normalize(val) {
+export function normalize(val) {
   if (Array.isArray(val)) return val.map(normalize)
   if (val && typeof val === 'object') {
     return Object.fromEntries(Object.entries(val).map(([k, v]) => [toCamel(k), normalize(v)]))
@@ -36,7 +36,7 @@ function authHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
-async function apiFetch(path, options = {}) {
+export async function apiFetch(path, options = {}) {
   const body = options.body && typeof options.body === 'object'
     ? JSON.stringify(denormalize(options.body))
     : options.body

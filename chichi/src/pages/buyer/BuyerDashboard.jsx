@@ -1,15 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useApp } from '../../context/AppContext'
+import { useApp, apiFetch, normalize } from '../../context/AppContext'
 import { Logo } from '../../components/Logo'
-import { ShoppingBag, User, LogOut, Check } from 'lucide-react'
-
-const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-
-function authHeaders() {
-  const token = localStorage.getItem('token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
+import { ShoppingBag, LogOut, Check } from 'lucide-react'
 
 export default function BuyerDashboard() {
   const { buyerUser, logoutBuyer } = useApp()
@@ -20,9 +13,9 @@ export default function BuyerDashboard() {
   const [profileSaved, setProfileSaved] = useState(false)
 
   useEffect(() => {
-    fetch(`${API}/buyer/me`, { headers: { 'Content-Type': 'application/json', ...authHeaders() } })
+    apiFetch('/buyer/me')
       .then(r => r.json())
-      .then(d => setPurchases(d.purchases || []))
+      .then(d => { const data = normalize(d); setPurchases(data.purchases || []) })
       .catch(() => {})
   }, [])
 
@@ -30,11 +23,7 @@ export default function BuyerDashboard() {
 
   const saveProfile = async (e) => {
     e.preventDefault()
-    await fetch(`${API}/buyer/profile`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify(profileForm),
-    })
+    await apiFetch('/buyer/profile', { method: 'PUT', body: profileForm })
     setProfileSaved(true)
     setTimeout(() => setProfileSaved(false), 2500)
   }
@@ -112,8 +101,8 @@ export default function BuyerDashboard() {
                     <div key={p.id} className="bg-white border border-divider p-5">
                       <div className="flex items-start justify-between mb-4">
                         <div>
-                          <p className="font-display text-lg font-semibold text-espresso">{p.puppy_name}</p>
-                          <p className="font-body text-sm text-muted">{p.kennel_name} · {p.date}</p>
+                          <p className="font-display text-lg font-semibold text-espresso">{p.puppyName}</p>
+                          <p className="font-body text-sm text-muted">{p.kennelName} · {p.date}</p>
                         </div>
                         <span className="font-display text-xl font-semibold text-espresso">R{(p.amount || 0).toLocaleString()}</span>
                       </div>

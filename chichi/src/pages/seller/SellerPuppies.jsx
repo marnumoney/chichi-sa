@@ -14,6 +14,7 @@ function BankingDetailsSection({ kennel, onSave }) {
   const hasBanking = kennel?.accountNumber
   const [open, setOpen] = useState(!hasBanking)
   const [saved, setSaved] = useState(false)
+  const [bankError, setBankError] = useState('')
   const [bank, setBank] = useState({
     bankName: kennel?.bankName ?? '',
     accountHolder: kennel?.accountHolder ?? '',
@@ -22,11 +23,16 @@ function BankingDetailsSection({ kennel, onSave }) {
     accountType: kennel?.accountType ?? 'Cheque / Current',
   })
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault()
-    onSave(bank)
-    setSaved(true)
-    setTimeout(() => { setSaved(false); setOpen(false) }, 2000)
+    setBankError('')
+    try {
+      await onSave(bank)
+      setSaved(true)
+      setTimeout(() => { setSaved(false); setOpen(false) }, 2000)
+    } catch (err) {
+      setBankError(err?.message || 'Failed to save banking details. Please try again.')
+    }
   }
 
   return (
@@ -89,6 +95,7 @@ function BankingDetailsSection({ kennel, onSave }) {
           <button type="submit" className={`flex items-center gap-2 px-6 py-2.5 font-body text-xs font-semibold tracking-widest uppercase transition-colors ${saved ? 'bg-sage text-white' : 'btn-primary'}`}>
             {saved ? <><Check className="w-3.5 h-3.5" /> Saved!</> : 'Save Banking Details'}
           </button>
+          {bankError && <p className="font-body text-xs text-red-600 mt-2">{bankError}</p>}
         </form>
       )}
     </div>
@@ -128,7 +135,9 @@ export default function SellerPuppies() {
   const [uploadingImages, setUploadingImages] = useState(false)
   const [uploadError, setUploadError] = useState(null)
   const [uploadingSire, setUploadingSire] = useState(false)
+  const [sireError, setSireError] = useState('')
   const [uploadingDam, setUploadingDam] = useState(false)
+  const [damError, setDamError] = useState('')
   const [addError, setAddError] = useState(null)
   const [commissionModal, setCommissionModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
@@ -174,14 +183,15 @@ export default function SellerPuppies() {
   const handleSireImage = async (e) => {
     const file = e.target.files[0]
     if (!file) return
-    const localPreview = URL.createObjectURL(file)
-    setForm(f => ({ ...f, sireImage: localPreview }))
+    setForm(f => ({ ...f, sireImage: URL.createObjectURL(file) }))
     setUploadingSire(true)
+    setSireError('')
     try {
       const url = await uploadImage(file)
       setForm(f => ({ ...f, sireImage: url }))
     } catch {
       setForm(f => ({ ...f, sireImage: null }))
+      setSireError('Sire photo upload failed. Please try again.')
     } finally {
       setUploadingSire(false)
     }
@@ -190,14 +200,15 @@ export default function SellerPuppies() {
   const handleDamImage = async (e) => {
     const file = e.target.files[0]
     if (!file) return
-    const localPreview = URL.createObjectURL(file)
-    setForm(f => ({ ...f, damImage: localPreview }))
+    setForm(f => ({ ...f, damImage: URL.createObjectURL(file) }))
     setUploadingDam(true)
+    setDamError('')
     try {
       const url = await uploadImage(file)
       setForm(f => ({ ...f, damImage: url }))
     } catch {
       setForm(f => ({ ...f, damImage: null }))
+      setDamError('Dam photo upload failed. Please try again.')
     } finally {
       setUploadingDam(false)
     }
@@ -446,6 +457,7 @@ export default function SellerPuppies() {
               {form.sireImage && !uploadingSire && (
                 <button type="button" onClick={() => setForm(f => ({ ...f, sireImage: null }))} className="font-body text-xs text-red-500 hover:underline mt-1">Remove</button>
               )}
+              {sireError && <p className="font-body text-xs text-red-600 mt-1">{sireError}</p>}
             </div>
             <div>
               <label className="label mb-3">Dam (Mother) Photo *</label>
@@ -465,6 +477,7 @@ export default function SellerPuppies() {
               {form.damImage && !uploadingDam && (
                 <button type="button" onClick={() => setForm(f => ({ ...f, damImage: null }))} className="font-body text-xs text-red-500 hover:underline mt-1">Remove</button>
               )}
+              {damError && <p className="font-body text-xs text-red-600 mt-1">{damError}</p>}
             </div>
           </div>
 
@@ -505,7 +518,7 @@ export default function SellerPuppies() {
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
                       <img
-                        src={p.images[0]}
+                        src={p.images[0] || ''}
                         alt={p.name}
                         className={`w-10 h-10 object-cover flex-shrink-0 ${p.sold ? 'grayscale' : ''}`}
                         onError={e => { e.target.src = `https://picsum.photos/seed/${p.id}/80/80` }}

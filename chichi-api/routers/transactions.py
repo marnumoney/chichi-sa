@@ -29,13 +29,13 @@ def purchase_puppy(body: PurchaseRequest, db: sqlite3.Connection = Depends(get_d
     db.execute("""
         INSERT INTO transactions
         (id, puppy_id, puppy_name, kennel_id, kennel_name, buyer_name, buyer_email,
-         amount, commission, seller_payout, seller_paid, commission_paid, date)
-        VALUES (?,?,?,?,?,?,?,?,?,?,0,0,?)
+         amount, commission, seller_payout, seller_paid, commission_paid, date, buyer_id)
+        VALUES (?,?,?,?,?,?,?,?,?,?,0,0,?,?)
     """, (
         txn_id, puppy['id'], puppy['name'],
         puppy['kennel_id'], dict(kennel)['name'] if kennel else '',
         body.buyer_name, body.buyer_email,
-        puppy['price'], commission, seller_payout, today,
+        puppy['price'], commission, seller_payout, today, body.buyer_id or '',
     ))
     db.execute('UPDATE puppies SET sold = 1 WHERE id = ?', (body.puppy_id,))
     db.commit()

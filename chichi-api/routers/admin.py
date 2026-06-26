@@ -215,6 +215,8 @@ def admin_approve_seller(
     if not seller:
         raise HTTPException(status_code=404, detail='Seller not found')
     seller = dict(seller)
+    if seller.get('kennel_id'):
+        raise HTTPException(status_code=400, detail='Seller already has a kennel — use pay-membership to activate')
     kennel_id = f'k{uuid.uuid4().hex[:8]}'
     color = random.choice(_PALETTE)
     kennel_name = seller.get('kennel_name') or f"{seller['name']}'s Kennel"

@@ -99,6 +99,7 @@ class PurchaseRequest(BaseModel):
     puppy_id: str
     buyer_name: str
     buyer_email: EmailStr
+    buyer_id: Optional[str] = ''
 
 
 class SettingsUpdate(BaseModel):
