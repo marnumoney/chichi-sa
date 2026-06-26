@@ -12,9 +12,14 @@ function DocsModal({ seller, open, onClose }) {
   const hasAny = kennelCert || sireCerts.length > 0 || damCerts.length > 0
 
   const isPdf = (url = '') => /\.pdf(\?|$)/i.test(url)
-  const docHref = (url) => isPdf(url)
-    ? `https://docs.google.com/viewer?url=${encodeURIComponent(url)}`
-    : url
+  const docHref = (url = '') => {
+    if (!isPdf(url)) return url
+    // Legacy image-type uploads: add fl_attachment so Cloudinary serves the raw PDF
+    if (url.includes('/image/upload/') && !url.includes('fl_attachment')) {
+      return url.replace('/image/upload/', '/image/upload/fl_attachment/')
+    }
+    return url
+  }
 
   const DocLink = ({ url, label }) => (
     <a href={docHref(url)} target="_blank" rel="noopener noreferrer"

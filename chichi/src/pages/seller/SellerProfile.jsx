@@ -245,7 +245,9 @@ export default function SellerProfile() {
                 <div className="space-y-1.5">
                   {existing.map((d, i) => {
                     const isPdf = /\.pdf(\?|$)/i.test(d.url)
-                    const href = isPdf ? `https://docs.google.com/viewer?url=${encodeURIComponent(d.url)}` : d.url
+                    const href = isPdf && d.url.includes('/image/upload/') && !d.url.includes('fl_attachment')
+                      ? d.url.replace('/image/upload/', '/image/upload/fl_attachment/')
+                      : d.url
                     return (
                       <a key={i} href={href} target="_blank" rel="noopener noreferrer"
                         className="flex items-center gap-2 px-3 py-2 border border-divider hover:border-sienna hover:bg-cream transition-colors group">
