@@ -57,9 +57,9 @@ export default function SellerProfile() {
 
   const set = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }))
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault()
-    updateSellerProfile(form)
+    await updateSellerProfile(form)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
