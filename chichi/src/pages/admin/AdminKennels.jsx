@@ -131,7 +131,7 @@ function CommissionModal({ kennel, open, onClose, onSave }) {
 }
 
 export default function AdminKennels() {
-  const { kennels, sellers, approveKennel, rejectKennel, updateKennelCommission, approveSeller, rejectSeller, adminAddKennel, adminEditKennel, adminRemoveKennel } = useApp()
+  const { kennels, sellers, adminSettings, approveKennel, rejectKennel, updateKennelCommission, approveSeller, rejectSeller, adminAddKennel, adminEditKennel, adminRemoveKennel } = useApp()
   const [tab, setTab] = useState('All')
   const [editKennel, setEditKennel] = useState(null)
   const [editFull, setEditFull] = useState(null)
@@ -234,7 +234,7 @@ export default function AdminKennels() {
             Step 2 — Send Payment Link ({awaitingPayment.length})
           </h3>
           <p className="font-body text-xs text-blue-700 mb-3">
-            These sellers are approved — copy their payment link and send via WhatsApp or email. They pay R{1200} to activate their portal.
+            These sellers are approved — copy their payment link and send via WhatsApp or email. They pay R{adminSettings?.membershipFeeAnnual ?? 1200} to activate their portal.
           </p>
           <div className="space-y-3">
             {awaitingPayment.map(s => (

@@ -362,9 +362,9 @@ export default function AdminWallet() {
             txn={releaseModal}
             kennel={kennels.find(k => k.id === releaseModal.kennelId)}
             adminSettings={adminSettings}
-            onSellerPaid={() => { markSellerPaid(releaseModal.id); setReleaseModal(prev => ({ ...prev, sellerPaid: true, sellerPaidDate: new Date().toISOString().split('T')[0] })) }}
-            onCommissionPaid={() => { markCommissionPaid(releaseModal.id); setReleaseModal(prev => ({ ...prev, commissionPaid: true, commissionPaidDate: new Date().toISOString().split('T')[0] })) }}
-            onBothPaid={() => { releasePayment(releaseModal.id); setReleaseModal(null) }}
+            onSellerPaid={async () => { await markSellerPaid(releaseModal.id); setReleaseModal(prev => ({ ...prev, sellerPaid: true, sellerPaidDate: new Date().toISOString().split('T')[0] })) }}
+            onCommissionPaid={async () => { await markCommissionPaid(releaseModal.id); setReleaseModal(prev => ({ ...prev, commissionPaid: true, commissionPaidDate: new Date().toISOString().split('T')[0] })) }}
+            onBothPaid={async () => { await releasePayment(releaseModal.id); setReleaseModal(null) }}
             onClose={() => setReleaseModal(null)}
           />
         </Modal>

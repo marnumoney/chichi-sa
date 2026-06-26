@@ -6,11 +6,13 @@ function RandIcon() {
   return <span className="font-body font-bold text-base leading-none">R</span>
 }
 
-function MembershipBanner({ kennel }) {
+function MembershipBanner({ kennel, sellerId }) {
   if (!kennel?.membershipExpiry) return null
   const daysLeft = Math.ceil((new Date(kennel.membershipExpiry) - new Date()) / (1000 * 60 * 60 * 24))
 
   if (daysLeft > 60) return null
+
+  const renewHref = `/pay/membership?seller=${sellerId}`
 
   if (daysLeft <= 0) {
     return (
@@ -20,9 +22,9 @@ function MembershipBanner({ kennel }) {
           <p className="font-body font-semibold text-sm text-red-700">Membership Expired</p>
           <p className="font-body text-xs text-red-600 mt-0.5">Your membership has expired. Renew now to continue listing puppies.</p>
         </div>
-        <button className="ml-auto btn-primary bg-red-600 hover:bg-red-700 text-xs tracking-widest uppercase py-2 px-4 whitespace-nowrap">
+        <Link to={renewHref} className="ml-auto btn-primary bg-red-600 hover:bg-red-700 text-xs tracking-widest uppercase py-2 px-4 whitespace-nowrap">
           Renew Now
-        </button>
+        </Link>
       </div>
     )
   }
@@ -34,9 +36,9 @@ function MembershipBanner({ kennel }) {
         <p className="font-body font-semibold text-sm text-amber-700">Membership Expires in {daysLeft} Days</p>
         <p className="font-body text-xs text-amber-600 mt-0.5">Renew before {kennel.membershipExpiry} to avoid listing interruptions.</p>
       </div>
-      <button className="ml-auto bg-amber-500 text-white font-body text-xs font-semibold tracking-widest uppercase px-4 py-2 hover:bg-amber-600 transition-colors whitespace-nowrap">
+      <Link to={renewHref} className="ml-auto bg-amber-500 text-white font-body text-xs font-semibold tracking-widest uppercase px-4 py-2 hover:bg-amber-600 transition-colors whitespace-nowrap">
         Renew Early
-      </button>
+      </Link>
     </div>
   )
 }
@@ -73,7 +75,7 @@ export default function SellerDashboard() {
         </p>
       </div>
 
-      <MembershipBanner kennel={kennel} />
+      <MembershipBanner kennel={kennel} sellerId={sellerUser?.id} />
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
