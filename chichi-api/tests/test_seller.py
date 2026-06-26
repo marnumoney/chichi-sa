@@ -16,7 +16,7 @@ def test_get_seller_me(seeded_client):
 
 def test_get_seller_me_no_token(seeded_client):
     res = seeded_client.get('/seller/me')
-    assert res.status_code == 403
+    assert res.status_code == 401
 
 
 def test_seller_list_puppies(seeded_client):

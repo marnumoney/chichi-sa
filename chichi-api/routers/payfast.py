@@ -4,7 +4,7 @@ import uuid
 from datetime import date, timedelta
 
 import httpx
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 
 from database import get_db
@@ -48,10 +48,10 @@ async def puppy_checkout(body: dict, db=Depends(get_db)):
 
     puppy = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
     if not puppy:
-        return {'error': 'Puppy not found'}, 404
+        raise HTTPException(status_code=404, detail='Puppy not found')
     puppy = dict(puppy)
     if puppy['sold']:
-        return {'error': 'Already sold'}, 409
+        raise HTTPException(status_code=409, detail='Already sold')
 
     parts = buyer_name.split(' ', 1)
     fields = build_payment_fields({
@@ -78,7 +78,7 @@ async def membership_checkout(body: dict, db=Depends(get_db)):
 
     seller = db.execute('SELECT * FROM sellers WHERE id = ?', (seller_id,)).fetchone()
     if not seller:
-        return {'error': 'Seller not found'}, 404
+        raise HTTPException(status_code=404, detail='Seller not found')
     seller = dict(seller)
 
     settings = db.execute('SELECT membership_fee_annual FROM admin_settings WHERE id = 1').fetchone()
