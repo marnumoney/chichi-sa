@@ -11,13 +11,22 @@ export default function AdminLogin() {
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (await loginAdmin(email, password)) {
-      navigate('/admin')
-    } else {
-      setError('Invalid credentials.')
+    setLoading(true)
+    setError('')
+    try {
+      if (await loginAdmin(email, password)) {
+        navigate('/admin')
+      } else {
+        setError('Invalid credentials.')
+        setLoading(false)
+      }
+    } catch {
+      setError('Network error — please try again.')
+      setLoading(false)
     }
   }
 
@@ -54,8 +63,9 @@ export default function AdminLogin() {
               </div>
             </div>
             {error && <p className="font-body text-xs text-red-600">{error}</p>}
-            <button type="submit" className="w-full btn-primary text-xs tracking-widest uppercase py-3.5 mt-2">
-              Sign In
+            <button type="submit" disabled={loading}
+              className={`w-full text-xs tracking-widest uppercase py-3.5 mt-2 ${loading ? 'bg-muted text-cream cursor-not-allowed' : 'btn-primary'}`}>
+              {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
         </div>

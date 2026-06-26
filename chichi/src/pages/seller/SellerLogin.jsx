@@ -11,14 +11,23 @@ export default function SellerLogin() {
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const result = await loginSeller(email, password)
-    if (result.success) {
-      navigate('/seller')
-    } else {
-      setError(result.error)
+    setLoading(true)
+    setError('')
+    try {
+      const result = await loginSeller(email, password)
+      if (result.success) {
+        navigate('/seller')
+      } else {
+        setError(result.error)
+        setLoading(false)
+      }
+    } catch {
+      setError('Network error — please try again.')
+      setLoading(false)
     }
   }
 
@@ -88,8 +97,9 @@ export default function SellerLogin() {
               </div>
             </div>
             {error && <p className="font-body text-xs text-red-600 bg-red-50 border border-red-200 px-3 py-2">{error}</p>}
-            <button type="submit" className="w-full btn-primary text-xs tracking-widest uppercase py-3.5 mt-2">
-              Sign In
+            <button type="submit" disabled={loading}
+              className={`w-full text-xs tracking-widest uppercase py-3.5 mt-2 ${loading ? 'bg-muted text-cream cursor-not-allowed' : 'btn-primary'}`}>
+              {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 

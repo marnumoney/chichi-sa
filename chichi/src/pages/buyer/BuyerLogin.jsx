@@ -18,11 +18,16 @@ export default function BuyerLogin() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const result = await loginBuyer(form.email, form.password)
-    if (result.success) {
-      navigate(from, { replace: true })
-    } else {
-      setError(result.error)
+    try {
+      const result = await loginBuyer(form.email, form.password)
+      if (result.success) {
+        navigate(from, { replace: true })
+      } else {
+        setError(result.error)
+        setLoading(false)
+      }
+    } catch {
+      setError('Network error — please try again.')
       setLoading(false)
     }
   }
