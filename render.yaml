@@ -25,11 +25,11 @@ services:
       - key: ADMIN_EMAIL
         value: chihuahuasouthafrica@gmail.com
       - key: ADMIN_PASSWORD_HASH
-        value: "$2b$12$tpr32b.w61jpWvgnNnui.uaysekoNrOgeEOw5YvQyy102JB25eRzm"
+        sync: false
       - key: PAYFAST_MERCHANT_ID
-        value: "35726985"
+        sync: false
       - key: PAYFAST_MERCHANT_KEY
-        value: "gp3je4kljmbsi"
+        sync: false
       - key: PAYFAST_PASSPHRASE
         value: ""
       - key: FRONTEND_URL
