@@ -107,6 +107,12 @@ export function AppProvider({ children }) {
   useEffect(() => {
     Promise.all([loadKennels(), loadPuppies(), loadTestimonials(), loadLegalContent()])
       .finally(() => setLoadingPublic(false))
+    const interval = setInterval(() => {
+      loadKennels()
+      loadPuppies()
+      loadTestimonials()
+    }, 60000)
+    return () => clearInterval(interval)
   }, [loadKennels, loadPuppies, loadTestimonials, loadLegalContent])
 
   // ── Bootstrap: restore session from localStorage ──────────────────────────
