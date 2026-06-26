@@ -36,3 +36,7 @@ services:
         value: https://chihuahuasouthafrica.com
       - key: BACKEND_URL
         value: https://chichi-api-7k6y.onrender.com
+      - key: SMTP_USER
+        value: chihuahuasouthafrica@gmail.com
+      - key: SMTP_PASSWORD
+        sync: false

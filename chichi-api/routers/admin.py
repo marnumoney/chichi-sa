@@ -228,7 +228,7 @@ def admin_approve_seller(
         kennel_name,
         f"kennel-{kennel_id}",
         registry,
-        '??',
+        ''.join(w[0].upper() for w in kennel_name.split()[:3]),
         color,
     ))
     db.execute(
@@ -503,6 +503,9 @@ def admin_release_transaction(
     db: sqlite3.Connection = Depends(get_db),
 ):
     """Mark both seller payout and commission as paid in one action."""
+    row = db.execute('SELECT * FROM transactions WHERE id = ?', (txn_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail='Transaction not found')
     today = date.today().isoformat()
     db.execute("""
         UPDATE transactions
@@ -511,10 +514,7 @@ def admin_release_transaction(
         WHERE id = ?
     """, (today, today, txn_id))
     db.commit()
-    row = db.execute('SELECT * FROM transactions WHERE id = ?', (txn_id,)).fetchone()
-    if not row:
-        raise HTTPException(status_code=404, detail='Transaction not found')
-    return parse_transaction(row)
+    return parse_transaction(db.execute('SELECT * FROM transactions WHERE id = ?', (txn_id,)).fetchone())
 
 
 @router.post('/transactions/{txn_id}/mark-seller-paid')
