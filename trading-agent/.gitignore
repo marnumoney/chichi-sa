@@ -1,8 +1,0 @@
-.env
-__pycache__/
-*.pyc
-*.pickle
-.pytest_cache/
-venv/
-node_modules/
-dist/

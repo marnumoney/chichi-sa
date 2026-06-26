@@ -1,6 +1,9 @@
 # Worktrees
 .worktrees/
 
+# Separate repos
+trading-agent/
+
 # Cache and runtime dirs
 .cache/
 .local/
