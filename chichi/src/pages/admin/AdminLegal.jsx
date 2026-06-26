@@ -43,8 +43,8 @@ export default function AdminLegal() {
   const [mode, setMode] = useState('edit')
   const [saved, setSaved] = useState(false)
 
-  const handleSave = () => {
-    updateLegal(draft)
+  const handleSave = async () => {
+    await updateLegal(draft)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }

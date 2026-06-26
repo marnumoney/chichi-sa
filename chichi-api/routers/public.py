@@ -72,8 +72,8 @@ def list_testimonials(db: sqlite3.Connection = Depends(get_db)):
 def submit_testimonial(body: TestimonialCreate, db: sqlite3.Connection = Depends(get_db)):
     tid = f't{uuid.uuid4().hex[:8]}'
     db.execute(
-        'INSERT INTO testimonials (id, kennel_id, buyer_name, stars, text, date) VALUES (?,?,?,?,?,?)',
-        (tid, body.kennel_id, body.buyer_name, body.stars, body.text, date.today().isoformat())
+        'INSERT INTO testimonials (id, kennel_id, buyer_name, buyer_email, stars, text, date) VALUES (?,?,?,?,?,?,?)',
+        (tid, body.kennel_id, body.buyer_name, body.buyer_email or '', body.stars, body.text, date.today().isoformat())
     )
     db.commit()
     return dict(db.execute('SELECT * FROM testimonials WHERE id = ?', (tid,)).fetchone())

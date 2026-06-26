@@ -81,6 +81,7 @@ export function AppProvider({ children }) {
   const [sellerUser, setSellerUser] = useState(null)
   const [buyerUser, setBuyerUser] = useState(null)
   const [loadingPublic, setLoadingPublic] = useState(true)
+  const [authLoading, setAuthLoading] = useState(!!getToken())
 
   // ── Public data loaders ───────────────────────────────────────────────────
   const loadKennels = useCallback(async () => {
@@ -116,6 +117,7 @@ export function AppProvider({ children }) {
     if (role === 'admin') {
       setAdminUser({ email: localStorage.getItem('adminEmail') || '', name: 'Admin' })
       loadAdminData()
+      setAuthLoading(false)
     }
     if (role === 'seller') {
       apiFetch('/seller/me').then(async res => {
@@ -125,9 +127,8 @@ export function AppProvider({ children }) {
         } else {
           localStorage.removeItem('token')
           localStorage.removeItem('role')
-          return
         }
-      })
+      }).finally(() => setAuthLoading(false))
       apiFetch('/seller/transactions').then(async res => {
         if (res.ok) setTransactions(normalize(await res.json()))
       })
@@ -141,7 +142,7 @@ export function AppProvider({ children }) {
           localStorage.removeItem('token')
           localStorage.removeItem('role')
         }
-      })
+      }).finally(() => setAuthLoading(false))
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -454,7 +455,7 @@ export function AppProvider({ children }) {
 
   return (
     <AppContext.Provider value={{
-      kennels, puppies, sellers, buyers, adminSettings, legalContent, transactions, testimonials, loadingPublic,
+      kennels, puppies, sellers, buyers, adminSettings, legalContent, transactions, testimonials, loadingPublic, authLoading,
       loadPuppies,
       buyerUser, signupBuyer, loginBuyer, logoutBuyer,
       addTestimonial, removeTestimonial,

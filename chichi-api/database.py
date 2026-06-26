@@ -235,6 +235,8 @@ def create_tables(conn):
     ]:
         _add_column(conn, is_pg, 'puppies', col, defn)
 
+    _add_column(conn, is_pg, 'testimonials', 'buyer_email', "TEXT DEFAULT ''")
+
 
 # ── Row parsers ───────────────────────────────────────────────────────────────
 

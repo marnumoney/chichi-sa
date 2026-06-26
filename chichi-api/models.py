@@ -93,6 +93,7 @@ class TestimonialCreate(BaseModel):
     buyer_name: str
     stars: int
     text: str
+    buyer_email: Optional[str] = ''
 
 
 class PurchaseRequest(BaseModel):

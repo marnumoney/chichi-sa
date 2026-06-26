@@ -37,12 +37,14 @@ function ProtectedAdmin({ children }) {
 }
 
 function ProtectedSeller({ children }) {
-  const { sellerUser } = useApp()
+  const { sellerUser, authLoading } = useApp()
+  if (authLoading) return null
   return sellerUser ? children : <Navigate to="/seller/login" replace />
 }
 
 function ProtectedBuyer({ children }) {
-  const { buyerUser } = useApp()
+  const { buyerUser, authLoading } = useApp()
+  if (authLoading) return null
   return buyerUser ? children : <Navigate to="/buyer/login" replace />
 }
 
