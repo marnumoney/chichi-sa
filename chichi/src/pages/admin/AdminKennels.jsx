@@ -12,29 +12,16 @@ function DocsModal({ seller, open, onClose }) {
   const hasAny = kennelCert || sireCerts.length > 0 || damCerts.length > 0
 
   const isPdf = (url = '') => /\.pdf(\?|$)/i.test(url)
-  // Legacy image/upload PDFs can't be served as PDF (Cloudinary strict transforms)
-  const isLegacyPdf = (url = '') => isPdf(url) && url.includes('/image/upload/')
 
-  const DocLink = ({ url, label }) => {
-    if (isLegacyPdf(url)) {
-      return (
-        <div className="flex items-center gap-2 px-3 py-2.5 border border-amber-200 bg-amber-50">
-          <FileText className="w-4 h-4 text-amber-500 flex-shrink-0" />
-          <span className="font-body text-xs text-espresso flex-1 truncate">{label}</span>
-          <span className="font-body text-[9px] font-bold tracking-widest uppercase text-amber-600">Re-upload needed</span>
-        </div>
-      )
-    }
-    return (
-      <a href={url} target="_blank" rel="noopener noreferrer"
-        className="flex items-center gap-2 px-3 py-2.5 border border-divider hover:border-sienna hover:bg-cream transition-colors group">
-        <FileText className="w-4 h-4 text-muted group-hover:text-sienna flex-shrink-0" />
-        <span className="font-body text-xs text-espresso flex-1 truncate">{label}</span>
-        {isPdf(url) && <span className="font-body text-[9px] font-bold tracking-widest uppercase text-muted group-hover:text-sienna">PDF</span>}
-        <ExternalLink className="w-3.5 h-3.5 text-muted group-hover:text-sienna flex-shrink-0" />
-      </a>
-    )
-  }
+  const DocLink = ({ url, label }) => (
+    <a href={url} target="_blank" rel="noopener noreferrer"
+      className="flex items-center gap-2 px-3 py-2.5 border border-divider hover:border-sienna hover:bg-cream transition-colors group">
+      <FileText className="w-4 h-4 text-muted group-hover:text-sienna flex-shrink-0" />
+      <span className="font-body text-xs text-espresso flex-1 truncate">{label}</span>
+      {isPdf(url) && <span className="font-body text-[9px] font-bold tracking-widest uppercase text-muted group-hover:text-sienna">PDF</span>}
+      <ExternalLink className="w-3.5 h-3.5 text-muted group-hover:text-sienna flex-shrink-0" />
+    </a>
+  )
 
   return (
     <Modal open={open} onClose={onClose} title={`Documents — ${seller?.name}`} maxWidth="max-w-lg">

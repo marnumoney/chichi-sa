@@ -245,16 +245,6 @@ export default function SellerProfile() {
                 <div className="space-y-1.5">
                   {existing.map((d, i) => {
                     const isPdf = /\.pdf(\?|$)/i.test(d.url)
-                    const isLegacyPdf = isPdf && d.url.includes('/image/upload/')
-                    if (isLegacyPdf) {
-                      return (
-                        <div key={i} className="flex items-center gap-2 px-3 py-2 border border-amber-200 bg-amber-50">
-                          <FileText className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                          <span className="font-body text-xs text-espresso flex-1">{d.label}</span>
-                          <span className="font-body text-[9px] font-bold tracking-widest uppercase text-amber-600">Please re-upload</span>
-                        </div>
-                      )
-                    }
                     return (
                       <a key={i} href={d.url} target="_blank" rel="noopener noreferrer"
                         className="flex items-center gap-2 px-3 py-2 border border-divider hover:border-sienna hover:bg-cream transition-colors group">
