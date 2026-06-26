@@ -11,11 +11,17 @@ function DocsModal({ seller, open, onClose }) {
   const damCerts = docs.damCerts || []
   const hasAny = kennelCert || sireCerts.length > 0 || damCerts.length > 0
 
+  const isPdf = (url = '') => /\.pdf(\?|$)/i.test(url)
+  const docHref = (url) => isPdf(url)
+    ? `https://docs.google.com/viewer?url=${encodeURIComponent(url)}`
+    : url
+
   const DocLink = ({ url, label }) => (
-    <a href={url} target="_blank" rel="noopener noreferrer"
+    <a href={docHref(url)} target="_blank" rel="noopener noreferrer"
       className="flex items-center gap-2 px-3 py-2.5 border border-divider hover:border-sienna hover:bg-cream transition-colors group">
       <FileText className="w-4 h-4 text-muted group-hover:text-sienna flex-shrink-0" />
       <span className="font-body text-xs text-espresso flex-1 truncate">{label}</span>
+      {isPdf(url) && <span className="font-body text-[9px] font-bold tracking-widest uppercase text-muted group-hover:text-sienna">PDF</span>}
       <ExternalLink className="w-3.5 h-3.5 text-muted group-hover:text-sienna flex-shrink-0" />
     </a>
   )
