@@ -34,10 +34,10 @@ function KennelSection({ kennel, puppies, testimonials, transactions, addTestimo
   const [reviewForm, setReviewForm] = useState({ buyerName: '', buyerEmail: '', stars: 0, text: '' })
   const [reviewSubmitted, setReviewSubmitted] = useState(false)
 
-  const handleSubmitReview = (e) => {
+  const handleSubmitReview = async (e) => {
     e.preventDefault()
     if (!reviewForm.stars) return
-    addTestimonial({ kennelId: kennel.id, ...reviewForm })
+    await addTestimonial({ kennelId: kennel.id, ...reviewForm })
     setReviewSubmitted(true)
     setShowReviewForm(false)
     setReviewForm({ buyerName: '', buyerEmail: '', stars: 0, text: '' })

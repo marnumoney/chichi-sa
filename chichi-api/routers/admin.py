@@ -405,8 +405,8 @@ def admin_add_testimonial(
     tid = f't{uuid.uuid4().hex[:8]}'
     today = date.today().isoformat()
     db.execute(
-        'INSERT INTO testimonials (id, kennel_id, buyer_name, stars, text, date) VALUES (?,?,?,?,?,?)',
-        (tid, body.kennel_id, body.buyer_name, body.stars, body.text, today)
+        'INSERT INTO testimonials (id, kennel_id, buyer_name, buyer_email, stars, text, date) VALUES (?,?,?,?,?,?,?)',
+        (tid, body.kennel_id, body.buyer_name, body.buyer_email or '', body.stars, body.text, today)
     )
     db.commit()
     return dict(db.execute('SELECT * FROM testimonials WHERE id = ?', (tid,)).fetchone())
