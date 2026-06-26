@@ -1,6 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
-import { useEffect, useRef } from 'react'
 import { useApp } from '../../context/AppContext'
 import { sendRenewalEmail } from '../../utils/email'
 import { LayoutDashboard, Package, User, LogOut, Menu, X } from 'lucide-react'
@@ -17,16 +16,18 @@ export default function SellerLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const kennel = sellerUser?.kennel
-  const renewalSent = useRef(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
-    if (!sellerUser || !kennel?.membershipExpiry || renewalSent.current) return
+    if (!sellerUser || !kennel?.membershipExpiry) return
     const daysLeft = Math.ceil((new Date(kennel.membershipExpiry) - new Date()) / (1000 * 60 * 60 * 24))
-    if (daysLeft <= 30) {
-      renewalSent.current = true
-      sendRenewalEmail(sellerUser, kennel.name)
-    }
+    if (daysLeft > 30) return
+    const key = `renewal_sent_${sellerUser.id}`
+    const lastSent = localStorage.getItem(key)
+    const daysSince = lastSent ? Math.floor((Date.now() - Number(lastSent)) / 86400000) : Infinity
+    if (daysSince < 7) return
+    localStorage.setItem(key, String(Date.now()))
+    sendRenewalEmail(sellerUser, kennel.name)
   }, [sellerUser, kennel])
 
   const daysLeft = kennel?.membershipExpiry

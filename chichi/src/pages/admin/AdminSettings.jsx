@@ -18,9 +18,9 @@ export default function AdminSettings() {
   const [newCodeKennel, setNewCodeKennel] = useState('')
   const [copiedCode, setCopiedCode] = useState(null)
 
-  const saveFees = (e) => {
+  const saveFees = async (e) => {
     e.preventDefault()
-    updateAdminSettings({
+    await updateAdminSettings({
       defaultCommission: Number(fees.defaultCommission),
       membershipFeeAnnual: Number(fees.membershipFeeAnnual),
       referralDiscount: Number(fees.referralDiscount),
