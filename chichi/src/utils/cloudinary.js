@@ -41,7 +41,7 @@ export async function uploadFile(file) {
   fd.append('upload_preset', UPLOAD_PRESET)
   fd.append('folder', 'chichi-docs')
 
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`, {
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
     method: 'POST',
     body: fd,
   })
