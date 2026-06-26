@@ -305,11 +305,13 @@ export function AppProvider({ children }) {
       method: 'PUT',
       body: updates,
     })
-    if (res.ok) {
-      const kennel = normalize(await res.json())
-      setSellerUser(prev => ({ ...prev, kennel }))
-      await loadKennels()
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}))
+      throw new Error(e.detail || 'Failed to update profile')
     }
+    const kennel = normalize(await res.json())
+    setSellerUser(prev => ({ ...prev, kennel }))
+    await loadKennels()
   }
 
   // ── Admin — kennels ───────────────────────────────────────────────────────

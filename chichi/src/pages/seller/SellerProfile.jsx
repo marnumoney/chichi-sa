@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
 import { Save, Check, Copy, Upload, Landmark, FileText, X, FileCheck, ExternalLink } from 'lucide-react'
-import { uploadFile as uploadToCloudinary } from '../../utils/cloudinary'
+import { uploadImage, uploadFile as uploadToCloudinary } from '../../utils/cloudinary'
 
 const SA_BANKS = [
   'ABSA Bank', 'Capitec Bank', 'FNB (First National Bank)', 'Nedbank',
@@ -29,6 +29,7 @@ export default function SellerProfile() {
   const [copied, setCopied] = useState(false)
   const [logoPreview, setLogoPreview] = useState(kennel?.logo ?? null)
   const [logoUploading, setLogoUploading] = useState(false)
+  const [logoError, setLogoError] = useState('')
   const [docsSaved, setDocsSaved] = useState(false)
   const [docsUploading, setDocsUploading] = useState(false)
   const [docsError, setDocsError] = useState('')
@@ -74,12 +75,14 @@ export default function SellerProfile() {
     if (!file) return
     setLogoPreview(URL.createObjectURL(file))
     setLogoUploading(true)
+    setLogoError('')
     try {
-      const url = await uploadToCloudinary(file)
+      const url = await uploadImage(file)
       await updateSellerProfile({ logo: url })
       setLogoPreview(url)
-    } catch {
+    } catch (err) {
       setLogoPreview(kennel?.logo ?? null)
+      setLogoError(err?.message || 'Logo upload failed. Please try again.')
     } finally {
       setLogoUploading(false)
     }
@@ -116,6 +119,7 @@ export default function SellerProfile() {
                 {logoUploading ? 'Saving…' : 'Upload Logo'}
                 <input type="file" accept="image/*" className="sr-only" onChange={handleLogoUpload} disabled={logoUploading} />
               </label>
+              {logoError && <p className="font-body text-xs text-red-600 mt-2">{logoError}</p>}
             </div>
           </div>
         </div>
