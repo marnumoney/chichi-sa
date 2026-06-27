@@ -192,6 +192,13 @@ def create_tables(conn):
             id INTEGER PRIMARY KEY DEFAULT 1,
             content TEXT DEFAULT ''
         )""",
+        f"""CREATE TABLE IF NOT EXISTS certs (
+            id TEXT PRIMARY KEY,
+            filename TEXT NOT NULL,
+            content_type TEXT NOT NULL,
+            data {blob_type} NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )""",
 f"{insert_ignore} admin_settings (id) VALUES (1) {on_conflict}",
         f"{insert_ignore} legal_text (id) VALUES (1) {on_conflict}",
         f"{insert_ignore} buyer_protection (id) VALUES (1) {on_conflict}",
