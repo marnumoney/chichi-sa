@@ -81,6 +81,7 @@ def create_tables(conn):
     is_pg = isinstance(conn, _PgConnection)
     insert_ignore = 'INSERT INTO' if is_pg else 'INSERT OR IGNORE INTO'
     on_conflict = 'ON CONFLICT DO NOTHING' if is_pg else ''
+    blob_type = 'BYTEA' if is_pg else 'BLOB'
 
     # Each statement in its own try/except so one failure never blocks the rest
     statements = [
@@ -186,6 +187,13 @@ def create_tables(conn):
         """CREATE TABLE IF NOT EXISTS legal_text (
             id INTEGER PRIMARY KEY DEFAULT 1,
             content TEXT DEFAULT ''
+        )""",
+        f"""CREATE TABLE IF NOT EXISTS doc_uploads (
+            id TEXT PRIMARY KEY,
+            filename TEXT NOT NULL,
+            content_type TEXT NOT NULL,
+            data {blob_type} NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )""",
         f"{insert_ignore} admin_settings (id) VALUES (1) {on_conflict}",
         f"{insert_ignore} legal_text (id) VALUES (1) {on_conflict}",
