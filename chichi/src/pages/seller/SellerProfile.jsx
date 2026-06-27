@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
 import { Save, Check, Copy, Upload, Landmark, FileText, X, FileCheck, ExternalLink } from 'lucide-react'
-import { uploadImage, uploadFile as uploadToCloudinary } from '../../utils/cloudinary'
+import { uploadImage } from '../../utils/cloudinary'
+import { uploadCert } from '../../utils/uploadCert'
 
 const SA_BANKS = [
   'ABSA Bank', 'Capitec Bank', 'FNB (First National Bank)', 'Nedbank',
@@ -332,10 +333,10 @@ export default function SellerProfile() {
                   try {
                     const existing = sellerUser?.documents || {}
                     const [kennelUrl, ...sireUrls] = await Promise.all([
-                      newKennelCert ? uploadToCloudinary(newKennelCert) : Promise.resolve(existing.kennelCert || null),
-                      ...newSireCerts.map(uploadToCloudinary),
+                      newKennelCert ? uploadCert(newKennelCert) : Promise.resolve(existing.kennelCert || null),
+                      ...newSireCerts.map(uploadCert),
                     ])
-                    const damUrls = await Promise.all(newDamCerts.map(uploadToCloudinary))
+                    const damUrls = await Promise.all(newDamCerts.map(uploadCert))
                     const documents = {
                       kennelCert: kennelUrl,
                       sireCerts: [...(existing.sireCerts || []), ...sireUrls.filter(Boolean)],

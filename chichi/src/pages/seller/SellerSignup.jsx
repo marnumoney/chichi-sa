@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import { CheckCircle, Loader2, Upload, FileCheck, X, Eye, EyeOff } from 'lucide-react'
 import { Logo } from '../../components/Logo'
-import { uploadFile as uploadToCloudinary } from '../../utils/cloudinary'
+import { uploadCert } from '../../utils/uploadCert'
 
 const FORMSUBMIT_EMAIL = 'Chihuahuasouthafrica@gmail.com'
 
@@ -58,10 +58,10 @@ export default function SellerSignup() {
     let documents = {}
     try {
       const [kennelUrl, ...sireUrls] = await Promise.all([
-        docs.kennelCert ? uploadToCloudinary(docs.kennelCert) : Promise.resolve(null),
-        ...sireCerts.map(uploadToCloudinary),
+        docs.kennelCert ? uploadCert(docs.kennelCert) : Promise.resolve(null),
+        ...sireCerts.map(uploadCert),
       ])
-      const damUrls = await Promise.all(damCerts.map(uploadToCloudinary))
+      const damUrls = await Promise.all(damCerts.map(uploadCert))
       documents = {
         kennel_cert: kennelUrl,
         sire_certs: sireUrls.filter(Boolean),
