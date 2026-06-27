@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import { Pencil, Trash2, Plus, Check, X, FileText, ExternalLink, Eye } from 'lucide-react'
 import Modal from '../../components/Modal'
+import { sendApprovalEmail } from '../../utils/email'
 
 function BuyerModal({ buyer, transactions, open, onClose }) {
   const purchases = transactions.filter(t => t.buyerId === buyer?.id)
@@ -147,7 +148,7 @@ export default function AdminUsers() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h2 className="font-display text-3xl font-semibold text-espresso mb-1">Users</h2>
           <p className="font-body text-sm text-muted">Manage all sellers and buyers on the platform.</p>
@@ -204,7 +205,7 @@ export default function AdminUsers() {
                       <td className="px-5 py-3">
                         <div className="flex gap-2 items-center">
                           {s.status === 'pending_verification' && (
-                            <button onClick={() => approveSeller(s.id)}
+                            <button onClick={() => { approveSeller(s.id); sendApprovalEmail(s) }}
                               className="flex items-center gap-1 bg-sage text-white text-[10px] font-bold uppercase tracking-widest px-2 py-1.5 hover:bg-sage-dark transition-colors">
                               <Check className="w-3 h-3" /> Approve
                             </button>

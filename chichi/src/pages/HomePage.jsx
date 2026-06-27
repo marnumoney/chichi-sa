@@ -194,10 +194,13 @@ export default function HomePage() {
               {approvedKennels.map(kennel => (
                 <Link key={kennel.id} to="/kennels" className="p-4 border border-divider hover:border-sienna/40 hover:shadow-sm transition-all group text-center">
                   <div
-                    className="w-12 h-12 mx-auto mb-3 flex items-center justify-center text-white font-bold text-sm font-body"
+                    className="w-12 h-12 mx-auto mb-3 flex items-center justify-center text-white font-bold text-sm font-body overflow-hidden"
                     style={{ backgroundColor: kennel.color }}
                   >
-                    {kennel.initials}
+                    {kennel.logo
+                      ? <img src={kennel.logo} alt={kennel.name} className="w-full h-full object-cover" />
+                      : kennel.initials
+                    }
                   </div>
                   <p className="font-body text-xs font-semibold text-espresso group-hover:text-sienna transition-colors leading-tight">{kennel.name}</p>
                   <p className="font-body text-[10px] text-muted mt-0.5">{kennel.registry}</p>

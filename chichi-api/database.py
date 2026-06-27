@@ -188,6 +188,10 @@ def create_tables(conn):
             id INTEGER PRIMARY KEY DEFAULT 1,
             content TEXT DEFAULT ''
         )""",
+        """CREATE TABLE IF NOT EXISTS buyer_protection (
+            id INTEGER PRIMARY KEY DEFAULT 1,
+            content TEXT DEFAULT ''
+        )""",
         f"""CREATE TABLE IF NOT EXISTS doc_uploads (
             id TEXT PRIMARY KEY,
             filename TEXT NOT NULL,
@@ -197,6 +201,7 @@ def create_tables(conn):
         )""",
         f"{insert_ignore} admin_settings (id) VALUES (1) {on_conflict}",
         f"{insert_ignore} legal_text (id) VALUES (1) {on_conflict}",
+        f"{insert_ignore} buyer_protection (id) VALUES (1) {on_conflict}",
     ]
 
     for stmt in statements:

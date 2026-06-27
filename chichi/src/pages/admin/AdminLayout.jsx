@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
-import { LayoutDashboard, FileText, Building2, Wallet, Users, Package, Star, Megaphone, Settings, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, FileText, Building2, Wallet, Users, Package, Star, Megaphone, Settings, LogOut, Menu, X, ShieldCheck } from 'lucide-react'
 import { LogoCompact } from '../../components/Logo'
 
 const navItems = [
@@ -14,6 +14,7 @@ const navItems = [
   { path: '/admin/broadcast', label: 'Broadcast', icon: Megaphone },
   { path: '/admin/settings', label: 'Settings', icon: Settings },
   { path: '/admin/legal', label: 'Legal & Rules', icon: FileText },
+  { path: '/admin/buyer-protection', label: 'Buyer Protection', icon: ShieldCheck },
 ]
 
 export default function AdminLayout() {

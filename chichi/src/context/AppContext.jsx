@@ -77,6 +77,7 @@ export function AppProvider({ children }) {
   const [testimonials, setTestimonials] = useState([])
   const [adminSettings, setAdminSettings] = useState({})
   const [legalContent, setLegalContent] = useState('')
+  const [buyerProtectionContent, setBuyerProtectionContent] = useState('')
   const [adminUser, setAdminUser] = useState(null)
   const [sellerUser, setSellerUser] = useState(null)
   const [buyerUser, setBuyerUser] = useState(null)
@@ -104,8 +105,13 @@ export function AppProvider({ children }) {
     if (res?.ok) { const data = await res.json(); setLegalContent(data.content ?? '') }
   }, [])
 
+  const loadBuyerProtectionContent = useCallback(async () => {
+    const res = await publicFetch('/buyer-protection')
+    if (res?.ok) { const data = await res.json(); setBuyerProtectionContent(data.content ?? '') }
+  }, [])
+
   useEffect(() => {
-    Promise.all([loadKennels(), loadPuppies(), loadTestimonials(), loadLegalContent()])
+    Promise.all([loadKennels(), loadPuppies(), loadTestimonials(), loadLegalContent(), loadBuyerProtectionContent()])
       .finally(() => setLoadingPublic(false))
     const interval = setInterval(() => {
       loadKennels()
@@ -113,7 +119,7 @@ export function AppProvider({ children }) {
       loadTestimonials()
     }, 60000)
     return () => clearInterval(interval)
-  }, [loadKennels, loadPuppies, loadTestimonials, loadLegalContent])
+  }, [loadKennels, loadPuppies, loadTestimonials, loadLegalContent, loadBuyerProtectionContent])
 
   // ── Bootstrap: restore session from localStorage ──────────────────────────
   useEffect(() => {
@@ -154,7 +160,7 @@ export function AppProvider({ children }) {
 
   // ── Admin data loaders ────────────────────────────────────────────────────
   const loadAdminData = useCallback(async () => {
-    const [kRes, sRes, tRes, txRes, setRes, legRes, bRes] = await Promise.all([
+    const [kRes, sRes, tRes, txRes, setRes, legRes, bRes, bpRes] = await Promise.all([
       apiFetch('/admin/kennels'),
       apiFetch('/admin/sellers'),
       apiFetch('/admin/testimonials'),
@@ -162,6 +168,7 @@ export function AppProvider({ children }) {
       apiFetch('/admin/settings'),
       apiFetch('/admin/legal'),
       apiFetch('/admin/buyers'),
+      apiFetch('/admin/buyer-protection'),
     ])
     if (kRes.ok) setKennels(normalize(await kRes.json()))
     if (sRes.ok) setSellers(normalize(await sRes.json()))
@@ -170,6 +177,7 @@ export function AppProvider({ children }) {
     if (setRes.ok) setAdminSettings(normalize(await setRes.json()))
     if (legRes.ok) { const d = normalize(await legRes.json()); setLegalContent(d.content) }
     if (bRes.ok) setBuyers(normalize(await bRes.json()))
+    if (bpRes.ok) { const d = normalize(await bpRes.json()); setBuyerProtectionContent(d.content) }
   }, [])
 
   // ── Auth ──────────────────────────────────────────────────────────────────
@@ -459,9 +467,17 @@ export function AppProvider({ children }) {
     if (res.ok) { const d = normalize(await res.json()); setLegalContent(d.content) }
   }
 
+  const updateBuyerProtection = async (content) => {
+    const res = await apiFetch('/admin/buyer-protection', {
+      method: 'PUT',
+      body: { content },
+    })
+    if (res.ok) { const d = normalize(await res.json()); setBuyerProtectionContent(d.content) }
+  }
+
   return (
     <AppContext.Provider value={{
-      kennels, puppies, sellers, buyers, adminSettings, legalContent, transactions, testimonials, loadingPublic, authLoading,
+      kennels, puppies, sellers, buyers, adminSettings, legalContent, buyerProtectionContent, transactions, testimonials, loadingPublic, authLoading,
       loadPuppies,
       buyerUser, signupBuyer, loginBuyer, logoutBuyer,
       addTestimonial, removeTestimonial,
@@ -470,7 +486,7 @@ export function AppProvider({ children }) {
       purchasePuppy, releasePayment, markSellerPaid, markCommissionPaid,
       approveSeller, rejectSeller, approveKennel, rejectKennel, broadcastSellers,
       updateKennelCommission, addPuppy, delistPuppy,
-      updateLegal, updateAdminSettings, signupSeller, updateSellerProfile, updateSellerDocuments,
+      updateLegal, updateBuyerProtection, updateAdminSettings, signupSeller, updateSellerProfile, updateSellerDocuments,
       payMembership,
       loadAdminData,
       adminRemovePuppy, adminAddKennel, adminEditKennel, adminRemoveKennel,

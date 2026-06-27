@@ -46,7 +46,7 @@ export default function Footer() {
             <ul className="space-y-2.5 font-body text-sm">
               <li><Link to="/legal" className="hover:text-sienna-light transition-colors">Terms & Conditions</Link></li>
               <li><Link to="/contact" className="hover:text-sienna-light transition-colors">Contact Us</Link></li>
-              <li><span className="cursor-default">Buyer Protection</span></li>
+              <li><Link to="/buyer-protection" className="hover:text-sienna-light transition-colors">Buyer Protection</Link></li>
             </ul>
           </div>
         </div>

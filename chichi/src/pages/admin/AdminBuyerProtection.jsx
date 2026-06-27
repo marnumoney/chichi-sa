@@ -37,34 +37,34 @@ function MarkdownPreview({ text }) {
   return <div className="space-y-1">{elements}</div>
 }
 
-export default function AdminLegal() {
-  const { legalContent, updateLegal } = useApp()
-  const [draft, setDraft] = useState(legalContent)
-  const [initialized, setInitialized] = useState(!!legalContent)
+export default function AdminBuyerProtection() {
+  const { buyerProtectionContent, updateBuyerProtection } = useApp()
+  const [draft, setDraft] = useState(buyerProtectionContent)
+  const [initialized, setInitialized] = useState(!!buyerProtectionContent)
   const [mode, setMode] = useState('edit')
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    if (!initialized && legalContent) {
-      setDraft(legalContent)
+    if (!initialized && buyerProtectionContent) {
+      setDraft(buyerProtectionContent)
       setInitialized(true)
     }
-  }, [legalContent, initialized])
+  }, [buyerProtectionContent, initialized])
 
   const handleSave = async () => {
-    await updateLegal(draft)
+    await updateBuyerProtection(draft)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
 
-  const hasChanges = draft !== legalContent
+  const hasChanges = draft !== buyerProtectionContent
 
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="font-display text-3xl font-semibold text-espresso mb-1">Legal & Rules</h2>
-          <p className="font-body text-sm text-muted">Edit the terms, conditions, and marketplace rules shown publicly.</p>
+          <h2 className="font-display text-3xl font-semibold text-espresso mb-1">Buyer Protection</h2>
+          <p className="font-body text-sm text-muted">Edit the buyer protection policy shown publicly on the website.</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex border border-divider overflow-hidden">

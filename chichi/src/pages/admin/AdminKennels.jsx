@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
-import { Check, X, Pencil, Copy, ExternalLink, Plus, Trash2, Download, FileText } from 'lucide-react'
+import { Check, X, Pencil, Copy, ExternalLink, Plus, Trash2, Download, FileText, Landmark, Bell } from 'lucide-react'
 import Modal from '../../components/Modal'
 import { exportCsv } from '../../utils/exportCsv'
+import { sendApprovalEmail, sendRenewalEmail } from '../../utils/email'
 
 function DocsModal({ seller, open, onClose }) {
   const docs = seller?.documents || {}
@@ -51,6 +52,33 @@ function DocsModal({ seller, open, onClose }) {
               </div>
             </div>
           )}
+        </div>
+      )}
+    </Modal>
+  )
+}
+
+function BankingModal({ kennel, open, onClose }) {
+  if (!kennel) return null
+  const hasBanking = kennel.bankName || kennel.accountNumber
+  return (
+    <Modal open={open} onClose={onClose} title={`Banking Details — ${kennel.name}`} maxWidth="max-w-lg">
+      {!hasBanking ? (
+        <p className="font-body text-sm text-muted py-4 text-center">No banking details on file.</p>
+      ) : (
+        <div className="space-y-3">
+          {[
+            { label: 'Bank', value: kennel.bankName },
+            { label: 'Account Holder', value: kennel.accountHolder },
+            { label: 'Account Number', value: kennel.accountNumber },
+            { label: 'Branch Code', value: kennel.branchCode },
+            { label: 'Account Type', value: kennel.accountType },
+          ].map(({ label, value }) => value ? (
+            <div key={label} className="flex items-center justify-between border border-divider px-4 py-3 bg-cream">
+              <span className="font-body text-xs text-muted uppercase tracking-widest">{label}</span>
+              <span className="font-body text-sm font-semibold text-espresso font-mono">{value}</span>
+            </div>
+          ) : null)}
         </div>
       )}
     </Modal>
@@ -142,9 +170,20 @@ export default function AdminKennels() {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [copiedId, setCopiedId] = useState(null)
   const [docsTarget, setDocsTarget] = useState(null)
+  const [bankingTarget, setBankingTarget] = useState(null)
+  const [reminderSent, setReminderSent] = useState(null)
 
   const pendingSellers = sellers.filter(s => s.status === 'pending_verification')
   const awaitingPayment = sellers.filter(s => s.status === 'pending_payment')
+
+  const today = new Date().toISOString().split('T')[0]
+  const expiredKennels = kennels.filter(k => k.membershipExpiry && k.membershipExpiry < today && k.status === 'approved')
+
+  const handleSendReminder = (seller, kennelName) => {
+    sendRenewalEmail(seller, kennelName)
+    setReminderSent(seller.id)
+    setTimeout(() => setReminderSent(null), 3000)
+  }
 
   const getPaymentLink = (sellerId) =>
     `${window.location.origin}/pay/membership?seller=${sellerId}`
@@ -171,12 +210,12 @@ export default function AdminKennels() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h2 className="font-display text-3xl font-semibold text-espresso mb-1">Kennels Management</h2>
           <p className="font-body text-sm text-muted">Add, edit, approve and remove kennels. Manage commission rates.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           <button onClick={() => exportCsv('kennels.csv', kennels.map(k => ({
             Name: k.name, Registry: k.registry, Location: k.location,
             Contact: k.contact, Phone: k.phone, Commission: k.commission + '%',
@@ -199,12 +238,12 @@ export default function AdminKennels() {
           <p className="font-body text-xs text-amber-700 mb-3">Review each applicant's registry details, then approve to generate their payment link.</p>
           <div className="space-y-3">
             {pendingSellers.map(s => (
-              <div key={s.id} className="flex items-center justify-between bg-white border border-amber-200 px-4 py-3">
+              <div key={s.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white border border-amber-200 px-4 py-3">
                 <div>
                   <p className="font-body text-sm font-semibold text-espresso">{s.name}</p>
                   <p className="font-body text-xs text-muted">{s.email} · Applied {s.joinedDate}</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => setDocsTarget(s)}
                     className="flex items-center gap-1.5 bg-cream border border-divider text-espresso font-body text-xs font-semibold px-3 py-1.5 hover:border-sienna hover:text-sienna transition-colors"
@@ -213,7 +252,7 @@ export default function AdminKennels() {
                     View Docs
                   </button>
                   <button
-                    onClick={() => approveSeller(s.id)}
+                    onClick={() => { approveSeller(s.id); sendApprovalEmail(s) }}
                     className="flex items-center gap-1.5 bg-sage text-white font-body text-xs font-semibold px-3 py-1.5 hover:bg-sage-dark transition-colors"
                   >
                     <Check className="w-3.5 h-3.5" />
@@ -242,7 +281,7 @@ export default function AdminKennels() {
           <div className="space-y-3">
             {awaitingPayment.map(s => (
               <div key={s.id} className="bg-white border border-blue-200 px-4 py-3 space-y-2">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div>
                     <p className="font-body text-sm font-semibold text-espresso">{s.name}</p>
                     <p className="font-body text-xs text-muted">{s.email}</p>
@@ -268,6 +307,39 @@ export default function AdminKennels() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Expired memberships */}
+      {expiredKennels.length > 0 && (
+        <div className="bg-red-50 border border-red-200 p-5 mb-6">
+          <h3 className="font-body font-semibold text-sm text-red-800 mb-1">
+            Expired Memberships ({expiredKennels.length})
+          </h3>
+          <p className="font-body text-xs text-red-700 mb-3">
+            These kennels have expired memberships. Send a renewal reminder to prompt payment.
+          </p>
+          <div className="space-y-3">
+            {expiredKennels.map(k => {
+              const seller = sellers.find(s => s.kennelId === k.id)
+              return (
+                <div key={k.id} className="flex items-center justify-between bg-white border border-red-200 px-4 py-3">
+                  <div>
+                    <p className="font-body text-sm font-semibold text-espresso">{k.name}</p>
+                    <p className="font-body text-xs text-muted">Expired: {k.membershipExpiry} · {seller?.email ?? '—'}</p>
+                  </div>
+                  {seller && (
+                    <button
+                      onClick={() => handleSendReminder(seller, k.name)}
+                      className={`flex items-center gap-1.5 font-body text-xs font-semibold px-3 py-1.5 transition-colors ${reminderSent === seller.id ? 'bg-sage text-white' : 'bg-espresso text-cream hover:bg-sienna'}`}
+                    >
+                      {reminderSent === seller.id ? <><Check className="w-3.5 h-3.5" /> Sent!</> : <><Bell className="w-3.5 h-3.5" /> Send Renewal Reminder</>}
+                    </button>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
@@ -377,9 +449,14 @@ export default function AdminKennels() {
                           </>
                         )}
                         {kennel.status === 'approved' && (
-                          <button onClick={() => setEditFull(kennel)} className="text-muted hover:text-sienna transition-colors p-1">
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
+                          <>
+                            <button onClick={() => setEditFull(kennel)} className="text-muted hover:text-sienna transition-colors p-1" title="Edit kennel">
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => setBankingTarget(kennel)} className="text-muted hover:text-sienna transition-colors p-1" title="View banking details">
+                              <Landmark className="w-3.5 h-3.5" />
+                            </button>
+                          </>
                         )}
                         <button onClick={() => setDeleteTarget(kennel)} className="text-muted hover:text-red-500 transition-colors p-1">
                           <Trash2 className="w-3.5 h-3.5" />
@@ -423,6 +500,7 @@ export default function AdminKennels() {
       )}
 
       <DocsModal seller={docsTarget} open={!!docsTarget} onClose={() => setDocsTarget(null)} />
+      <BankingModal kennel={bankingTarget} open={!!bankingTarget} onClose={() => setBankingTarget(null)} />
 
       {/* Remove kennel confirmation */}
       <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Remove Kennel">

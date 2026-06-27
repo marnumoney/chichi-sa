@@ -177,13 +177,8 @@ export default function SellerSignup() {
               <input type="tel" required className="input-field" value={form.phone} onChange={set('phone')} placeholder="+27 82 000 0000" />
             </div>
             <div>
-              <label className="label">Province *</label>
-              <select required className="input-field" value={form.province} onChange={set('province')}>
-                <option value="">Select province</option>
-                {['Gauteng', 'Western Cape', 'KwaZulu-Natal', 'Eastern Cape', 'Limpopo', 'Mpumalanga', 'Free State', 'North West', 'Northern Cape'].map(p => (
-                  <option key={p}>{p}</option>
-                ))}
-              </select>
+              <label className="label">City *</label>
+              <input type="text" required className="input-field" value={form.province} onChange={set('province')} placeholder="e.g. Johannesburg" />
             </div>
           </div>
 

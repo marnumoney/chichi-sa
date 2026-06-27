@@ -9,6 +9,7 @@ import AdminLogin from './pages/admin/AdminLogin'
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminLegal from './pages/admin/AdminLegal'
+import AdminBuyerProtection from './pages/admin/AdminBuyerProtection'
 import AdminKennels from './pages/admin/AdminKennels'
 import AdminWallet from './pages/admin/AdminWallet'
 import AdminUsers from './pages/admin/AdminUsers'
@@ -18,6 +19,7 @@ import AdminBroadcast from './pages/admin/AdminBroadcast'
 import AdminSettings from './pages/admin/AdminSettings'
 import ContactPage from './pages/ContactPage'
 import LegalPage from './pages/LegalPage'
+import BuyerProtectionPage from './pages/BuyerProtectionPage'
 import SellerSignup from './pages/seller/SellerSignup'
 import SellerLogin from './pages/seller/SellerLogin'
 import SellerLayout from './pages/seller/SellerLayout'
@@ -77,6 +79,7 @@ export default function App() {
         <Route path="broadcast" element={<AdminBroadcast />} />
         <Route path="settings" element={<AdminSettings />} />
         <Route path="legal" element={<AdminLegal />} />
+        <Route path="buyer-protection" element={<AdminBuyerProtection />} />
         <Route path="kennels" element={<AdminKennels />} />
       </Route>
 
@@ -97,6 +100,7 @@ export default function App() {
 
       <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
       <Route path="/legal" element={<PublicLayout><LegalPage /></PublicLayout>} />
+      <Route path="/buyer-protection" element={<PublicLayout><BuyerProtectionPage /></PublicLayout>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

@@ -85,6 +85,12 @@ def get_legal(db: sqlite3.Connection = Depends(get_db)):
     return {'content': row['content'] if row else ''}
 
 
+@router.get('/buyer-protection')
+def get_buyer_protection(db: sqlite3.Connection = Depends(get_db)):
+    row = db.execute('SELECT content FROM buyer_protection WHERE id = 1').fetchone()
+    return {'content': row['content'] if row else ''}
+
+
 def _send_contact_email(name: str, email: str, subject: str, message: str):
     import smtplib
     from email.mime.multipart import MIMEMultipart
