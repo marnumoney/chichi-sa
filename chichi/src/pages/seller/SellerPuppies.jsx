@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import { Plus, Trash2, X, Check, Upload, Landmark, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 import Modal from '../../components/Modal'
-import { uploadImage, uploadImages } from '../../utils/cloudinary'
+import { uploadImage, uploadImages } from '../../utils/storage'
 
 const SA_BANKS = [
   'ABSA Bank', 'Capitec Bank', 'FNB (First National Bank)', 'Nedbank',

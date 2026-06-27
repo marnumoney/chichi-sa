@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useApp } from '../../context/AppContext'
 import { Save, Check, Copy, Upload, Landmark, FileText, X, FileCheck, ExternalLink } from 'lucide-react'
-import { uploadImage } from '../../utils/cloudinary'
+import { uploadImage } from '../../utils/storage'
 import { uploadCert } from '../../utils/uploadCert'
 
 const SA_BANKS = [
