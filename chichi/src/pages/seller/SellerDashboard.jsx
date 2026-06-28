@@ -63,16 +63,29 @@ export default function SellerDashboard() {
   return (
     <div>
       {/* Welcome */}
-      <div className="mb-6">
-        <h2 className="font-display text-3xl font-semibold text-espresso mb-1">
-          Welcome, {sellerUser?.name?.split(' ')[0]}
-        </h2>
-        <p className="font-body text-sm text-muted">
-          {kennel?.name}{kennel?.registry ? ` · ${kennel.registry}` : ''}
-          {referralDiscountActive && (
-            <span className="ml-2 text-sage font-semibold">· Referral discount active ({(adminSettings?.referralDiscount ?? 1.5)}% off commission)</span>
-          )}
-        </p>
+      <div className="flex items-center gap-4 mb-6">
+        {kennel && (
+          <div
+            className="w-16 h-16 flex-shrink-0 overflow-hidden border border-divider"
+            style={{ backgroundColor: kennel.logo ? 'transparent' : (kennel.color || '#8B7355') }}
+          >
+            {kennel.logo
+              ? <img src={kennel.logo} alt={kennel.name} className="w-full h-full object-cover" />
+              : <span className="w-full h-full flex items-center justify-center text-white text-sm font-bold">{kennel.initials ?? '??'}</span>
+            }
+          </div>
+        )}
+        <div>
+          <h2 className="font-display text-3xl font-semibold text-espresso mb-1">
+            Welcome, {sellerUser?.name?.split(' ')[0]}
+          </h2>
+          <p className="font-body text-sm text-muted">
+            {kennel?.name}{kennel?.registry ? ` · ${kennel.registry}` : ''}
+            {referralDiscountActive && (
+              <span className="ml-2 text-sage font-semibold">· Referral discount active ({(adminSettings?.referralDiscount ?? 1.5)}% off commission)</span>
+            )}
+          </p>
+        </div>
       </div>
 
       <MembershipBanner kennel={kennel} sellerId={sellerUser?.id} />
