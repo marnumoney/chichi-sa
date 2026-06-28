@@ -509,6 +509,28 @@ def admin_update_buyer_protection(
     return dict(db.execute('SELECT * FROM buyer_protection WHERE id = 1').fetchone())
 
 
+# ── Terms & Conditions ───────────────────────────────────────────────────────
+
+@router.get('/terms')
+def admin_get_terms(
+    _: dict = Depends(get_current_admin),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    row = db.execute('SELECT * FROM terms_content WHERE id = 1').fetchone()
+    return dict(row)
+
+
+@router.put('/terms')
+def admin_update_terms(
+    body: LegalUpdate,
+    _: dict = Depends(get_current_admin),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    db.execute('UPDATE terms_content SET content = ? WHERE id = 1', (body.content,))
+    db.commit()
+    return dict(db.execute('SELECT * FROM terms_content WHERE id = 1').fetchone())
+
+
 # ── Transactions ──────────────────────────────────────────────────────────────
 
 @router.get('/transactions')

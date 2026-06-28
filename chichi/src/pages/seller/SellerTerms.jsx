@@ -19,7 +19,7 @@ function renderLines(lines) {
 }
 
 export default function SellerTerms() {
-  const { legalContent } = useApp()
+  const { termsContent } = useApp()
 
   return (
     <div>
@@ -29,8 +29,8 @@ export default function SellerTerms() {
       </div>
 
       <div className="bg-white border border-divider p-6 md:p-10 max-w-3xl">
-        {legalContent
-          ? <div className="space-y-1">{renderLines(legalContent.split('\n'))}</div>
+        {termsContent
+          ? <div className="space-y-1">{renderLines(termsContent.split('\n'))}</div>
           : <p className="font-body text-sm text-muted">No terms have been published yet.</p>
         }
       </div>

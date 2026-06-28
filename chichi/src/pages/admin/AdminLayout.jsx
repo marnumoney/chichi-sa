@@ -14,6 +14,7 @@ const navItems = [
   { path: '/admin/broadcast', label: 'Broadcast', icon: Megaphone },
   { path: '/admin/settings', label: 'Settings', icon: Settings },
   { path: '/admin/legal', label: 'Legal & Rules', icon: FileText },
+  { path: '/admin/terms', label: 'Terms & Conditions', icon: FileText },
   { path: '/admin/buyer-protection', label: 'Buyer Protection', icon: ShieldCheck },
 ]
 
