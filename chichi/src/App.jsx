@@ -26,6 +26,7 @@ import SellerLayout from './pages/seller/SellerLayout'
 import SellerDashboard from './pages/seller/SellerDashboard'
 import SellerPuppies from './pages/seller/SellerPuppies'
 import SellerProfile from './pages/seller/SellerProfile'
+import SellerTerms from './pages/seller/SellerTerms'
 import PayMembership from './pages/PayMembership'
 import BuyerSignup from './pages/buyer/BuyerSignup'
 import BuyerLogin from './pages/buyer/BuyerLogin'
@@ -96,6 +97,7 @@ export default function App() {
         <Route index element={<SellerDashboard />} />
         <Route path="puppies" element={<SellerPuppies />} />
         <Route path="profile" element={<SellerProfile />} />
+        <Route path="terms" element={<SellerTerms />} />
       </Route>
 
       <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />

@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import { sendRenewalEmail } from '../../utils/email'
-import { LayoutDashboard, Package, User, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Package, User, FileText, LogOut, Menu, X } from 'lucide-react'
 import { LogoCompact } from '../../components/Logo'
 
 const navItems = [
   { path: '/seller', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { path: '/seller/puppies', label: 'My Puppies', icon: Package },
   { path: '/seller/profile', label: 'Kennel Profile', icon: User },
+  { path: '/seller/terms', label: 'Terms & Rules', icon: FileText },
 ]
 
 export default function SellerLayout() {
