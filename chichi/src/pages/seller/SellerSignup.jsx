@@ -15,6 +15,7 @@ export default function SellerSignup() {
     phone: '',
     kennelName: '',
     registry: 'KUSA',
+    city: '',
     province: '',
     referralCode: '',
     password: '',
@@ -84,6 +85,7 @@ export default function SellerSignup() {
           'Phone': form.phone,
           'Kennel Name': form.kennelName,
           'Registry': form.registry,
+          'City': form.city,
           'Province': form.province,
           'Referral Code': form.referralCode || 'None',
           'Kennel Certificate': documents.kennel_cert || 'Not uploaded',
@@ -102,6 +104,7 @@ export default function SellerSignup() {
         password: form.password,
         name: form.name,
         phone: form.phone,
+        city: form.city,
         province: form.province,
         kennel_name: form.kennelName,
         registry: form.registry,
@@ -178,29 +181,45 @@ export default function SellerSignup() {
             </div>
             <div>
               <label className="label">City *</label>
-              <input type="text" required className="input-field" value={form.province} onChange={set('province')} placeholder="e.g. Johannesburg" />
+              <input type="text" required className="input-field" value={form.city} onChange={set('city')} placeholder="e.g. Johannesburg" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
+              <label className="label">Province *</label>
+              <select required className="input-field" value={form.province} onChange={set('province')}>
+                <option value="">Select province…</option>
+                <option>Gauteng</option>
+                <option>Western Cape</option>
+                <option>KwaZulu-Natal</option>
+                <option>Eastern Cape</option>
+                <option>Limpopo</option>
+                <option>Mpumalanga</option>
+                <option>North West</option>
+                <option>Free State</option>
+                <option>Northern Cape</option>
+              </select>
+            </div>
+            <div>
               <label className="label">Kennel Name *</label>
               <input type="text" required className="input-field" value={form.kennelName} onChange={set('kennelName')} placeholder="Your registered kennel name" />
             </div>
-            <div>
-              <label className="label">Registry *</label>
-              <div className="flex gap-0 border border-divider overflow-hidden">
-                {['KUSA', 'Canine SA'].map(r => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => setForm(f => ({ ...f, registry: r }))}
-                    className={`flex-1 py-3 font-body text-xs font-semibold tracking-wide transition-colors ${form.registry === r ? 'bg-espresso text-cream' : 'bg-white text-muted hover:text-espresso'}`}
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
+          </div>
+
+          <div>
+            <label className="label">Registry *</label>
+            <div className="flex gap-0 border border-divider overflow-hidden">
+              {['KUSA', 'Canine SA'].map(r => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, registry: r }))}
+                  className={`flex-1 py-3 font-body text-xs font-semibold tracking-wide transition-colors ${form.registry === r ? 'bg-espresso text-cream' : 'bg-white text-muted hover:text-espresso'}`}
+                >
+                  {r}
+                </button>
+              ))}
             </div>
           </div>
 

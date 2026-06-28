@@ -241,6 +241,7 @@ f"{insert_ignore} admin_settings (id) VALUES (1) {on_conflict}",
         ('kennel_name', "TEXT DEFAULT ''"),
         ('registry', "TEXT DEFAULT 'KUSA'"),
         ('phone', "TEXT DEFAULT ''"),
+        ('city', "TEXT DEFAULT ''"),
         ('province', "TEXT DEFAULT ''"),
         ('documents', "TEXT DEFAULT '{}'"),
     ]:

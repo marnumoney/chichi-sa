@@ -12,6 +12,7 @@ class SignupRequest(BaseModel):
     password: str = Field(min_length=8)
     name: str
     phone: Optional[str] = None
+    city: Optional[str] = None
     province: Optional[str] = None
     kennel_name: Optional[str] = None
     registry: Optional[str] = None
