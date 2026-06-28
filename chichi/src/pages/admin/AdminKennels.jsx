@@ -470,10 +470,13 @@ export default function AdminKennels() {
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div
-                          className="w-8 h-8 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-                          style={{ backgroundColor: kennel.color }}
+                          className="w-8 h-8 flex-shrink-0 overflow-hidden"
+                          style={{ backgroundColor: kennel.logo ? 'transparent' : kennel.color }}
                         >
-                          {kennel.initials}
+                          {kennel.logo
+                            ? <img src={kennel.logo} alt={kennel.name} className="w-full h-full object-cover" />
+                            : <span className="w-full h-full flex items-center justify-center text-white text-[10px] font-bold">{kennel.initials}</span>
+                          }
                         </div>
                         <div>
                           <p className="font-semibold text-espresso">{kennel.name}</p>
