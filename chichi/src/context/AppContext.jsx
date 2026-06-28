@@ -177,6 +177,13 @@ export function AppProvider({ children }) {
       apiFetch('/admin/buyer-protection'),
       apiFetch('/admin/terms'),
     ])
+    if (kRes.status === 401) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('role')
+      localStorage.removeItem('adminEmail')
+      setAdminUser(null)
+      return
+    }
     if (kRes.ok) setKennels(normalize(await kRes.json()))
     if (sRes.ok) setSellers(normalize(await sRes.json()))
     if (tRes.ok) setTestimonials(normalize(await tRes.json()))
