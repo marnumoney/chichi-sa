@@ -256,13 +256,13 @@ export default function PuppyDetailPage() {
             {puppy.sireImage && (
               <div>
                 <p className="label mb-2">Sire (Father)</p>
-                <img src={puppy.sireImage} alt="Sire" className="w-full h-64 object-cover border border-divider" />
+                <img src={puppy.sireImage} alt="Sire" className="w-full aspect-[4/3] object-contain bg-cream border border-divider" />
               </div>
             )}
             {puppy.damImage && (
               <div>
                 <p className="label mb-2">Dam (Mother)</p>
-                <img src={puppy.damImage} alt="Dam" className="w-full h-64 object-cover border border-divider" />
+                <img src={puppy.damImage} alt="Dam" className="w-full aspect-[4/3] object-contain bg-cream border border-divider" />
               </div>
             )}
           </div>
