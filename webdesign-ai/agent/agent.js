@@ -236,6 +236,8 @@ app.get('/api/dashboard',async(req,res)=>{
 });
 
 app.get('/health',(_,res)=>res.json({status:'autonomous',uptime:process.uptime(),ts:new Date().toISOString()}));
+app.get('/api/health',(_,res)=>res.json({status:'ok',uptime:process.uptime(),ts:new Date().toISOString()}));
+app.get('/api/ping',(_,res)=>res.json({status:'ok'}));
 
 app.get('/',(_,res)=>{
   res.setHeader('Content-Type','text/html');

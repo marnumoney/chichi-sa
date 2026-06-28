@@ -54,7 +54,7 @@ header.append(av,titleWrap,closeBtn);
 const msgs=document.createElement('div');msgs.id='_aims';
 
 const qr=document.createElement('div');qr.id='_aiqr';
-['Form won\'t submit','Page is slow','Menu is broken','Images missing'].forEach(text=>{
+['How do I buy a puppy?','How do I list my kennel?','Tell me about buyer protection','How does payment work?'].forEach(text=>{
   const btn=document.createElement('button');btn.className='ai-q';btn.textContent=text;
   qr.appendChild(btn);
 });
@@ -70,13 +70,32 @@ w.append(header,msgs,qr,ir);
 document.body.appendChild(w);
 
 const hist=[];
+let _serverReady=false;
+let _wakePromise=null;
 
 function addMsg(role,text,typing=false){
-  hist.push({role,content:text});
+  if(role!=='status')hist.push({role,content:text});
   const d=document.createElement('div');
-  d.className='ai-m '+(role==='assistant'?'b':'u')+(typing?' t':'');
+  d.className='ai-m '+(role==='assistant'||role==='status'?'b':'u')+(typing?' t':'');
   d.textContent=typing?'Checking…':text;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;return d;
+}
+
+function wakeServer(){
+  if(_serverReady||_wakePromise)return _wakePromise||Promise.resolve();
+  _wakePromise=fetch(AGENT+'/api/ping',{method:'GET',cache:'no-store'})
+    .then(()=>{_serverReady=true;})
+    .catch(()=>{})
+    .finally(()=>{_wakePromise=null;});
+  return _wakePromise;
+}
+
+async function doFetch(body){
+  return fetch(AGENT+'/api/chat',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(body),
+  });
 }
 
 async function sendMsg(text){
@@ -84,24 +103,42 @@ async function sendMsg(text){
   inp.value='';inp.disabled=true;qr.style.display='none';b.classList.remove('has-err');
   addMsg('user',text);
   const t=addMsg('assistant','',true);
+  const body={siteId:SITE_ID,messages:hist,currentPage:location.href,pageErrors:window._aiErrors||[],userRole:USER_ROLE};
   try{
-    const r=await fetch(AGENT+'/api/chat',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({siteId:SITE_ID,messages:hist,currentPage:location.href,pageErrors:window._aiErrors||[],userRole:USER_ROLE}),
-    });
+    const r=await doFetch(body);
     const d=await r.json();
+    _serverReady=true;
     t.remove();addMsg('assistant',d.reply||"I'm on it — fixing that now.");
   }catch{
-    t.remove();addMsg('assistant',"I'm diagnosing this right now. Give me a moment.");
+    // First attempt failed — likely a cold start. Retry once after 5 seconds.
+    t.textContent='Still connecting, please wait…';
+    await new Promise(resolve=>setTimeout(resolve,5000));
+    try{
+      const r2=await doFetch(body);
+      const d2=await r2.json();
+      _serverReady=true;
+      t.remove();addMsg('assistant',d2.reply||"I'm on it — fixing that now.");
+    }catch{
+      t.remove();addMsg('assistant','Sorry, the assistant is starting up. This can take up to 30 seconds on the first connection. Please try again in a moment.');
+      b.classList.add('has-err');
+    }
   }
   inp.disabled=false;inp.focus();
 }
 
 b.addEventListener('click',()=>{
   w.classList.toggle('h');
-  if(!w.classList.contains('h')&&!hist.length)
-    addMsg('assistant','Hi! I can see everything on this page and fix issues instantly. What\'s wrong?');
+  if(!w.classList.contains('h')&&!hist.length){
+    if(!_serverReady){
+      const statusMsg=addMsg('status','Connecting to assistant…');
+      wakeServer().then(()=>{
+        statusMsg.remove();
+        addMsg('assistant','Hi! How can I help you with Chihuahua South Africa today?');
+      });
+    }else{
+      addMsg('assistant','Hi! How can I help you with Chihuahua South Africa today?');
+    }
+  }
   if(!w.classList.contains('h'))inp.focus();
 });
 closeBtn.addEventListener('click',()=>w.classList.add('h'));
