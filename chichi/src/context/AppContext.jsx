@@ -488,7 +488,12 @@ export function AppProvider({ children }) {
       method: 'PUT',
       body: { content },
     })
-    if (res.ok) { const d = normalize(await res.json()); setTermsContent(d.content) }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.detail || `Save failed (${res.status})`)
+    }
+    const d = normalize(await res.json())
+    setTermsContent(d.content)
   }
 
   return (

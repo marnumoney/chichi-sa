@@ -34,6 +34,7 @@ export default function AdminTerms() {
   const [initialized, setInitialized] = useState(!!termsContent)
   const [mode, setMode] = useState('edit')
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   useEffect(() => {
     if (!initialized && termsContent) {
@@ -43,9 +44,14 @@ export default function AdminTerms() {
   }, [termsContent, initialized])
 
   const handleSave = async () => {
-    await updateTerms(draft)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+    setSaveError('')
+    try {
+      await updateTerms(draft)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } catch (e) {
+      setSaveError(e.message || 'Failed to save. Please try again.')
+    }
   }
 
   const hasChanges = draft !== termsContent
@@ -78,9 +84,15 @@ export default function AdminTerms() {
         </div>
       </div>
 
+      {saveError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 font-body text-xs px-4 py-2 mb-4">
+          {saveError}
+        </div>
+      )}
+
       {mode === 'edit' ? (
         <div>
-          {hasChanges && (
+          {hasChanges && !saveError && (
             <div className="bg-amber-50 border border-amber-200 text-amber-700 font-body text-xs px-4 py-2 mb-4">
               You have unsaved changes.
             </div>
