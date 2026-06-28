@@ -220,7 +220,7 @@ export default function SellerProfile() {
           </div>
           {form.bankName && form.accountNumber && (
             <div className="bg-sage/5 border border-sage/20 p-3 font-body text-xs text-sage-dark">
-              ✓ Banking details saved — admin will EFT R[payout amount] to <strong>{form.accountHolder}</strong> at <strong>{form.bankName}</strong>, Acc: <strong>{form.accountNumber}</strong>
+              ✓ Banking details on file — admin will EFT your payout to <strong>{form.accountHolder}</strong> at <strong>{form.bankName}</strong> · Acc: <strong className="font-mono">{form.accountNumber}</strong>
             </div>
           )}
         </div>

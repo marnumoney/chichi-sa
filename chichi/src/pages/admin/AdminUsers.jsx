@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
-import { Pencil, Trash2, Plus, Check, X, FileText, ExternalLink, Eye } from 'lucide-react'
+import { Pencil, Trash2, Plus, Check, X, FileText, ExternalLink, Eye, Landmark } from 'lucide-react'
 import Modal from '../../components/Modal'
 import { sendApprovalEmail } from '../../utils/email'
 
@@ -91,6 +91,39 @@ function DocsModal({ seller, open, onClose }) {
   )
 }
 
+function SellerBankingModal({ seller, kennel, open, onClose }) {
+  if (!seller) return null
+  const hasBanking = kennel?.bankName || kennel?.accountNumber
+  return (
+    <Modal open={open} onClose={onClose} title={`Banking Details — ${seller.name}`} maxWidth="max-w-md">
+      {!hasBanking ? (
+        <div className="py-4 text-center">
+          <p className="font-body text-sm text-muted mb-1">No banking details on file.</p>
+          <p className="font-body text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 mt-3">
+            Ask the seller to add their banking details in their Kennel Profile so payouts can be processed.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {[
+            { label: 'Bank', value: kennel.bankName },
+            { label: 'Account Type', value: kennel.accountType },
+            { label: 'Account Holder', value: kennel.accountHolder },
+            { label: 'Account Number', value: kennel.accountNumber, mono: true },
+            { label: 'Branch Code', value: kennel.branchCode, mono: true },
+          ].map(({ label, value, mono }) => value ? (
+            <div key={label} className="flex items-center justify-between border border-divider px-4 py-3 bg-cream">
+              <span className="font-body text-xs text-muted uppercase tracking-widest">{label}</span>
+              <span className={`font-body text-sm font-semibold text-espresso ${mono ? 'font-mono' : ''}`}>{value}</span>
+            </div>
+          ) : null)}
+        </div>
+      )}
+      <button onClick={onClose} className="w-full mt-4 btn-secondary text-xs tracking-widest uppercase py-3">Close</button>
+    </Modal>
+  )
+}
+
 const EMPTY_SELLER = { name: '', email: '', phone: '', password: '', kennelId: '', status: 'approved' }
 
 function SellerModal({ seller, kennels, open, onClose, onSave, title }) {
@@ -136,6 +169,7 @@ export default function AdminUsers() {
   const [editTarget, setEditTarget] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [docsTarget, setDocsTarget] = useState(null)
+  const [bankingTarget, setBankingTarget] = useState(null)
   const [buyerTarget, setBuyerTarget] = useState(null)
 
   const statusBadge = (status) => {
@@ -213,6 +247,9 @@ export default function AdminUsers() {
                           <button onClick={() => setDocsTarget(s)} className="text-muted hover:text-sienna transition-colors p-1" title="View documents">
                             <FileText className="w-3.5 h-3.5" />
                           </button>
+                          <button onClick={() => setBankingTarget({ seller: s, kennel })} className="text-muted hover:text-sienna transition-colors p-1" title="View banking details">
+                            <Landmark className="w-3.5 h-3.5" />
+                          </button>
                           <button onClick={() => setEditTarget(s)} className="text-muted hover:text-sienna transition-colors p-1">
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
@@ -272,6 +309,12 @@ export default function AdminUsers() {
       )}
 
       <DocsModal seller={docsTarget} open={!!docsTarget} onClose={() => setDocsTarget(null)} />
+      <SellerBankingModal
+        seller={bankingTarget?.seller}
+        kennel={bankingTarget?.kennel}
+        open={!!bankingTarget}
+        onClose={() => setBankingTarget(null)}
+      />
       <BuyerModal buyer={buyerTarget} transactions={transactions} open={!!buyerTarget} onClose={() => setBuyerTarget(null)} />
 
       {/* Add seller modal */}
