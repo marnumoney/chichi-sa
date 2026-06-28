@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { useApp } from '../../context/AppContext'
-import { Check, X, Pencil, Copy, ExternalLink, Plus, Trash2, Download, FileText, Landmark, Bell } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useApp, apiFetch } from '../../context/AppContext'
+import { Check, X, Pencil, Copy, ExternalLink, Plus, Trash2, Download, FileText, Landmark, Bell, ClipboardList } from 'lucide-react'
 import Modal from '../../components/Modal'
 import { exportCsv } from '../../utils/exportCsv'
 import { sendApprovalEmail, sendRenewalEmail } from '../../utils/email'
@@ -81,6 +81,77 @@ function BankingModal({ kennel, open, onClose }) {
           ) : null)}
         </div>
       )}
+    </Modal>
+  )
+}
+
+function MembershipLogModal({ kennel, open, onClose }) {
+  const [logs, setLogs] = useState(null)
+  const [note, setNote] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!open || !kennel) return
+    setLogs(null)
+    setNote('')
+    apiFetch(`/admin/kennels/${kennel.id}/membership-logs`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setLogs(data))
+  }, [open, kennel])
+
+  const handleAdd = async () => {
+    if (!note.trim()) return
+    setSaving(true)
+    const res = await apiFetch(`/admin/kennels/${kennel.id}/membership-logs`, {
+      method: 'POST',
+      body: JSON.stringify({ note }),
+    })
+    if (res.ok) { const entry = await res.json(); setLogs(prev => [entry, ...(prev ?? [])]) }
+    setNote('')
+    setSaving(false)
+  }
+
+  if (!kennel) return null
+
+  return (
+    <Modal open={open} onClose={onClose} title={`Membership Log — ${kennel.name}`} maxWidth="max-w-lg">
+      <div className="space-y-4">
+        <div>
+          <label className="label">Add contact note</label>
+          <textarea
+            rows={3}
+            className="input-field resize-none text-sm"
+            placeholder="e.g. Called today — will renew by end of month."
+            value={note}
+            onChange={e => setNote(e.target.value)}
+          />
+          <button
+            onClick={handleAdd}
+            disabled={!note.trim() || saving}
+            className="mt-2 flex items-center gap-2 btn-primary text-xs tracking-widest uppercase py-2.5 px-5 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {saving ? 'Saving…' : 'Log Contact'}
+          </button>
+        </div>
+
+        <div>
+          <p className="font-body text-xs font-semibold uppercase tracking-widest text-muted mb-2">History</p>
+          {logs === null ? (
+            <p className="font-body text-xs text-muted py-3 text-center">Loading…</p>
+          ) : logs.length === 0 ? (
+            <p className="font-body text-xs text-muted py-3 text-center">No contact logs yet.</p>
+          ) : (
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+              {logs.map(log => (
+                <div key={log.id} className="border border-divider bg-cream px-4 py-3">
+                  <p className="font-body text-sm text-espresso leading-relaxed">{log.note}</p>
+                  <p className="font-body text-[10px] text-muted mt-1.5">{log.logged_at}{log.logged_by ? ` · ${log.logged_by}` : ''}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </Modal>
   )
 }
@@ -171,6 +242,7 @@ export default function AdminKennels() {
   const [copiedId, setCopiedId] = useState(null)
   const [docsTarget, setDocsTarget] = useState(null)
   const [bankingTarget, setBankingTarget] = useState(null)
+  const [logTarget, setLogTarget] = useState(null)
   const [reminderSent, setReminderSent] = useState(null)
 
   const pendingSellers = sellers.filter(s => s.status === 'pending_verification')
@@ -329,14 +401,23 @@ export default function AdminKennels() {
                     <p className="font-body text-sm font-semibold text-espresso">{k.name}</p>
                     <p className="font-body text-xs text-muted">Expired: {k.membershipExpiry} · {seller?.email ?? '—'}</p>
                   </div>
-                  {seller && (
+                  <div className="flex gap-2">
+                    {seller && (
+                      <button
+                        onClick={() => handleSendReminder(seller, k.name)}
+                        className={`flex items-center gap-1.5 font-body text-xs font-semibold px-3 py-1.5 transition-colors ${reminderSent === seller.id ? 'bg-sage text-white' : 'bg-espresso text-cream hover:bg-sienna'}`}
+                      >
+                        {reminderSent === seller.id ? <><Check className="w-3.5 h-3.5" /> Sent!</> : <><Bell className="w-3.5 h-3.5" /> Send Reminder</>}
+                      </button>
+                    )}
                     <button
-                      onClick={() => handleSendReminder(seller, k.name)}
-                      className={`flex items-center gap-1.5 font-body text-xs font-semibold px-3 py-1.5 transition-colors ${reminderSent === seller.id ? 'bg-sage text-white' : 'bg-espresso text-cream hover:bg-sienna'}`}
+                      onClick={() => setLogTarget(k)}
+                      className="flex items-center gap-1.5 bg-cream border border-divider text-espresso font-body text-xs font-semibold px-3 py-1.5 hover:border-sienna hover:text-sienna transition-colors"
+                      title="Log membership conversation"
                     >
-                      {reminderSent === seller.id ? <><Check className="w-3.5 h-3.5" /> Sent!</> : <><Bell className="w-3.5 h-3.5" /> Send Renewal Reminder</>}
+                      <ClipboardList className="w-3.5 h-3.5" /> Log Contact
                     </button>
-                  )}
+                  </div>
                 </div>
               )
             })}
@@ -456,6 +537,11 @@ export default function AdminKennels() {
                             <button onClick={() => setBankingTarget(kennel)} className="text-muted hover:text-sienna transition-colors p-1" title="View banking details">
                               <Landmark className="w-3.5 h-3.5" />
                             </button>
+                            {kennel.membershipExpiry && kennel.membershipExpiry < today && (
+                              <button onClick={() => setLogTarget(kennel)} className="text-amber-500 hover:text-sienna transition-colors p-1" title="Log membership contact">
+                                <ClipboardList className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                           </>
                         )}
                         <button onClick={() => setDeleteTarget(kennel)} className="text-muted hover:text-red-500 transition-colors p-1">
@@ -501,6 +587,7 @@ export default function AdminKennels() {
 
       <DocsModal seller={docsTarget} open={!!docsTarget} onClose={() => setDocsTarget(null)} />
       <BankingModal kennel={bankingTarget} open={!!bankingTarget} onClose={() => setBankingTarget(null)} />
+      <MembershipLogModal kennel={logTarget} open={!!logTarget} onClose={() => setLogTarget(null)} />
 
       {/* Remove kennel confirmation */}
       <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Remove Kennel">

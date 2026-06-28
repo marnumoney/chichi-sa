@@ -203,6 +203,13 @@ def create_tables(conn):
             data {blob_type} NOT NULL,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )""",
+        """CREATE TABLE IF NOT EXISTS membership_logs (
+            id TEXT PRIMARY KEY,
+            kennel_id TEXT NOT NULL,
+            note TEXT NOT NULL,
+            logged_at TEXT NOT NULL,
+            logged_by TEXT DEFAULT ''
+        )""",
 f"{insert_ignore} admin_settings (id) VALUES (1) {on_conflict}",
         f"{insert_ignore} legal_text (id) VALUES (1) {on_conflict}",
         f"{insert_ignore} buyer_protection (id) VALUES (1) {on_conflict}",

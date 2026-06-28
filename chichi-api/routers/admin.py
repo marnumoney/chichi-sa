@@ -531,6 +531,44 @@ def admin_update_terms(
     return dict(db.execute('SELECT * FROM terms_content WHERE id = 1').fetchone())
 
 
+# ── Membership logs ───────────────────────────────────────────────────────────
+
+class MembershipLogCreate(BaseModel):
+    note: str
+
+
+@router.get('/kennels/{kennel_id}/membership-logs')
+def list_membership_logs(
+    kennel_id: str,
+    _: dict = Depends(get_current_admin),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    rows = db.execute(
+        'SELECT * FROM membership_logs WHERE kennel_id = ? ORDER BY logged_at DESC',
+        (kennel_id,)
+    ).fetchall()
+    return [dict(r) for r in rows]
+
+
+@router.post('/kennels/{kennel_id}/membership-logs', status_code=201)
+def add_membership_log(
+    kennel_id: str,
+    body: MembershipLogCreate,
+    admin: dict = Depends(get_current_admin),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    from datetime import datetime, timezone
+    log_id = uuid.uuid4().hex[:12]
+    logged_at = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')
+    db.execute(
+        'INSERT INTO membership_logs (id, kennel_id, note, logged_at, logged_by) VALUES (?, ?, ?, ?, ?)',
+        (log_id, kennel_id, body.note.strip(), logged_at, admin.get('email', ''))
+    )
+    db.commit()
+    row = db.execute('SELECT * FROM membership_logs WHERE id = ?', (log_id,)).fetchone()
+    return dict(row)
+
+
 # ── Transactions ──────────────────────────────────────────────────────────────
 
 @router.get('/transactions')
