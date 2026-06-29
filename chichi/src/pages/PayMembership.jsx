@@ -8,14 +8,14 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 export default function PayMembership() {
   const [params] = useSearchParams()
-  const { payMembership, adminSettings } = useApp()
+  const { payMembership } = useApp()
 
   const sellerId = params.get('seller')
-  const membershipFee = adminSettings?.membershipFeeAnnual ?? 1200
-  const defaultCommission = adminSettings?.defaultCommission ?? 8
 
   const [seller, setSeller] = useState(null)
   const [kennel, setKennel] = useState(null)
+  const [membershipFee, setMembershipFee] = useState(null)
+  const [defaultCommission, setDefaultCommission] = useState(8)
   const [notFound, setNotFound] = useState(false)
   const [paid, setPaid] = useState(params.get('paid') === 'true')
   const [loading, setLoading] = useState(false)
@@ -28,6 +28,8 @@ export default function PayMembership() {
         if (!data.seller || !data.kennel) { setNotFound(true); return }
         setSeller(data.seller)
         setKennel(data.kennel)
+        setMembershipFee(data.membership_fee ?? 1200)
+        setDefaultCommission(data.default_commission ?? 8)
       })
       .catch(() => setNotFound(true))
   }, [sellerId])
@@ -69,7 +71,7 @@ export default function PayMembership() {
     )
   }
 
-  if (!seller || !kennel) {
+  if (!seller || !kennel || membershipFee === null) {
     return (
       <div className="min-h-screen bg-cream flex items-center justify-center p-4">
         <p className="font-body text-sm text-muted">Loading…</p>
