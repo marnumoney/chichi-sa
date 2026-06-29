@@ -269,6 +269,20 @@ f"{insert_ignore} admin_settings (id) VALUES (1) {on_conflict}",
 
     _add_column(conn, is_pg, 'testimonials', 'buyer_email', "TEXT DEFAULT ''")
 
+    # Backfill referral codes for any kennel that doesn't have one yet
+    import random, string
+    rows = conn.execute("SELECT id FROM kennels WHERE referral_code IS NULL OR referral_code = ''").fetchall()
+    for row in rows:
+        kennel_id = dict(row)['id']
+        while True:
+            code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+            if not conn.execute('SELECT id FROM kennels WHERE referral_code = ?', (code,)).fetchone():
+                break
+        conn.execute('UPDATE kennels SET referral_code = ? WHERE id = ?', (code, kennel_id))
+    if rows:
+        conn.commit()
+        print(f'[db] backfilled referral codes for {len(rows)} kennel(s)')
+
 
 # ── Row parsers ───────────────────────────────────────────────────────────────
 
