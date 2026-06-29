@@ -269,6 +269,15 @@ f"{insert_ignore} admin_settings (id) VALUES (1) {on_conflict}",
 
     _add_column(conn, is_pg, 'testimonials', 'buyer_email', "TEXT DEFAULT ''")
 
+    for col, defn in [
+        ('admin_bank_name', "TEXT DEFAULT ''"),
+        ('admin_account_holder', "TEXT DEFAULT 'Chihuahua South Africa'"),
+        ('admin_account_number', "TEXT DEFAULT ''"),
+        ('admin_branch_code', "TEXT DEFAULT ''"),
+        ('admin_account_type', "TEXT DEFAULT 'Cheque / Current'"),
+    ]:
+        _add_column(conn, is_pg, 'admin_settings', col, defn)
+
     # Backfill referral codes for any kennel that doesn't have one yet
     import random, string
     rows = conn.execute("SELECT id FROM kennels WHERE referral_code IS NULL OR referral_code = ''").fetchall()
