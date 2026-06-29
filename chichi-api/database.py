@@ -203,6 +203,12 @@ def create_tables(conn):
             data {blob_type} NOT NULL,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )""",
+        f"""CREATE TABLE IF NOT EXISTS images (
+            id TEXT PRIMARY KEY,
+            content_type TEXT NOT NULL,
+            data {blob_type} NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )""",
         """CREATE TABLE IF NOT EXISTS membership_logs (
             id TEXT PRIMARY KEY,
             kennel_id TEXT NOT NULL,

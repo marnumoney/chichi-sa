@@ -36,6 +36,7 @@ from routers import admin as admin_router
 from routers import transactions as transactions_router
 from routers import payfast as payfast_router
 from routers import certs as certs_router
+from routers import images as images_router
 app.include_router(auth_router.router, prefix='/auth', tags=['auth'])
 app.include_router(public_router.router, tags=['public'])
 app.include_router(seller_router.router, prefix='/seller', tags=['seller'])
@@ -44,3 +45,4 @@ app.include_router(admin_router.router, prefix='/admin', tags=['admin'])
 app.include_router(transactions_router.router, tags=['transactions'])
 app.include_router(payfast_router.router, tags=['payfast'])
 app.include_router(certs_router.router, tags=['certs'])
+app.include_router(images_router.router, tags=['images'])
