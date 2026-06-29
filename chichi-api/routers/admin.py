@@ -265,6 +265,24 @@ def admin_approve_seller(
     return result
 
 
+@router.post('/sellers/{seller_id}/set-password')
+def admin_set_seller_password(
+    seller_id: str,
+    body: dict,
+    _: dict = Depends(get_current_admin),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    new_password = (body.get('password') or '').strip()
+    if len(new_password) < 8:
+        raise HTTPException(status_code=400, detail='Password must be at least 8 characters')
+    row = db.execute('SELECT id FROM sellers WHERE id = ?', (seller_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail='Seller not found')
+    db.execute('UPDATE sellers SET password_hash = ? WHERE id = ?', (hash_password(new_password), seller_id))
+    db.commit()
+    return {'ok': True}
+
+
 @router.patch('/sellers/{seller_id}/reject')
 def admin_reject_seller(
     seller_id: str,
