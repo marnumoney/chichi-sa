@@ -218,7 +218,9 @@ export function AppProvider({ children }) {
     })
     if (!res.ok) {
       const err = await res.json()
-      return { success: false, error: err.detail || 'Invalid credentials.' }
+      const detail = err.detail
+      const msg = Array.isArray(detail) ? (detail[0]?.msg || 'Invalid credentials.') : (detail || 'Invalid credentials.')
+      return { success: false, error: msg }
     }
     const raw = await res.json()
     const { token } = raw
