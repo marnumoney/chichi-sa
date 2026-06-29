@@ -170,7 +170,7 @@ export default function KennelsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-10">
-        <h1 className="font-display text-4xl md:text-5xl font-semibold text-espresso mb-3">Chihuahua Kennels</h1>
+        <h1 className="font-display text-4xl md:text-5xl font-semibold text-espresso mb-3">Our Independent Trading Kennels</h1>
         <p className="font-body text-sm text-muted max-w-xl">
           Browse South Africa's finest registered Chihuahua kennels. Every breeder is verified with KUSA or Canine SA before listing.
         </p>

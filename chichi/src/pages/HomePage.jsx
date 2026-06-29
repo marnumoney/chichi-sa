@@ -185,7 +185,7 @@ export default function HomePage() {
         <section className="bg-white border-t border-divider py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-between mb-8">
-              <h2 className="section-title">Our Kennels</h2>
+              <h2 className="section-title">Our Independent Trading Kennels</h2>
               <Link to="/kennels" className="flex items-center gap-1 text-sienna font-body text-sm font-medium hover:gap-2 transition-all">
                 See all <ChevronRight className="w-4 h-4" />
               </Link>

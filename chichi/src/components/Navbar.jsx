@@ -52,7 +52,7 @@ export default function Navbar() {
             <NavLink to="/kennels" className={({ isActive }) =>
               `font-body text-xs tracking-[0.15em] uppercase font-medium transition-colors pb-1 border-b-2 ${isActive ? 'text-sienna border-sienna' : 'text-muted border-transparent hover:text-espresso hover:border-divider'}`
             }>
-              Kennels
+              Our Kennels
             </NavLink>
             <NavLink to="/contact" className={({ isActive }) =>
               `font-body text-xs tracking-[0.15em] uppercase font-medium transition-colors pb-1 border-b-2 ${isActive ? 'text-sienna border-sienna' : 'text-muted border-transparent hover:text-espresso hover:border-divider'}`
