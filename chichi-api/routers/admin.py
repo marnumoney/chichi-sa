@@ -245,6 +245,8 @@ def admin_approve_seller(
     )
     db.commit()
 
+    settings = db.execute('SELECT membership_fee_annual FROM admin_settings WHERE id = 1').fetchone()
+    fee = dict(settings)['membership_fee_annual'] if settings else 1200.0
     payment_link = f'{FRONTEND_URL}/pay/membership?seller={seller_id}'
     _send_email(
         seller['email'],
@@ -253,7 +255,7 @@ def admin_approve_seller(
         (
             f"Hi {seller.get('name') or 'Breeder'},\n\n"
             f"Your application for {kennel_name} ({registry}) has been approved by our admin team.\n\n"
-            f"To activate your seller account and start listing puppies, please complete your annual membership payment:\n\n"
+            f"To activate your seller account and start listing puppies, please complete your annual membership payment of R{fee:,.0f}:\n\n"
             f"{payment_link}\n\n"
             f"Once payment is confirmed your portal will be activated automatically.\n\n"
             f"— Chihuahua South Africa"
@@ -330,6 +332,8 @@ def admin_send_payment_email(
             kennel = dict(k)
     kennel_name = (kennel or {}).get('name') or seller.get('kennel_name') or f"{seller['name']}'s Kennel"
     registry = (kennel or {}).get('registry') or seller.get('registry') or 'KUSA'
+    settings = db.execute('SELECT membership_fee_annual FROM admin_settings WHERE id = 1').fetchone()
+    fee = dict(settings)['membership_fee_annual'] if settings else 1200.0
     payment_link = f'{FRONTEND_URL}/pay/membership?seller={seller_id}'
     _send_email(
         seller['email'],
@@ -338,7 +342,7 @@ def admin_send_payment_email(
         (
             f"Hi {seller.get('name') or 'Breeder'},\n\n"
             f"Your application for {kennel_name} ({registry}) has been approved!\n\n"
-            f"To activate your seller account and start listing puppies, please complete your annual membership payment:\n\n"
+            f"To activate your seller account and start listing puppies, please complete your annual membership payment of R{fee:,.0f}:\n\n"
             f"{payment_link}\n\n"
             f"Once payment is confirmed your portal will be activated automatically.\n\n"
             f"— Chihuahua South Africa"
