@@ -2,6 +2,7 @@ import os
 import random
 import re
 import sqlite3
+import string
 import uuid
 from datetime import date, timedelta
 from typing import List
@@ -221,10 +222,14 @@ def admin_approve_seller(
     color = random.choice(_PALETTE)
     kennel_name = seller.get('kennel_name') or f"{seller['name']}'s Kennel"
     registry = seller.get('registry') or 'KUSA'
+    while True:
+        referral_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        if not db.execute('SELECT id FROM kennels WHERE referral_code = ?', (referral_code,)).fetchone():
+            break
     db.execute("""
         INSERT INTO kennels
-        (id, name, slug, registry, initials, color, membership_status, commission, status)
-        VALUES (?,?,?,?,?,?,'pending_payment',8.0,'pending')
+        (id, name, slug, registry, initials, color, membership_status, commission, status, referral_code)
+        VALUES (?,?,?,?,?,?,'pending_payment',8.0,'pending',?)
     """, (
         kennel_id,
         kennel_name,
@@ -232,6 +237,7 @@ def admin_approve_seller(
         registry,
         ''.join(w[0].upper() for w in kennel_name.split()[:3]),
         color,
+        referral_code,
     ))
     db.execute(
         "UPDATE sellers SET status = 'pending_payment', kennel_id = ? WHERE id = ?",
