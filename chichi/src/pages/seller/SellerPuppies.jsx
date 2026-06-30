@@ -401,13 +401,12 @@ export default function SellerPuppies() {
             <label className="label mb-3">Health Certifications</label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {HEALTH_OPTIONS.map(cert => (
-                <label key={cert} className={`flex items-center gap-2 p-2 border cursor-pointer transition-colors ${form.health.includes(cert) ? 'border-sage bg-sage/5' : 'border-divider hover:border-sage/40'}`}>
+                <div key={cert} onClick={() => toggleHealth(cert)} className={`flex items-center gap-2 p-2 border cursor-pointer transition-colors ${form.health.includes(cert) ? 'border-sage bg-sage/5' : 'border-divider hover:border-sage/40'}`}>
                   <div className={`w-4 h-4 flex items-center justify-center flex-shrink-0 border transition-colors ${form.health.includes(cert) ? 'border-sage bg-sage' : 'border-divider'}`}>
                     {form.health.includes(cert) && <Check className="w-2.5 h-2.5 text-white" />}
                   </div>
                   <span className="font-body text-xs text-espresso leading-tight">{cert}</span>
-                  <input type="checkbox" className="sr-only" checked={form.health.includes(cert)} onChange={() => toggleHealth(cert)} />
-                </label>
+                </div>
               ))}
             </div>
           </div>
