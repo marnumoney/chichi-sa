@@ -1,3 +1,4 @@
+import json
 import os
 import random
 import re
@@ -380,6 +381,7 @@ def admin_broadcast(
     _: dict = Depends(get_current_admin),
     db: sqlite3.Connection = Depends(get_db),
 ):
+    from datetime import datetime
     sent = 0
     for seller_id in body.seller_ids:
         row = db.execute('SELECT * FROM sellers WHERE id = ?', (seller_id,)).fetchone()
@@ -388,6 +390,14 @@ def admin_broadcast(
         seller = dict(row)
         _send_email(seller['email'], seller.get('name') or 'Breeder', body.subject, body.message)
         sent += 1
+    broadcast_id = f'bc{uuid.uuid4().hex[:8]}'
+    db.execute(
+        "INSERT INTO broadcasts (id, subject, message, sent_at, recipient_ids) VALUES (?,?,?,?,?)",
+        (broadcast_id, body.subject, body.message,
+         datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+         json.dumps(body.seller_ids)),
+    )
+    db.commit()
     return {'ok': True, 'sent': sent}
 
 

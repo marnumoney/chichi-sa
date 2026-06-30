@@ -216,6 +216,13 @@ def create_tables(conn):
             logged_at TEXT NOT NULL,
             logged_by TEXT DEFAULT ''
         )""",
+        """CREATE TABLE IF NOT EXISTS broadcasts (
+            id TEXT PRIMARY KEY,
+            subject TEXT NOT NULL,
+            message TEXT NOT NULL,
+            sent_at TEXT NOT NULL,
+            recipient_ids TEXT DEFAULT '[]'
+        )""",
 f"{insert_ignore} admin_settings (id) VALUES (1) {on_conflict}",
         f"{insert_ignore} legal_text (id) VALUES (1) {on_conflict}",
         f"{insert_ignore} buyer_protection (id) VALUES (1) {on_conflict}",

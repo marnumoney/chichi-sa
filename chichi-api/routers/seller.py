@@ -153,3 +153,25 @@ def delist_puppy(
     db.execute('DELETE FROM puppies WHERE id = ?', (puppy_id,))
     db.commit()
     return {'ok': True}
+
+
+@router.get('/broadcasts')
+def get_seller_broadcasts(
+    seller: dict = Depends(get_current_seller),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    rows = db.execute(
+        "SELECT * FROM broadcasts ORDER BY sent_at DESC LIMIT 10"
+    ).fetchall()
+    result = []
+    for row in rows:
+        r = dict(row)
+        recipient_ids = json.loads(r.get('recipient_ids') or '[]')
+        if not recipient_ids or seller['id'] in recipient_ids:
+            result.append({
+                'id': r['id'],
+                'subject': r['subject'],
+                'message': r['message'],
+                'sent_at': r['sent_at'],
+            })
+    return result

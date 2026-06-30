@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
-import { Package, TrendingUp, Gift, AlertCircle, Plus } from 'lucide-react'
+import { Package, TrendingUp, Gift, AlertCircle, Plus, Megaphone } from 'lucide-react'
 
 function RandIcon() {
   return <span className="font-body font-bold text-base leading-none">R</span>
@@ -44,7 +44,7 @@ function MembershipBanner({ kennel, sellerId }) {
 }
 
 export default function SellerDashboard() {
-  const { sellerUser, puppies, kennels, adminSettings, transactions } = useApp()
+  const { sellerUser, puppies, kennels, adminSettings, transactions, broadcasts } = useApp()
   const kennel = sellerUser?.kennel
 
   const myPuppies = puppies.filter(p => p.kennelId === sellerUser?.kennelId)
@@ -187,6 +187,25 @@ export default function SellerDashboard() {
               <p className="font-body text-xs text-muted italic">Referral code assigned after first sale.</p>
             )}
           </div>
+
+          {/* Broadcast notifications */}
+          {broadcasts.length > 0 && (
+            <div className="bg-white border border-divider">
+              <div className="flex items-center gap-2 px-5 py-4 border-b border-divider">
+                <Megaphone className="w-4 h-4 text-sienna flex-shrink-0" />
+                <h3 className="font-body font-semibold text-sm text-espresso">Announcements</h3>
+              </div>
+              <div className="divide-y divide-divider">
+                {broadcasts.slice(0, 3).map(b => (
+                  <div key={b.id} className="px-5 py-4">
+                    <p className="font-body text-xs font-semibold text-espresso mb-1">{b.subject}</p>
+                    <p className="font-body text-xs text-muted leading-relaxed whitespace-pre-line">{b.message}</p>
+                    <p className="font-body text-[10px] text-muted/60 mt-2">{b.sentAt ? new Date(b.sentAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

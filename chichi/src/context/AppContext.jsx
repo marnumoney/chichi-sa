@@ -74,6 +74,7 @@ export function AppProvider({ children }) {
   const [sellers, setSellers] = useState([])
   const [buyers, setBuyers] = useState([])
   const [transactions, setTransactions] = useState([])
+  const [broadcasts, setBroadcasts] = useState([])
   const [testimonials, setTestimonials] = useState([])
   const [adminSettings, setAdminSettings] = useState({})
   const [legalContent, setLegalContent] = useState('')
@@ -149,6 +150,9 @@ export function AppProvider({ children }) {
       }).finally(() => setAuthLoading(false))
       apiFetch('/seller/transactions').then(async res => {
         if (res.ok) setTransactions(normalize(await res.json()))
+      })
+      apiFetch('/seller/broadcasts').then(async res => {
+        if (res.ok) setBroadcasts(normalize(await res.json()))
       })
     }
     if (role === 'buyer') {
@@ -231,6 +235,9 @@ export function AppProvider({ children }) {
     apiFetch('/seller/transactions').then(async r => {
       if (r.ok) setTransactions(normalize(await r.json()))
     })
+    apiFetch('/seller/broadcasts').then(async r => {
+      if (r.ok) setBroadcasts(normalize(await r.json()))
+    })
     return { success: true }
   }
 
@@ -246,6 +253,7 @@ export function AppProvider({ children }) {
     localStorage.removeItem('role')
     setSellerUser(null)
     setTransactions([])
+    setBroadcasts([])
   }
 
   const signupBuyer = async (data) => {
@@ -519,7 +527,7 @@ export function AppProvider({ children }) {
 
   return (
     <AppContext.Provider value={{
-      kennels, puppies, sellers, buyers, adminSettings, legalContent, buyerProtectionContent, termsContent, transactions, testimonials, loadingPublic, authLoading,
+      kennels, puppies, sellers, buyers, adminSettings, legalContent, buyerProtectionContent, termsContent, transactions, broadcasts, testimonials, loadingPublic, authLoading,
       loadPuppies,
       buyerUser, signupBuyer, loginBuyer, logoutBuyer,
       addTestimonial, removeTestimonial,
