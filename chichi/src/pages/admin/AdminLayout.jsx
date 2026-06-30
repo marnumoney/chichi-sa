@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import { LayoutDashboard, FileText, Building2, Wallet, Users, Package, Star, Megaphone, Settings, LogOut, Menu, X, ShieldCheck } from 'lucide-react'
@@ -25,6 +25,15 @@ export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const pendingCount = sellers.filter(s => s.status === 'pending_verification').length
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = ''
+      document.documentElement.style.overflow = ''
+    }
+  }, [])
 
   const handleLogout = () => {
     logoutAdmin()
