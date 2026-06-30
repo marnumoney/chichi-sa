@@ -172,7 +172,7 @@ export default function SellerPuppies() {
       setImagePreviews(urls)
       setForm(f => ({ ...f, images: urls }))
     } catch (err) {
-      setUploadError('Image upload failed. Check your internet connection and try again.')
+      setUploadError(err?.message || 'Image upload failed. Check your internet connection and try again.')
       setImagePreviews([])
       setForm(f => ({ ...f, images: [] }))
     } finally {
@@ -189,9 +189,9 @@ export default function SellerPuppies() {
     try {
       const url = await uploadImage(file)
       setForm(f => ({ ...f, sireImage: url }))
-    } catch {
+    } catch (err) {
       setForm(f => ({ ...f, sireImage: null }))
-      setSireError('Sire photo upload failed. Please try again.')
+      setSireError(err?.message || 'Sire photo upload failed. Please try again.')
     } finally {
       setUploadingSire(false)
     }
@@ -206,9 +206,9 @@ export default function SellerPuppies() {
     try {
       const url = await uploadImage(file)
       setForm(f => ({ ...f, damImage: url }))
-    } catch {
+    } catch (err) {
       setForm(f => ({ ...f, damImage: null }))
-      setDamError('Dam photo upload failed. Please try again.')
+      setDamError(err?.message || 'Dam photo upload failed. Please try again.')
     } finally {
       setUploadingDam(false)
     }
