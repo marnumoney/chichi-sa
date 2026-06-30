@@ -69,24 +69,13 @@ export default function PuppyDetailPage() {
     if (!validate()) return
     setLoading(true)
     try {
-      const res = await fetch(`${API}/payfast/puppy-checkout`, {
+      const res = await fetch(`${API}/yoco/puppy-checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ puppy_id: puppy.id, buyer_name: buyer.name, buyer_email: buyer.email, buyer_id: buyerUser?.id || '' }),
       })
-      const { payfast_url, ...fields } = await res.json()
-      const form = document.createElement('form')
-      form.method = 'POST'
-      form.action = payfast_url
-      Object.entries(fields).forEach(([k, v]) => {
-        const input = document.createElement('input')
-        input.type = 'hidden'
-        input.name = k
-        input.value = v
-        form.appendChild(input)
-      })
-      document.body.appendChild(form)
-      form.submit()
+      const { redirect_url } = await res.json()
+      window.location.href = redirect_url
     } catch (_) {
       setLoading(false)
     }
@@ -201,10 +190,10 @@ export default function PuppyDetailPage() {
                 className="w-full py-4 bg-sienna text-cream font-body font-semibold text-sm tracking-widest uppercase hover:bg-sienna-dark transition-colors flex items-center justify-center gap-2"
               >
                 <Lock className="w-4 h-4" />
-                Purchase Securely via PayFast
+                Purchase Securely via Yoco
               </button>
               <div className="flex items-center justify-center gap-4 mt-3">
-                <span className="font-body text-xs text-muted">🔒 Secure SA payments via PayFast</span>
+                <span className="font-body text-xs text-muted">🔒 Secure SA payments via Yoco</span>
               </div>
             </>
           ) : (
@@ -283,7 +272,7 @@ export default function PuppyDetailPage() {
       </div>
 
       {/* ── Payment Modal ── */}
-      <Modal open={payOpen} onClose={() => !loading && setPayOpen(false)} title="Purchase via PayFast" maxWidth="max-w-lg">
+      <Modal open={payOpen} onClose={() => !loading && setPayOpen(false)} title="Purchase via Yoco" maxWidth="max-w-lg">
         <form onSubmit={handlePay} className="space-y-4">
           <div className="bg-cream border border-divider p-4 flex items-center gap-3">
             <img src={puppy.images[0]} alt={puppy.name} className="w-12 h-12 object-cover flex-shrink-0" onError={e => { e.target.src = `https://picsum.photos/seed/${puppy.id}/80/80` }} />
@@ -313,9 +302,9 @@ export default function PuppyDetailPage() {
             className={`w-full py-4 font-body font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition-colors ${loading ? 'bg-muted text-cream cursor-not-allowed' : 'bg-sienna text-white hover:bg-sienna-dark'}`}
           >
             <Lock className="w-4 h-4" />
-            {loading ? 'Redirecting to PayFast...' : `Pay R${puppy.price.toLocaleString()} via PayFast`}
+            {loading ? 'Redirecting to Yoco...' : `Pay R${puppy.price.toLocaleString()} via Yoco`}
           </button>
-          <p className="font-body text-xs text-muted text-center">You will be redirected to PayFast to complete your payment securely.</p>
+          <p className="font-body text-xs text-muted text-center">You will be redirected to Yoco to complete your payment securely.</p>
         </form>
       </Modal>
 

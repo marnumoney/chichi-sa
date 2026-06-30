@@ -1,0 +1,181 @@
+import json
+import uuid
+from datetime import date, timedelta
+
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import PlainTextResponse
+
+from database import get_db
+from yoco_helper import FRONTEND_URL, BACKEND_URL, YOCO_SECRET_KEY, create_checkout, verify_webhook
+
+router = APIRouter()
+
+
+@router.post('/yoco/membership-checkout')
+async def yoco_membership_checkout(body: dict, db=Depends(get_db)):
+    seller_id = body.get('seller_id', '')
+
+    seller = db.execute('SELECT * FROM sellers WHERE id = ?', (seller_id,)).fetchone()
+    if not seller:
+        raise HTTPException(status_code=404, detail='Seller not found')
+
+    settings = db.execute('SELECT membership_fee_annual FROM admin_settings WHERE id = 1').fetchone()
+    fee = dict(settings)['membership_fee_annual'] if settings else 1200.0
+    amount_cents = int(fee * 100)
+
+    try:
+        session = await create_checkout(
+            amount_cents=amount_cents,
+            metadata={'seller_id': seller_id, 'type': 'membership'},
+            success_url=f'{FRONTEND_URL}/pay/membership?paid=true&seller={seller_id}',
+            cancel_url=f'{FRONTEND_URL}/pay/membership?seller={seller_id}',
+        )
+    except httpx.HTTPError:
+        raise HTTPException(status_code=502, detail='Payment provider error')
+
+    return {'redirect_url': session['redirectUrl'], 'checkout_id': session['id']}
+
+
+@router.post('/yoco/puppy-checkout')
+async def yoco_puppy_checkout(body: dict, db=Depends(get_db)):
+    puppy_id = body.get('puppy_id', '')
+    buyer_name = body.get('buyer_name', '').strip()
+    buyer_email = body.get('buyer_email', '').strip()
+    buyer_id = body.get('buyer_id', '')
+
+    puppy = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
+    if not puppy:
+        raise HTTPException(status_code=404, detail='Puppy not found')
+    puppy = dict(puppy)
+    if puppy['sold']:
+        raise HTTPException(status_code=409, detail='Already sold')
+
+    amount_cents = int(puppy['price'] * 100)
+
+    try:
+        session = await create_checkout(
+            amount_cents=amount_cents,
+            metadata={
+                'type': 'puppy',
+                'puppy_id': puppy_id,
+                'buyer_name': buyer_name,
+                'buyer_email': buyer_email,
+                'buyer_id': buyer_id,
+            },
+            success_url=f'{FRONTEND_URL}/puppies/{puppy_id}?purchased=true',
+            cancel_url=f'{FRONTEND_URL}/puppies/{puppy_id}',
+        )
+    except httpx.HTTPError:
+        raise HTTPException(status_code=502, detail='Payment provider error')
+
+    return {'redirect_url': session['redirectUrl'], 'checkout_id': session['id']}
+
+
+@router.post('/yoco/webhook')
+async def yoco_webhook(request: Request, db=Depends(get_db)):
+    raw_body = await request.body()
+    signature = request.headers.get('x-yoco-signature', '')
+
+    if not verify_webhook(raw_body, signature):
+        return PlainTextResponse('Invalid', status_code=400)
+
+    event = json.loads(raw_body)
+    event_type = event.get('type', '')
+    if event_type not in ('payment.succeeded', 'checkout.completed'):
+        return PlainTextResponse('OK')
+
+    payload = event.get('payload', {})
+    metadata = payload.get('metadata', {})
+    payment_type = metadata.get('type')
+
+    if payment_type == 'membership':
+        seller_id = metadata.get('seller_id', '')
+        seller = db.execute('SELECT * FROM sellers WHERE id = ?', (seller_id,)).fetchone()
+        if not seller:
+            return PlainTextResponse('OK')
+        seller = dict(seller)
+
+        expiry = (date.today() + timedelta(days=365)).isoformat()
+        db.execute("UPDATE sellers SET status = 'approved' WHERE id = ?", (seller_id,))
+        if seller.get('kennel_id'):
+            db.execute("""
+                UPDATE kennels SET status = 'approved', membership_status = 'active',
+                membership_expiry = ? WHERE id = ?
+            """, (expiry, seller['kennel_id']))
+        db.commit()
+
+    elif payment_type == 'puppy':
+        puppy_id = metadata.get('puppy_id', '')
+        buyer_name = metadata.get('buyer_name', '')
+        buyer_email = metadata.get('buyer_email', '')
+        buyer_id = metadata.get('buyer_id', '')
+
+        puppy = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
+        if not puppy or dict(puppy)['sold']:
+            return PlainTextResponse('OK')
+        puppy = dict(puppy)
+
+        kennel = db.execute('SELECT * FROM kennels WHERE id = ?', (puppy['kennel_id'],)).fetchone()
+        rate = dict(kennel)['commission'] if kennel else 8.0
+        commission = round(puppy['price'] * rate / 100, 2)
+        seller_payout = round(puppy['price'] - commission, 2)
+
+        txn_id = f'txn{uuid.uuid4().hex[:8]}'
+        db.execute("""
+            INSERT INTO transactions
+            (id, puppy_id, puppy_name, kennel_id, kennel_name, buyer_name, buyer_email,
+             amount, commission, seller_payout, seller_paid, commission_paid, date, buyer_id)
+            VALUES (?,?,?,?,?,?,?,?,?,?,0,0,?,?)
+        """, (
+            txn_id, puppy['id'], puppy['name'],
+            puppy['kennel_id'], dict(kennel)['name'] if kennel else '',
+            buyer_name, buyer_email,
+            puppy['price'], commission, seller_payout, date.today().isoformat(), buyer_id,
+        ))
+        db.execute('UPDATE puppies SET sold = 1 WHERE id = ?', (puppy_id,))
+        db.commit()
+
+    return PlainTextResponse('OK')
+
+
+@router.post('/yoco/verify-membership')
+async def verify_membership(body: dict, db=Depends(get_db)):
+    checkout_id = body.get('checkout_id', '')
+    seller_id = body.get('seller_id', '')
+
+    if not checkout_id or not seller_id:
+        raise HTTPException(status_code=400, detail='Missing parameters')
+
+    async with httpx.AsyncClient() as client:
+        res = await client.get(
+            f'https://payments.yoco.com/api/checkouts/{checkout_id}',
+            headers={'Authorization': f'Bearer {YOCO_SECRET_KEY}'},
+            timeout=10,
+        )
+
+    if not res.is_success:
+        raise HTTPException(status_code=400, detail='Could not verify payment')
+
+    checkout = res.json()
+    status = checkout.get('status', '')
+    if status not in ('succeeded', 'success', 'complete'):
+        raise HTTPException(status_code=400, detail='Payment not complete')
+
+    seller = db.execute('SELECT * FROM sellers WHERE id = ?', (seller_id,)).fetchone()
+    if not seller:
+        raise HTTPException(status_code=404, detail='Seller not found')
+    seller = dict(seller)
+
+    if seller.get('status') == 'approved':
+        return {'ok': True}
+
+    expiry = (date.today() + timedelta(days=365)).isoformat()
+    db.execute("UPDATE sellers SET status = 'approved' WHERE id = ?", (seller_id,))
+    if seller.get('kennel_id'):
+        db.execute("""
+            UPDATE kennels SET status = 'approved', membership_status = 'active',
+            membership_expiry = ? WHERE id = ?
+        """, (expiry, seller['kennel_id']))
+    db.commit()
+    return {'ok': True}

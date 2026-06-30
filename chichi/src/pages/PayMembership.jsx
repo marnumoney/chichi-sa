@@ -19,6 +19,7 @@ export default function PayMembership() {
   const [notFound, setNotFound] = useState(false)
   const [paid, setPaid] = useState(params.get('paid') === 'true')
   const [loading, setLoading] = useState(false)
+  const [verifying, setVerifying] = useState(params.get('paid') === 'true')
 
   useEffect(() => {
     if (!sellerId) { setNotFound(true); return }
@@ -34,27 +35,31 @@ export default function PayMembership() {
       .catch(() => setNotFound(true))
   }, [sellerId])
 
-  const handlePayFast = async () => {
+  useEffect(() => {
+    if (!paid || !sellerId) return
+    const checkoutId = sessionStorage.getItem(`yoco_checkout_${sellerId}`)
+    if (!checkoutId) { setVerifying(false); return }
+    fetch(`${API}/yoco/verify-membership`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ checkout_id: checkoutId, seller_id: sellerId }),
+    })
+      .then(() => sessionStorage.removeItem(`yoco_checkout_${sellerId}`))
+      .catch(() => {})
+      .finally(() => setVerifying(false))
+  }, [paid, sellerId])
+
+  const handleYoco = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`${API}/payfast/membership-checkout`, {
+      const res = await fetch(`${API}/yoco/membership-checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ seller_id: sellerId }),
       })
-      const { payfast_url, ...fields } = await res.json()
-      const form = document.createElement('form')
-      form.method = 'POST'
-      form.action = payfast_url
-      Object.entries(fields).forEach(([k, v]) => {
-        const input = document.createElement('input')
-        input.type = 'hidden'
-        input.name = k
-        input.value = v
-        form.appendChild(input)
-      })
-      document.body.appendChild(form)
-      form.submit()
+      const { redirect_url, checkout_id } = await res.json()
+      sessionStorage.setItem(`yoco_checkout_${sellerId}`, checkout_id)
+      window.location.href = redirect_url
     } catch (_) {
       setLoading(false)
     }
@@ -75,6 +80,14 @@ export default function PayMembership() {
     return (
       <div className="min-h-screen bg-cream flex items-center justify-center p-4">
         <p className="font-body text-sm text-muted">Loading…</p>
+      </div>
+    )
+  }
+
+  if (paid && verifying) {
+    return (
+      <div className="min-h-screen bg-cream flex items-center justify-center p-4">
+        <p className="font-body text-sm text-muted">Confirming payment…</p>
       </div>
     )
   }
@@ -126,7 +139,7 @@ export default function PayMembership() {
           <LogoCompact light />
           <div className="flex items-center gap-1.5 font-body text-xs text-cream/60">
             <Shield className="w-3.5 h-3.5" />
-            Secure EFT Payment
+            Secure Payment via Yoco
           </div>
         </div>
       </div>
@@ -149,22 +162,22 @@ export default function PayMembership() {
           </div>
         </div>
 
-        {/* PayFast button */}
+        {/* Yoco button */}
         <div className="bg-white border border-divider p-6 mb-6 text-center space-y-4">
           <p className="font-body text-xs text-muted uppercase tracking-widest">Secure Payment via</p>
-          <p className="font-display text-2xl font-bold text-espresso tracking-widest">PAYFAST</p>
+          <p className="font-display text-2xl font-bold text-espresso tracking-widest">YOCO</p>
           <p className="font-body text-sm text-muted leading-relaxed">
-            You'll be redirected to PayFast to complete your payment securely. Once paid, your seller portal will be activated automatically.
+            You'll be redirected to Yoco to complete your payment securely. Once paid, your seller portal will be activated automatically.
           </p>
         </div>
 
         <button
-          onClick={handlePayFast}
+          onClick={handleYoco}
           disabled={loading}
           className={`w-full py-4 font-body font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition-colors ${loading ? 'bg-muted text-cream cursor-not-allowed' : 'bg-sienna text-white hover:bg-sienna-dark'}`}
         >
           <CheckCircle className="w-4 h-4" />
-          {loading ? 'Redirecting to PayFast...' : `Pay R${membershipFee.toLocaleString()} via PayFast`}
+          {loading ? 'Redirecting to Yoco...' : `Pay R${membershipFee.toLocaleString()} via Yoco`}
         </button>
         <p className="font-body text-xs text-muted text-center mt-3">
           🔒 Secure SA payments. Your portal activates automatically on payment confirmation.
