@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useApp } from '../../context/AppContext'
 import { Plus, Trash2, X, Check, Upload, Landmark, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 import Modal from '../../components/Modal'
@@ -141,6 +141,9 @@ export default function SellerPuppies() {
   const [addError, setAddError] = useState(null)
   const [commissionModal, setCommissionModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const imagesInputRef = useRef(null)
+  const sireInputRef = useRef(null)
+  const damInputRef = useRef(null)
 
   const myPuppies = puppies.filter(p => p.kennelId === sellerUser?.kennelId)
   const kennel = sellerUser?.kennel ?? kennels.find(k => k.id === sellerUser?.kennelId)
@@ -415,15 +418,18 @@ export default function SellerPuppies() {
           {/* Puppy photos */}
           <div>
             <label className="label mb-3">Puppy Photos</label>
-            <label className={`flex items-center gap-3 border-2 border-dashed p-6 transition-colors ${uploadingImages ? 'border-sienna/40 cursor-wait' : 'border-divider hover:border-sienna/40 cursor-pointer'}`}>
+            <div
+              onClick={() => !uploadingImages && imagesInputRef.current?.click()}
+              className={`flex items-center gap-3 border-2 border-dashed p-6 transition-colors ${uploadingImages ? 'border-sienna/40 cursor-wait' : 'border-divider hover:border-sienna/40 cursor-pointer'}`}
+            >
               {uploadingImages
                 ? <Loader2 className="w-5 h-5 text-sienna animate-spin" />
                 : <Upload className="w-5 h-5 text-muted" />}
               <span className="font-body text-sm text-muted">
                 {uploadingImages ? 'Uploading photos…' : 'Click to upload puppy photos (multiple allowed)'}
               </span>
-              <input type="file" accept="image/*" multiple className="sr-only" onChange={handleImages} disabled={uploadingImages} />
-            </label>
+              <input ref={imagesInputRef} type="file" accept="image/*" multiple style={{display:'none'}} onChange={handleImages} disabled={uploadingImages} />
+            </div>
             {uploadError && (
               <p className="font-body text-xs text-red-500 mt-1">{uploadError}</p>
             )}
@@ -440,7 +446,10 @@ export default function SellerPuppies() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="label mb-3">Sire (Father) Photo *</label>
-              <label className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed border-divider hover:border-sienna/40 p-4 cursor-pointer transition-colors min-h-[120px] ${uploadingSire ? 'opacity-60 pointer-events-none' : ''}`}>
+              <div
+                onClick={() => !uploadingSire && sireInputRef.current?.click()}
+                className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed border-divider hover:border-sienna/40 p-4 cursor-pointer transition-colors min-h-[120px] ${uploadingSire ? 'opacity-60 pointer-events-none' : ''}`}
+              >
                 {uploadingSire ? (
                   <Loader2 className="w-5 h-5 text-sienna animate-spin" />
                 ) : form.sireImage ? (
@@ -451,8 +460,8 @@ export default function SellerPuppies() {
                     <span className="font-body text-xs text-muted text-center">Upload photo of the Sire</span>
                   </>
                 )}
-                <input type="file" accept="image/*" className="sr-only" onChange={handleSireImage} disabled={uploadingSire} />
-              </label>
+                <input ref={sireInputRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleSireImage} disabled={uploadingSire} />
+              </div>
               {form.sireImage && !uploadingSire && (
                 <button type="button" onClick={() => setForm(f => ({ ...f, sireImage: null }))} className="font-body text-xs text-red-500 hover:underline mt-1">Remove</button>
               )}
@@ -460,7 +469,10 @@ export default function SellerPuppies() {
             </div>
             <div>
               <label className="label mb-3">Dam (Mother) Photo *</label>
-              <label className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed border-divider hover:border-sienna/40 p-4 cursor-pointer transition-colors min-h-[120px] ${uploadingDam ? 'opacity-60 pointer-events-none' : ''}`}>
+              <div
+                onClick={() => !uploadingDam && damInputRef.current?.click()}
+                className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed border-divider hover:border-sienna/40 p-4 cursor-pointer transition-colors min-h-[120px] ${uploadingDam ? 'opacity-60 pointer-events-none' : ''}`}
+              >
                 {uploadingDam ? (
                   <Loader2 className="w-5 h-5 text-sienna animate-spin" />
                 ) : form.damImage ? (
@@ -471,8 +483,8 @@ export default function SellerPuppies() {
                     <span className="font-body text-xs text-muted text-center">Upload photo of the Dam</span>
                   </>
                 )}
-                <input type="file" accept="image/*" className="sr-only" onChange={handleDamImage} disabled={uploadingDam} />
-              </label>
+                <input ref={damInputRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleDamImage} disabled={uploadingDam} />
+              </div>
               {form.damImage && !uploadingDam && (
                 <button type="button" onClick={() => setForm(f => ({ ...f, damImage: null }))} className="font-body text-xs text-red-500 hover:underline mt-1">Remove</button>
               )}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import { CheckCircle, Loader2, Upload, FileCheck, X, Eye, EyeOff } from 'lucide-react'
@@ -28,6 +28,9 @@ export default function SellerSignup() {
   const [docs, setDocs] = useState({ kennelCert: null })
   const [sireCerts, setSireCerts] = useState([])
   const [damCerts, setDamCerts] = useState([])
+  const kennelCertInputRef = useRef(null)
+  const sireInputRef = useRef(null)
+  const damInputRef = useRef(null)
 
   const set = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }))
 
@@ -260,14 +263,14 @@ export default function SellerSignup() {
                   </button>
                 </div>
               ) : (
-                <label className="flex items-center gap-3 border-2 border-dashed border-divider hover:border-sienna/40 px-4 py-4 cursor-pointer transition-colors">
+                <div onClick={() => kennelCertInputRef.current?.click()} className="flex items-center gap-3 border-2 border-dashed border-divider hover:border-sienna/40 px-4 py-4 cursor-pointer transition-colors">
                   <Upload className="w-5 h-5 text-muted flex-shrink-0" />
                   <div>
                     <p className="font-body text-sm text-espresso">Upload kennel registration certificate</p>
                     <p className="font-body text-xs text-muted mt-0.5">PDF, JPG or PNG · Max 5MB</p>
                   </div>
-                  <input required type="file" accept=".pdf,.jpg,.jpeg,.png" className="sr-only" onChange={handleDoc('kennelCert')} />
-                </label>
+                  <input ref={kennelCertInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}} onChange={handleDoc('kennelCert')} />
+                </div>
               )}
             </div>
 
@@ -275,14 +278,14 @@ export default function SellerSignup() {
             <div>
               <label className="label">Sire (Father) Registration Certificates <span className="text-red-500">*</span></label>
               <p className="font-body text-xs text-muted mb-2">Upload one or more certificates for the sire(s)</p>
-              <label className="flex items-center gap-3 border-2 border-dashed border-divider hover:border-sienna/40 px-4 py-4 cursor-pointer transition-colors">
+              <div onClick={() => sireInputRef.current?.click()} className="flex items-center gap-3 border-2 border-dashed border-divider hover:border-sienna/40 px-4 py-4 cursor-pointer transition-colors">
                 <Upload className="w-5 h-5 text-muted flex-shrink-0" />
                 <div>
                   <p className="font-body text-sm text-espresso">Click to add sire certificate(s)</p>
                   <p className="font-body text-xs text-muted mt-0.5">PDF, JPG or PNG · Multiple allowed</p>
                 </div>
-                <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple className="sr-only" onChange={handleSireCerts} />
-              </label>
+                <input ref={sireInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" multiple style={{display:'none'}} onChange={handleSireCerts} />
+              </div>
               {sireCerts.length > 0 && (
                 <div className="mt-2 space-y-1.5">
                   {sireCerts.map((file, i) => (
@@ -302,14 +305,14 @@ export default function SellerSignup() {
             <div>
               <label className="label">Dam (Mother) Registration Certificates <span className="text-red-500">*</span></label>
               <p className="font-body text-xs text-muted mb-2">Upload one or more certificates for the dam(s)</p>
-              <label className="flex items-center gap-3 border-2 border-dashed border-divider hover:border-sienna/40 px-4 py-4 cursor-pointer transition-colors">
+              <div onClick={() => damInputRef.current?.click()} className="flex items-center gap-3 border-2 border-dashed border-divider hover:border-sienna/40 px-4 py-4 cursor-pointer transition-colors">
                 <Upload className="w-5 h-5 text-muted flex-shrink-0" />
                 <div>
                   <p className="font-body text-sm text-espresso">Click to add dam certificate(s)</p>
                   <p className="font-body text-xs text-muted mt-0.5">PDF, JPG or PNG · Multiple allowed</p>
                 </div>
-                <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple className="sr-only" onChange={handleDamCerts} />
-              </label>
+                <input ref={damInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" multiple style={{display:'none'}} onChange={handleDamCerts} />
+              </div>
               {damCerts.length > 0 && (
                 <div className="mt-2 space-y-1.5">
                   {damCerts.map((file, i) => (

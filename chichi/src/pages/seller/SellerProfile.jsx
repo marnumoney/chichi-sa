@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useApp } from '../../context/AppContext'
 import { Save, Check, Copy, Upload, Landmark, FileText, X, FileCheck, ExternalLink } from 'lucide-react'
 import { uploadImage } from '../../utils/storage'
@@ -39,6 +39,10 @@ export default function SellerProfile() {
   const [newKennelCert, setNewKennelCert] = useState(null)
   const [newSireCerts, setNewSireCerts] = useState([])
   const [newDamCerts, setNewDamCerts] = useState([])
+  const logoInputRef = useRef(null)
+  const kennelCertInputRef = useRef(null)
+  const sireInputRef = useRef(null)
+  const damInputRef = useRef(null)
 
   // Re-populate form if kennel data arrives after initial mount (page refresh)
   useEffect(() => {
@@ -123,11 +127,14 @@ export default function SellerProfile() {
             <div>
               <p className="font-body text-sm text-espresso font-semibold mb-1">{kennel?.name}</p>
               <p className="font-body text-xs text-muted mb-3">{logoPreview ? 'Custom logo saved' : 'Using initials placeholder'}</p>
-              <label className={`flex items-center gap-2 btn-outline text-xs tracking-widest uppercase cursor-pointer py-2 px-4 ${logoUploading ? 'opacity-60 pointer-events-none' : ''}`}>
+              <div
+                onClick={() => !logoUploading && logoInputRef.current?.click()}
+                className={`flex items-center gap-2 btn-outline text-xs tracking-widest uppercase cursor-pointer py-2 px-4 ${logoUploading ? 'opacity-60 pointer-events-none' : ''}`}
+              >
                 <Upload className="w-3.5 h-3.5" />
                 {logoUploading ? 'Saving…' : 'Upload Logo'}
-                <input type="file" accept="image/*" className="sr-only" onChange={handleLogoUpload} disabled={logoUploading} />
-              </label>
+                <input ref={logoInputRef} type="file" accept="image/*" style={{display:'none'}} onChange={handleLogoUpload} disabled={logoUploading} />
+              </div>
               {logoError && <p className="font-body text-xs text-red-600 mt-2">{logoError}</p>}
             </div>
           </div>
@@ -292,23 +299,23 @@ export default function SellerProfile() {
                   <button type="button" onClick={() => setNewKennelCert(null)} className="text-muted hover:text-red-500"><X className="w-4 h-4" /></button>
                 </div>
               ) : (
-                <label className="flex items-center gap-3 border-2 border-dashed border-divider hover:border-sienna/40 px-4 py-3 cursor-pointer transition-colors">
+                <div onClick={() => kennelCertInputRef.current?.click()} className="flex items-center gap-3 border-2 border-dashed border-divider hover:border-sienna/40 px-4 py-3 cursor-pointer transition-colors">
                   <Upload className="w-4 h-4 text-muted flex-shrink-0" />
                   <span className="font-body text-sm text-muted">Click to upload certificate</span>
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="sr-only" onChange={e => setNewKennelCert(e.target.files[0] || null)} />
-                </label>
+                  <input ref={kennelCertInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" style={{display:'none'}} onChange={e => setNewKennelCert(e.target.files[0] || null)} />
+                </div>
               )}
             </div>
 
             {/* Sire certs */}
             <div>
               <label className="label">Sire (Father) Certificates</label>
-              <label className="flex items-center gap-3 border-2 border-dashed border-divider hover:border-sienna/40 px-4 py-3 cursor-pointer transition-colors">
+              <div onClick={() => sireInputRef.current?.click()} className="flex items-center gap-3 border-2 border-dashed border-divider hover:border-sienna/40 px-4 py-3 cursor-pointer transition-colors">
                 <Upload className="w-4 h-4 text-muted flex-shrink-0" />
                 <span className="font-body text-sm text-muted">Click to add sire certificate(s)</span>
-                <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple className="sr-only"
+                <input ref={sireInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" multiple style={{display:'none'}}
                   onChange={e => setNewSireCerts(prev => [...prev, ...Array.from(e.target.files)])} />
-              </label>
+              </div>
               {newSireCerts.map((f, i) => (
                 <div key={i} className="flex items-center gap-3 border border-sage/40 bg-sage/5 px-3 py-2 mt-1.5">
                   <FileCheck className="w-4 h-4 text-sage-dark flex-shrink-0" />
@@ -321,12 +328,12 @@ export default function SellerProfile() {
             {/* Dam certs */}
             <div>
               <label className="label">Dam (Mother) Certificates</label>
-              <label className="flex items-center gap-3 border-2 border-dashed border-divider hover:border-sienna/40 px-4 py-3 cursor-pointer transition-colors">
+              <div onClick={() => damInputRef.current?.click()} className="flex items-center gap-3 border-2 border-dashed border-divider hover:border-sienna/40 px-4 py-3 cursor-pointer transition-colors">
                 <Upload className="w-4 h-4 text-muted flex-shrink-0" />
                 <span className="font-body text-sm text-muted">Click to add dam certificate(s)</span>
-                <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple className="sr-only"
+                <input ref={damInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" multiple style={{display:'none'}}
                   onChange={e => setNewDamCerts(prev => [...prev, ...Array.from(e.target.files)])} />
-              </label>
+              </div>
               {newDamCerts.map((f, i) => (
                 <div key={i} className="flex items-center gap-3 border border-sage/40 bg-sage/5 px-3 py-2 mt-1.5">
                   <FileCheck className="w-4 h-4 text-sage-dark flex-shrink-0" />
