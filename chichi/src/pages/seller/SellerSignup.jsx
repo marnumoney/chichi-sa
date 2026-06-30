@@ -1,14 +1,14 @@
 import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
-import { CheckCircle, Loader2, Upload, FileCheck, X, Eye, EyeOff } from 'lucide-react'
+import { CheckCircle, Loader2, Upload, FileCheck, X, Eye, EyeOff, Check } from 'lucide-react'
 import { Logo } from '../../components/Logo'
 import { uploadCert } from '../../utils/uploadCert'
 
 const FORMSUBMIT_EMAIL = 'Chihuahuasouthafrica@gmail.com'
 
 export default function SellerSignup() {
-  const { signupSeller } = useApp()
+  const { signupSeller, termsContent } = useApp()
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -28,6 +28,7 @@ export default function SellerSignup() {
   const [docs, setDocs] = useState({ kennelCert: null })
   const [sireCerts, setSireCerts] = useState([])
   const [damCerts, setDamCerts] = useState([])
+  const [termsAgreed, setTermsAgreed] = useState(false)
   const kennelCertInputRef = useRef(null)
   const sireInputRef = useRef(null)
   const damInputRef = useRef(null)
@@ -342,10 +343,41 @@ export default function SellerSignup() {
           {saveError && (
             <p className="font-body text-xs text-red-700 bg-red-50 border border-red-200 px-3 py-2">{saveError}</p>
           )}
+
+          {/* Terms agreement */}
+          <div className="border border-divider">
+            <div className="px-4 py-3 bg-cream border-b border-divider">
+              <p className="font-body text-xs font-semibold uppercase tracking-widest text-muted">Terms &amp; Rules</p>
+            </div>
+            <div className="h-48 overflow-y-auto px-4 py-3 bg-white text-xs font-body text-muted leading-relaxed space-y-1">
+              {termsContent
+                ? termsContent.split('\n').map((line, i) => {
+                    if (!line.trim()) return <div key={i} className="h-1" />
+                    if (line.startsWith('## ')) return <p key={i} className="font-semibold text-espresso mt-3">{line.slice(3)}</p>
+                    if (line.startsWith('# ')) return <p key={i} className="font-bold text-espresso mt-3">{line.slice(2)}</p>
+                    if (line.startsWith('- ')) return <p key={i} className="ml-3">• {line.slice(2)}</p>
+                    return <p key={i}>{line}</p>
+                  })
+                : <p className="italic text-muted">No terms published yet.</p>
+              }
+            </div>
+            <div
+              onClick={() => setTermsAgreed(a => !a)}
+              className={`flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors border-t border-divider ${termsAgreed ? 'bg-sage/5' : 'bg-white hover:bg-cream'}`}
+            >
+              <div className={`w-5 h-5 flex-shrink-0 border flex items-center justify-center mt-0.5 transition-colors ${termsAgreed ? 'border-sage bg-sage' : 'border-divider'}`}>
+                {termsAgreed && <Check className="w-3 h-3 text-white" />}
+              </div>
+              <p className="font-body text-sm text-espresso leading-snug">
+                I have read and I agree to the <strong>Terms &amp; Rules</strong> of Chihuahua South Africa.
+              </p>
+            </div>
+          </div>
+
           <button
             type="submit"
-            disabled={loading}
-            className={`w-full text-xs tracking-widest uppercase py-4 flex items-center justify-center gap-2 font-body font-medium transition-colors ${loading ? 'bg-muted text-cream cursor-not-allowed' : 'btn-primary'}`}
+            disabled={loading || !termsAgreed}
+            className={`w-full text-xs tracking-widest uppercase py-4 flex items-center justify-center gap-2 font-body font-medium transition-colors ${loading || !termsAgreed ? 'bg-muted text-cream cursor-not-allowed' : 'btn-primary'}`}
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             {loading ? 'Submitting...' : 'Submit Application'}

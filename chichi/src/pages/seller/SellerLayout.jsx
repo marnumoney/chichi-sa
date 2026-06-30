@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { lockScroll, unlockScroll } from '../../utils/bodyScroll'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import { sendRenewalEmail } from '../../utils/email'
-import { LayoutDashboard, Package, User, FileText, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Package, User, FileText, LogOut, Menu, X, ScrollText, Check } from 'lucide-react'
 import { LogoCompact } from '../../components/Logo'
 
 const navItems = [
@@ -13,8 +13,90 @@ const navItems = [
   { path: '/seller/terms', label: 'Terms & Rules', icon: FileText },
 ]
 
+function TermsAgreementGate({ termsContent, onAgree }) {
+  const [agreed, setAgreed] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const scrollRef = useRef(null)
+
+  const handleScroll = () => {
+    const el = scrollRef.current
+    if (!el) return
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 40) setScrolled(true)
+  }
+
+  const handleAgree = async () => {
+    if (!agreed) return
+    setLoading(true)
+    try { await onAgree() } finally { setLoading(false) }
+  }
+
+  function renderLines(lines) {
+    return lines.map((line, i) => {
+      if (!line.trim()) return <div key={i} className="h-2" />
+      if (line.startsWith('- ')) return <li key={i} className="ml-5 list-disc font-body text-sm text-muted leading-relaxed">{line.slice(2)}</li>
+      if (line.startsWith('## ')) return <h2 key={i} className="font-display text-lg font-semibold text-espresso mt-6 mb-2">{line.slice(3)}</h2>
+      if (line.startsWith('# ')) return <h1 key={i} className="font-display text-2xl font-semibold text-espresso mt-6 mb-3">{line.slice(2)}</h1>
+      const parts = line.split(/\*\*(.+?)\*\*/)
+      return <p key={i} className="font-body text-sm text-muted leading-relaxed">{parts.map((p, j) => j % 2 === 1 ? <strong key={j} className="font-semibold text-espresso">{p}</strong> : p)}</p>
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-[200] bg-espresso/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-cream w-full max-w-2xl flex flex-col shadow-2xl max-h-[92vh]">
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-divider flex items-center gap-3 flex-shrink-0">
+          <ScrollText className="w-5 h-5 text-sienna flex-shrink-0" />
+          <div>
+            <h2 className="font-display text-xl font-semibold text-espresso">Terms &amp; Rules Agreement</h2>
+            <p className="font-body text-xs text-muted mt-0.5">Please read and agree before accessing your portal.</p>
+          </div>
+        </div>
+
+        {/* Scrollable terms */}
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto px-6 py-5 space-y-1 border-b border-divider"
+        >
+          {termsContent
+            ? renderLines(termsContent.split('\n'))
+            : <p className="font-body text-sm text-muted">Loading terms…</p>
+          }
+          {!scrolled && (
+            <p className="font-body text-xs text-sienna pt-4 text-center">↓ Scroll to read all terms</p>
+          )}
+        </div>
+
+        {/* Agreement footer */}
+        <div className="px-6 py-5 flex-shrink-0 space-y-4">
+          <div
+            onClick={() => setAgreed(a => !a)}
+            className={`flex items-start gap-3 p-3 border cursor-pointer transition-colors ${agreed ? 'border-sage bg-sage/5' : 'border-divider hover:border-sage/40'}`}
+          >
+            <div className={`w-5 h-5 flex-shrink-0 border flex items-center justify-center mt-0.5 transition-colors ${agreed ? 'border-sage bg-sage' : 'border-divider'}`}>
+              {agreed && <Check className="w-3 h-3 text-white" />}
+            </div>
+            <p className="font-body text-sm text-espresso leading-snug">
+              I have read and I agree to the <strong>Terms &amp; Rules</strong> of Chihuahua South Africa. I understand my obligations as a listed breeder.
+            </p>
+          </div>
+          <button
+            onClick={handleAgree}
+            disabled={!agreed || loading}
+            className={`w-full py-3.5 font-body text-xs font-semibold tracking-widest uppercase transition-colors ${agreed && !loading ? 'btn-primary' : 'bg-divider text-muted cursor-not-allowed'}`}
+          >
+            {loading ? 'Saving…' : 'Confirm Agreement & Enter Portal'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function SellerLayout() {
-  const { sellerUser, logoutSeller } = useApp()
+  const { sellerUser, logoutSeller, agreeToTerms, termsContent } = useApp()
   const location = useLocation()
   const navigate = useNavigate()
   const kennel = sellerUser?.kennel
@@ -100,7 +182,11 @@ export default function SellerLayout() {
     </>
   )
 
+  const needsAgreement = sellerUser && !sellerUser.termsAgreedAt
+
   return (
+    <>
+    {needsAgreement && <TermsAgreementGate termsContent={termsContent} onAgree={agreeToTerms} />}
     <div className="flex h-screen bg-cream overflow-hidden">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-56 bg-espresso flex-col flex-shrink-0">
@@ -135,5 +221,6 @@ export default function SellerLayout() {
         </div>
       </main>
     </div>
+    </>
   )
 }

@@ -155,6 +155,18 @@ def delist_puppy(
     return {'ok': True}
 
 
+@router.post('/agree-terms')
+def agree_terms(
+    seller: dict = Depends(get_current_seller),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    from datetime import datetime
+    agreed_at = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+    db.execute('UPDATE sellers SET terms_agreed_at = ? WHERE id = ?', (agreed_at, seller['id']))
+    db.commit()
+    return {'ok': True, 'terms_agreed_at': agreed_at}
+
+
 @router.get('/broadcasts')
 def get_seller_broadcasts(
     seller: dict = Depends(get_current_seller),

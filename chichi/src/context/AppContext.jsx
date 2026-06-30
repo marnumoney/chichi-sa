@@ -325,6 +325,13 @@ export function AppProvider({ children }) {
     await loadPuppies()
   }
 
+  const agreeToTerms = async () => {
+    const res = await apiFetch('/seller/agree-terms', { method: 'POST' })
+    if (!res.ok) throw new Error('Failed to record agreement')
+    const data = normalize(await res.json())
+    setSellerUser(prev => ({ ...prev, termsAgreedAt: data.termsAgreedAt }))
+  }
+
   const updatePuppy = async (puppyId, puppyData) => {
     const res = await apiFetch(`/seller/puppies/${puppyId}`, {
       method: 'PUT',
@@ -535,7 +542,7 @@ export function AppProvider({ children }) {
       loginAdmin, loginSeller, logoutAdmin, logoutSeller,
       purchasePuppy, releasePayment, markSellerPaid, markCommissionPaid,
       approveSeller, rejectSeller, approveKennel, rejectKennel, broadcastSellers,
-      updateKennelCommission, addPuppy, updatePuppy, delistPuppy,
+      agreeToTerms, updateKennelCommission, addPuppy, updatePuppy, delistPuppy,
       updateLegal, updateBuyerProtection, updateTerms, updateAdminSettings, signupSeller, updateSellerProfile, updateSellerDocuments,
       payMembership,
       loadAdminData,

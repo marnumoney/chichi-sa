@@ -275,6 +275,7 @@ f"{insert_ignore} admin_settings (id) VALUES (1) {on_conflict}",
         _add_column(conn, is_pg, 'puppies', col, defn)
 
     _add_column(conn, is_pg, 'testimonials', 'buyer_email', "TEXT DEFAULT ''")
+    _add_column(conn, is_pg, 'sellers', 'terms_agreed_at', "TEXT DEFAULT NULL")
 
     for col, defn in [
         ('admin_bank_name', "TEXT DEFAULT ''"),
