@@ -117,7 +117,7 @@ export default function SellerLayout() {
       )}
 
       {/* Main */}
-      <main className="flex-1 overflow-y-auto flex flex-col">
+      <main className="flex-1 min-h-0 overflow-y-auto flex flex-col">
         <div className="bg-white border-b border-divider px-4 md:px-8 py-4 flex items-center sticky top-0 z-40">
           <button onClick={() => setSidebarOpen(true)} className="md:hidden text-espresso hover:text-sienna transition-colors mr-3">
             <Menu className="w-5 h-5" />
