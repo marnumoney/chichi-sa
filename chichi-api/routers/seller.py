@@ -109,6 +109,36 @@ def add_puppy(
     return parse_puppy(row)
 
 
+@router.put('/puppies/{puppy_id}')
+def update_puppy(
+    puppy_id: str,
+    body: PuppyCreate,
+    seller: dict = Depends(get_current_seller),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    row = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail='Puppy not found')
+    if dict(row)['kennel_id'] != seller['kennel_id']:
+        raise HTTPException(status_code=403, detail='Not your puppy')
+    db.execute("""
+        UPDATE puppies SET
+          name=?, coat_type=?, gender=?, color=?, dob=?, price=?,
+          breeding_rights=?, breeding_rights_price=?, images=?, pedigree=?,
+          health=?, description=?, registration_no=?, sire_image=?, dam_image=?
+        WHERE id=?
+    """, (
+        body.name, body.coat_type, body.gender, body.color, body.dob, body.price,
+        int(body.breeding_rights), body.breeding_rights_price,
+        json.dumps(body.images), json.dumps(body.pedigree), json.dumps(body.health),
+        body.description, body.registration_no, body.sire_image, body.dam_image,
+        puppy_id,
+    ))
+    db.commit()
+    row = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
+    return parse_puppy(row)
+
+
 @router.delete('/puppies/{puppy_id}')
 def delist_puppy(
     puppy_id: str,

@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useApp } from '../../context/AppContext'
-import { Plus, Trash2, X, Check, Upload, Landmark, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
+import { Plus, Trash2, X, Check, Upload, Landmark, ChevronDown, ChevronUp, Loader2, Pencil } from 'lucide-react'
 import Modal from '../../components/Modal'
 import { uploadImage, uploadImages } from '../../utils/storage'
 
@@ -128,7 +128,7 @@ const HEALTH_OPTIONS = [
 ]
 
 export default function SellerPuppies() {
-  const { sellerUser, puppies, adminSettings, kennels, addPuppy, delistPuppy, updateSellerProfile } = useApp()
+  const { sellerUser, puppies, adminSettings, kennels, addPuppy, updatePuppy, delistPuppy, updateSellerProfile } = useApp()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [imagePreviews, setImagePreviews] = useState([])
@@ -141,6 +141,7 @@ export default function SellerPuppies() {
   const [addError, setAddError] = useState(null)
   const [commissionModal, setCommissionModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [editTarget, setEditTarget] = useState(null)
   const imagesInputRef = useRef(null)
   const sireInputRef = useRef(null)
   const damInputRef = useRef(null)
@@ -217,6 +218,31 @@ export default function SellerPuppies() {
     }
   }
 
+  const openEdit = (puppy) => {
+    setEditTarget(puppy)
+    setForm({
+      name: puppy.name,
+      breed: 'Chihuahua',
+      coatType: puppy.coatType ?? 'Smooth Coat',
+      gender: puppy.gender,
+      color: puppy.color,
+      dob: puppy.dob,
+      price: String(puppy.price),
+      breedingRights: puppy.breedingRights,
+      breedingRightsPrice: String(puppy.breedingRightsPrice || ''),
+      description: puppy.description ?? '',
+      registrationNo: puppy.registrationNo ?? '',
+      pedigree: puppy.pedigree ?? { sire: '', dam: '', sireSire: '', sireDam: '', damSire: '', damDam: '' },
+      health: puppy.health ?? [],
+      images: puppy.images ?? [],
+      sireImage: puppy.sireImage ?? null,
+      damImage: puppy.damImage ?? null,
+    })
+    setImagePreviews(puppy.images ?? [])
+    setShowForm(true)
+    setAddError(null)
+  }
+
   const handleFormSubmit = (e) => {
     e.preventDefault()
     if (form.breedingRights === null) return
@@ -234,21 +260,27 @@ export default function SellerPuppies() {
 
   const handleConfirmAdd = async () => {
     setAddError(null)
+    const payload = {
+      ...form,
+      kennelId: sellerUser.kennelId,
+      price: Number(form.price),
+      breedingRightsPrice: Number(form.breedingRightsPrice || 0),
+      images: form.images.length > 0 ? form.images : [],
+    }
     try {
-      await addPuppy({
-        ...form,
-        kennelId: sellerUser.kennelId,
-        price: Number(form.price),
-        breedingRightsPrice: Number(form.breedingRightsPrice || 0),
-        images: form.images.length > 0 ? form.images : [],
-      })
+      if (editTarget) {
+        await updatePuppy(editTarget.id, payload)
+      } else {
+        await addPuppy(payload)
+      }
       setCommissionModal(false)
       setShowForm(false)
       setForm(EMPTY_FORM)
       setImagePreviews([])
+      setEditTarget(null)
     } catch (err) {
       setCommissionModal(false)
-      setAddError(err.message || 'Failed to add puppy. Please try again.')
+      setAddError(err.message || `Failed to ${editTarget ? 'update' : 'add'} puppy. Please try again.`)
     }
   }
 
@@ -266,7 +298,7 @@ export default function SellerPuppies() {
           <p className="font-body text-sm text-muted">{myPuppies.filter(p => !p.sold).length} active · {myPuppies.filter(p => p.sold).length} sold</p>
         </div>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => { setShowForm(!showForm); if (showForm) { setEditTarget(null); setForm(EMPTY_FORM); setImagePreviews([]) } }}
           className={`flex items-center gap-2 text-xs font-body font-semibold tracking-widest uppercase px-5 py-2.5 transition-colors ${showForm ? 'bg-divider text-muted' : 'btn-primary'}`}
         >
           {showForm ? <><X className="w-3.5 h-3.5" /> Cancel</> : <><Plus className="w-3.5 h-3.5" /> Add Puppy</>}
@@ -276,7 +308,7 @@ export default function SellerPuppies() {
       {/* Add puppy form */}
       {showForm && (
         <form onSubmit={handleFormSubmit} className="bg-white border border-divider p-6 mb-8 space-y-6">
-          <h3 className="font-display text-xl font-semibold text-espresso border-b border-divider pb-3">New Puppy Listing</h3>
+          <h3 className="font-display text-xl font-semibold text-espresso border-b border-divider pb-3">{editTarget ? `Edit — ${editTarget.name}` : 'New Puppy Listing'}</h3>
 
           {/* Basic info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -498,7 +530,7 @@ export default function SellerPuppies() {
 
           <button type="submit" disabled={uploadingImages || uploadingSire || uploadingDam}
             className={`btn-primary text-xs tracking-widest uppercase py-3.5 px-8 ${(uploadingImages || uploadingSire || uploadingDam) ? 'opacity-60 cursor-not-allowed' : ''}`}>
-            Review & Confirm Listing
+            {editTarget ? 'Review & Save Changes' : 'Review & Confirm Listing'}
           </button>
         </form>
       )}
@@ -558,15 +590,26 @@ export default function SellerPuppies() {
                     </span>
                   </td>
                   <td className="px-5 py-3">
-                    {!p.sold && (
-                      <button
-                        onClick={() => setDeleteTarget(p)}
-                        className="flex items-center gap-1 text-red-500 hover:text-red-700 font-body text-xs transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Delist
-                      </button>
-                    )}
+                    <div className="flex items-center gap-3">
+                      {!p.sold && (
+                        <button
+                          onClick={() => openEdit(p)}
+                          className="flex items-center gap-1 text-sienna hover:text-sienna-dark font-body text-xs transition-colors"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                          Edit
+                        </button>
+                      )}
+                      {!p.sold && (
+                        <button
+                          onClick={() => setDeleteTarget(p)}
+                          className="flex items-center gap-1 text-red-500 hover:text-red-700 font-body text-xs transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Delist
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -576,7 +619,7 @@ export default function SellerPuppies() {
       )}
 
       {/* Commission confirmation modal */}
-      <Modal open={commissionModal} onClose={() => setCommissionModal(false)} title="Confirm Listing">
+      <Modal open={commissionModal} onClose={() => setCommissionModal(false)} title={editTarget ? 'Confirm Changes' : 'Confirm Listing'}>
         <div className="space-y-4">
           <p className="font-body text-sm text-muted">
             Review the pricing for <strong className="text-espresso">{form.name}</strong> before listing.
@@ -610,7 +653,7 @@ export default function SellerPuppies() {
           </p>
           <div className="flex gap-3">
             <button onClick={() => setCommissionModal(false)} className="flex-1 btn-secondary text-xs tracking-widest uppercase py-3">Cancel</button>
-            <button onClick={handleConfirmAdd} className="flex-1 btn-primary text-xs tracking-widest uppercase py-3">Confirm & List</button>
+            <button onClick={handleConfirmAdd} className="flex-1 btn-primary text-xs tracking-widest uppercase py-3">{editTarget ? 'Save Changes' : 'Confirm & List'}</button>
           </div>
         </div>
       </Modal>

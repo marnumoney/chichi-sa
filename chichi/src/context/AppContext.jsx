@@ -317,6 +317,18 @@ export function AppProvider({ children }) {
     await loadPuppies()
   }
 
+  const updatePuppy = async (puppyId, puppyData) => {
+    const res = await apiFetch(`/seller/puppies/${puppyId}`, {
+      method: 'PUT',
+      body: puppyData,
+    })
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}))
+      throw new Error(e.detail || 'Failed to update puppy')
+    }
+    await loadPuppies()
+  }
+
   const delistPuppy = async (puppyId) => {
     await apiFetch(`/seller/puppies/${puppyId}`, { method: 'DELETE' })
     await loadPuppies()
@@ -515,7 +527,7 @@ export function AppProvider({ children }) {
       loginAdmin, loginSeller, logoutAdmin, logoutSeller,
       purchasePuppy, releasePayment, markSellerPaid, markCommissionPaid,
       approveSeller, rejectSeller, approveKennel, rejectKennel, broadcastSellers,
-      updateKennelCommission, addPuppy, delistPuppy,
+      updateKennelCommission, addPuppy, updatePuppy, delistPuppy,
       updateLegal, updateBuyerProtection, updateTerms, updateAdminSettings, signupSeller, updateSellerProfile, updateSellerDocuments,
       payMembership,
       loadAdminData,
