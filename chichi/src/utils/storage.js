@@ -13,5 +13,5 @@ export async function uploadImage(file) {
 }
 
 export async function uploadImages(files) {
-  return Promise.all(files.map(uploadImage))
+  return Promise.all(Array.from(files).map(uploadImage))
 }
