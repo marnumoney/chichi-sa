@@ -28,6 +28,7 @@ export default function SellerProfile() {
     accountType: kennel?.accountType ?? '',
   })
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [copied, setCopied] = useState(false)
   const [logoPreview, setLogoPreview] = useState(kennel?.logo ?? null)
   const [logoUploading, setLogoUploading] = useState(false)
@@ -62,9 +63,14 @@ export default function SellerProfile() {
 
   const handleSave = async (e) => {
     e.preventDefault()
-    await updateSellerProfile(form)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+    setSaveError('')
+    try {
+      await updateSellerProfile(form)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } catch (err) {
+      setSaveError(err?.message || 'Failed to save. Please try again.')
+    }
   }
 
   const handleCopy = () => {
@@ -408,7 +414,8 @@ export default function SellerProfile() {
             {saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
             {saved ? 'Profile Saved!' : 'Save Changes'}
           </button>
-          {hasChanges && <p className="font-body text-xs text-muted">You have unsaved changes.</p>}
+          {hasChanges && !saveError && <p className="font-body text-xs text-muted">You have unsaved changes.</p>}
+          {saveError && <p className="font-body text-xs text-red-600">{saveError}</p>}
         </div>
       </form>
     </div>

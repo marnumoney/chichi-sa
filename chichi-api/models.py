@@ -53,6 +53,7 @@ class KennelCreate(BaseModel):
 
 class KennelUpdate(BaseModel):
     name: Optional[str] = None
+    registry: Optional[str] = None
     description: Optional[str] = None
     location: Optional[str] = None
     contact: Optional[str] = None
