@@ -57,6 +57,7 @@ export default function PayMembership() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ seller_id: sellerId }),
       })
+      if (!res.ok) throw new Error('Payment provider error')
       const { redirect_url, checkout_id } = await res.json()
       sessionStorage.setItem(`yoco_checkout_${sellerId}`, checkout_id)
       window.location.href = redirect_url

@@ -25,6 +25,7 @@ export default function PuppyDetailPage() {
   const [payOpen, setPayOpen] = useState(false)
   const [successOpen, setSuccessOpen] = useState(searchParams.get('purchased') === 'true')
   const [loading, setLoading] = useState(false)
+  const [payError, setPayError] = useState('')
   const [buyer, setBuyer] = useState({ name: buyerUser?.name || '', email: buyerUser?.email || '' })
   const [errors, setErrors] = useState({})
 
@@ -75,15 +76,18 @@ export default function PuppyDetailPage() {
     e.preventDefault()
     if (!validate()) return
     setLoading(true)
+    setPayError('')
     try {
       const res = await fetch(`${API}/yoco/puppy-checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ puppy_id: puppy.id, buyer_name: buyer.name, buyer_email: buyer.email, buyer_id: buyerUser?.id || '' }),
       })
+      if (!res.ok) throw new Error('Payment provider error. Please try again.')
       const { redirect_url } = await res.json()
       window.location.href = redirect_url
-    } catch (_) {
+    } catch (err) {
+      setPayError(err.message || 'Payment failed. Please try again.')
       setLoading(false)
     }
   }
@@ -311,6 +315,7 @@ export default function PuppyDetailPage() {
             <Lock className="w-4 h-4" />
             {loading ? 'Redirecting to Yoco...' : `Pay R${puppy.price.toLocaleString()} via Yoco`}
           </button>
+          {payError && <p className="font-body text-xs text-red-600 text-center">{payError}</p>}
           <p className="font-body text-xs text-muted text-center">You will be redirected to Yoco to complete your payment securely.</p>
         </form>
       </Modal>
