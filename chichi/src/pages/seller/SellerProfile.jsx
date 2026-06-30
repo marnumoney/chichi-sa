@@ -16,6 +16,7 @@ export default function SellerProfile() {
 
   const [form, setForm] = useState({
     name: kennel?.name ?? '',
+    registry: kennel?.registry ?? 'KUSA',
     description: kennel?.description ?? '',
     location: kennel?.location ?? '',
     contact: kennel?.contact ?? '',
@@ -43,6 +44,7 @@ export default function SellerProfile() {
     if (!kennel) return
     setForm({
       name: kennel.name ?? '',
+      registry: kennel.registry ?? 'KUSA',
       description: kennel.description ?? '',
       location: kennel.location ?? '',
       contact: kennel.contact ?? '',
@@ -136,7 +138,14 @@ export default function SellerProfile() {
 
           <div>
             <label className="label">Registry</label>
-            <input className="input-field bg-cream" readOnly value={kennel?.registry ?? ''} />
+            <div className="flex border border-divider overflow-hidden">
+              {['KUSA', 'Canine SA'].map(r => (
+                <button key={r} type="button" onClick={() => setForm(f => ({ ...f, registry: r }))}
+                  className={`flex-1 py-2.5 font-body text-xs font-semibold transition-colors ${form.registry === r ? 'bg-espresso text-cream' : 'bg-white text-muted hover:text-espresso'}`}>
+                  {r}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>
