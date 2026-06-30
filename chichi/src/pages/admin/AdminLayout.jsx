@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { lockScroll, unlockScroll } from '../../utils/bodyScroll'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import { LayoutDashboard, FileText, Building2, Wallet, Users, Package, Star, Megaphone, Settings, LogOut, Menu, X, ShieldCheck } from 'lucide-react'
@@ -27,12 +28,8 @@ export default function AdminLayout() {
   const pendingCount = sellers.filter(s => s.status === 'pending_verification').length
 
   useEffect(() => {
-    document.body.style.overflow = 'hidden'
-    document.documentElement.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = ''
-      document.documentElement.style.overflow = ''
-    }
+    lockScroll()
+    return () => unlockScroll()
   }, [])
 
   const handleLogout = () => {

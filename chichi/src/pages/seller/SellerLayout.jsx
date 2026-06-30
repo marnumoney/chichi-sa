@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { lockScroll, unlockScroll } from '../../utils/bodyScroll'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../../context/AppContext'
 import { sendRenewalEmail } from '../../utils/email'
@@ -20,12 +21,8 @@ export default function SellerLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
-    document.body.style.overflow = 'hidden'
-    document.documentElement.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = ''
-      document.documentElement.style.overflow = ''
-    }
+    lockScroll()
+    return () => unlockScroll()
   }, [])
 
   useEffect(() => {

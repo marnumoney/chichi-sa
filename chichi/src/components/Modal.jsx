@@ -1,11 +1,10 @@
 import { useEffect } from 'react'
 import { X } from 'lucide-react'
+import { lockScroll, unlockScroll } from '../utils/bodyScroll'
 
 export default function Modal({ open, onClose, title, children, maxWidth = 'max-w-md' }) {
   useEffect(() => {
-    if (open) document.body.style.overflow = 'hidden'
-    else document.body.style.overflow = ''
-    return () => { document.body.style.overflow = '' }
+    if (open) { lockScroll(); return () => unlockScroll() }
   }, [open])
 
   if (!open) return null
