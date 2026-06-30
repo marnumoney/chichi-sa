@@ -19,7 +19,7 @@ function getAge(dob) {
 export default function PuppyDetailPage() {
   const { id } = useParams()
   const [searchParams] = useSearchParams()
-  const { puppies, kennels, adminSettings, buyerUser, loadPuppies } = useApp()
+  const { puppies, kennels, adminSettings, buyerUser, loadPuppies, loadingPublic } = useApp()
   const navigate = useNavigate()
   const [imgIdx, setImgIdx] = useState(0)
   const [payOpen, setPayOpen] = useState(false)
@@ -37,6 +37,13 @@ export default function PuppyDetailPage() {
 
   const puppy = puppies.find(p => p.id === id)
   if (!puppy) {
+    if (loadingPublic) {
+      return (
+        <div className="max-w-2xl mx-auto px-4 py-24 text-center">
+          <p className="font-body text-sm text-muted">Loading…</p>
+        </div>
+      )
+    }
     return (
       <div className="max-w-2xl mx-auto px-4 py-24 text-center">
         <p className="font-display text-2xl text-espresso mb-4">Puppy not found.</p>
