@@ -109,7 +109,7 @@ export default function BuyerDashboard() {
 
                       <div className="flex items-center gap-2 mt-3">
                         <Check className="w-4 h-4 text-sage-dark" />
-                        <span className="font-body text-xs text-sage-dark font-semibold">Payment confirmed via PayFast</span>
+                        <span className="font-body text-xs text-sage-dark font-semibold">Payment confirmed via Yoco</span>
                       </div>
                     </div>
                   )

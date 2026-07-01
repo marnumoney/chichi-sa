@@ -216,7 +216,7 @@ async def verify_puppy(body: dict, db=Depends(get_db)):
     metadata = checkout.get('metadata', {})
     buyer_name = metadata.get('buyer_name', '')
     buyer_email = metadata.get('buyer_email', '')
-    buyer_id = metadata.get('buyer_id', '')
+    buyer_id = body.get('buyer_id', '') or metadata.get('buyer_id', '')
 
     kennel = db.execute('SELECT * FROM kennels WHERE id = ?', (puppy['kennel_id'],)).fetchone()
     rate = dict(kennel)['commission'] if kennel else 8.0

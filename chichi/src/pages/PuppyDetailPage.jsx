@@ -36,7 +36,7 @@ export default function PuppyDetailPage() {
       fetch(`${API}/yoco/verify-puppy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ checkout_id: checkoutId, puppy_id: id }),
+        body: JSON.stringify({ checkout_id: checkoutId, puppy_id: id, buyer_id: buyerUser?.id || '' }),
       })
         .then(() => sessionStorage.removeItem(`yoco_checkout_puppy_${id}`))
         .catch(() => {})
