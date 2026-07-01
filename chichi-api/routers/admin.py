@@ -5,7 +5,7 @@ import re
 import sqlite3
 import string
 import uuid
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -421,6 +421,50 @@ def admin_delete_puppy(
     db.execute('DELETE FROM puppies WHERE id = ?', (puppy_id,))
     db.commit()
     return {'ok': True}
+
+
+@router.post('/puppies/{puppy_id}/mark-sold')
+def admin_mark_puppy_sold(
+    puppy_id: str,
+    body: dict,
+    _: dict = Depends(get_current_admin),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    """Manually mark a puppy as sold and record the transaction. Used to fix payments
+    that went through Yoco but weren't recorded (e.g. due to a verify-puppy bug)."""
+    puppy = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
+    if not puppy:
+        raise HTTPException(status_code=404, detail='Puppy not found')
+    puppy = dict(puppy)
+
+    if puppy.get('sold'):
+        return {'ok': True, 'note': 'already sold'}
+
+    buyer_name = body.get('buyer_name', '')
+    buyer_email = body.get('buyer_email', '')
+    buyer_id = body.get('buyer_id', '')
+
+    kennel = db.execute('SELECT * FROM kennels WHERE id = ?', (puppy['kennel_id'],)).fetchone()
+    rate = dict(kennel)['commission'] if kennel else 8.0
+    commission = round(puppy['price'] * rate / 100, 2)
+    seller_payout = round(puppy['price'] - commission, 2)
+
+    txn_id = f'txn{uuid.uuid4().hex[:8]}'
+    now = datetime.now().isoformat()
+    db.execute("""
+        INSERT INTO transactions
+        (id, puppy_id, puppy_name, kennel_id, kennel_name, buyer_name, buyer_email,
+         amount, commission, seller_payout, seller_paid, commission_paid, date, buyer_id)
+        VALUES (?,?,?,?,?,?,?,?,?,?,0,0,?,?)
+    """, (
+        txn_id, puppy['id'], puppy['name'],
+        puppy['kennel_id'], dict(kennel)['name'] if kennel else '',
+        buyer_name, buyer_email,
+        puppy['price'], commission, seller_payout, date.today().isoformat(), buyer_id,
+    ))
+    db.execute('UPDATE puppies SET sold = 1, sold_at = ? WHERE id = ?', (now, puppy_id))
+    db.commit()
+    return {'ok': True, 'txn_id': txn_id}
 
 
 # ── Testimonials ──────────────────────────────────────────────────────────────

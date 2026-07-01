@@ -31,14 +31,22 @@ export default function PuppyDetailPage() {
 
   useEffect(() => {
     if (searchParams.get('purchased') !== 'true') return
+    // sessionStorage is primary; Yoco may also append checkoutId to the success URL
     const checkoutId = sessionStorage.getItem(`yoco_checkout_puppy_${id}`)
+                       || searchParams.get('checkoutId')
     if (checkoutId) {
       fetch(`${API}/yoco/verify-puppy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ checkout_id: checkoutId, puppy_id: id, buyer_id: buyerUser?.id || '' }),
+        body: JSON.stringify({
+          checkout_id: checkoutId,
+          puppy_id: id,
+          buyer_id: buyerUser?.id || '',
+          buyer_name: buyerUser?.name || '',
+          buyer_email: buyerUser?.email || '',
+        }),
       })
-        .then(() => sessionStorage.removeItem(`yoco_checkout_puppy_${id}`))
+        .then(res => { if (res.ok) sessionStorage.removeItem(`yoco_checkout_puppy_${id}`) })
         .catch(() => {})
         .finally(() => loadPuppies())
     } else {

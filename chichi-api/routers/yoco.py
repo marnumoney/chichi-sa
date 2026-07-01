@@ -186,24 +186,12 @@ async def verify_membership(body: dict, db=Depends(get_db)):
 async def verify_puppy(body: dict, db=Depends(get_db)):
     checkout_id = body.get('checkout_id', '')
     puppy_id = body.get('puppy_id', '')
+    buyer_id = body.get('buyer_id', '')
+    buyer_name = body.get('buyer_name', '')
+    buyer_email = body.get('buyer_email', '')
 
     if not checkout_id or not puppy_id:
         raise HTTPException(status_code=400, detail='Missing parameters')
-
-    async with httpx.AsyncClient() as client:
-        res = await client.get(
-            f'https://payments.yoco.com/api/checkouts/{checkout_id}',
-            headers={'Authorization': f'Bearer {YOCO_SECRET_KEY}'},
-            timeout=10,
-        )
-
-    if not res.is_success:
-        raise HTTPException(status_code=400, detail='Could not verify payment')
-
-    checkout = res.json()
-    status = checkout.get('status', '')
-    if status not in ('succeeded', 'success', 'complete'):
-        raise HTTPException(status_code=400, detail='Payment not complete')
 
     puppy = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
     if not puppy:
@@ -213,10 +201,36 @@ async def verify_puppy(body: dict, db=Depends(get_db)):
     if puppy.get('sold'):
         return {'ok': True}
 
-    metadata = checkout.get('metadata', {})
-    buyer_name = metadata.get('buyer_name', '')
-    buyer_email = metadata.get('buyer_email', '')
-    buyer_id = body.get('buyer_id', '') or metadata.get('buyer_id', '')
+    try:
+        async with httpx.AsyncClient() as client:
+            res = await client.get(
+                f'https://payments.yoco.com/api/checkouts/{checkout_id}',
+                headers={'Authorization': f'Bearer {YOCO_SECRET_KEY}'},
+                timeout=10,
+            )
+        if not res.is_success:
+            print(f'[verify-puppy] Yoco API {res.status_code} for {checkout_id}: {res.text[:300]}')
+            raise HTTPException(status_code=502, detail='Could not verify payment')
+
+        checkout = res.json()
+        status = checkout.get('status', '')
+        print(f'[verify-puppy] checkout {checkout_id} status={status!r}')
+
+        # Only reject statuses that explicitly mean payment did NOT happen
+        if status in ('created', 'cancelled', 'failed', 'expired'):
+            raise HTTPException(status_code=400, detail='Payment not complete')
+
+        # Enrich buyer details from Yoco metadata when not provided by frontend
+        metadata = checkout.get('metadata', {})
+        buyer_name = buyer_name or metadata.get('buyer_name', '')
+        buyer_email = buyer_email or metadata.get('buyer_email', '')
+        buyer_id = buyer_id or metadata.get('buyer_id', '')
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f'[verify-puppy] exception: {e}')
+        raise HTTPException(status_code=502, detail='Could not verify payment')
 
     kennel = db.execute('SELECT * FROM kennels WHERE id = ?', (puppy['kennel_id'],)).fetchone()
     rate = dict(kennel)['commission'] if kennel else 8.0
@@ -238,4 +252,5 @@ async def verify_puppy(body: dict, db=Depends(get_db)):
     ))
     db.execute('UPDATE puppies SET sold = 1, sold_at = ? WHERE id = ?', (now, puppy_id))
     db.commit()
+    print(f'[verify-puppy] txn {txn_id} created for puppy {puppy_id}, buyer_id={buyer_id!r}')
     return {'ok': True}

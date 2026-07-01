@@ -1,15 +1,36 @@
 import { useState } from 'react'
-import { useApp } from '../../context/AppContext'
-import { Trash2, Search, Download } from 'lucide-react'
+import { useApp, apiFetch } from '../../context/AppContext'
+import { Trash2, Search, Download, CheckSquare } from 'lucide-react'
 import Modal from '../../components/Modal'
 import { exportCsv } from '../../utils/exportCsv'
 
 export default function AdminPuppies() {
-  const { puppies, kennels, adminRemovePuppy } = useApp()
+  const { puppies, kennels, adminRemovePuppy, loadAdminData } = useApp()
   const [search, setSearch] = useState('')
   const [filterKennel, setFilterKennel] = useState('All')
   const [filterStatus, setFilterStatus] = useState('All')
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [soldTarget, setSoldTarget] = useState(null)
+  const [soldForm, setSoldForm] = useState({ buyer_name: '', buyer_email: '', buyer_id: '' })
+  const [soldLoading, setSoldLoading] = useState(false)
+  const [soldDone, setSoldDone] = useState(false)
+
+  const handleMarkSold = async () => {
+    setSoldLoading(true)
+    try {
+      const res = await apiFetch(`/admin/puppies/${soldTarget.id}/mark-sold`, {
+        method: 'POST',
+        body: soldForm,
+      })
+      if (res.ok) {
+        setSoldDone(true)
+        loadAdminData()
+        setTimeout(() => { setSoldTarget(null); setSoldDone(false); setSoldForm({ buyer_name: '', buyer_email: '', buyer_id: '' }) }, 1500)
+      }
+    } finally {
+      setSoldLoading(false)
+    }
+  }
 
   const approvedKennels = kennels.filter(k => k.status === 'approved')
 
@@ -120,10 +141,18 @@ export default function AdminPuppies() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <button onClick={() => setDeleteTarget(p)}
-                          className="flex items-center gap-1 text-muted hover:text-red-500 font-body text-xs transition-colors">
-                          <Trash2 className="w-3.5 h-3.5" /> Remove
-                        </button>
+                        <div className="flex items-center gap-3">
+                          {!p.sold && (
+                            <button onClick={() => { setSoldTarget(p); setSoldForm({ buyer_name: '', buyer_email: '', buyer_id: '' }) }}
+                              className="flex items-center gap-1 text-muted hover:text-sage-dark font-body text-xs transition-colors">
+                              <CheckSquare className="w-3.5 h-3.5" /> Mark Sold
+                            </button>
+                          )}
+                          <button onClick={() => setDeleteTarget(p)}
+                            className="flex items-center gap-1 text-muted hover:text-red-500 font-body text-xs transition-colors">
+                            <Trash2 className="w-3.5 h-3.5" /> Remove
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -133,6 +162,40 @@ export default function AdminPuppies() {
           </div>
         )}
       </div>
+
+      {/* Mark Sold */}
+      <Modal open={!!soldTarget} onClose={() => !soldLoading && setSoldTarget(null)} title="Mark as Sold">
+        <div className="space-y-4">
+          {soldDone ? (
+            <p className="font-body text-sm text-sage-dark font-semibold text-center py-4">✓ Marked as sold</p>
+          ) : (
+            <>
+              <p className="font-body text-sm text-muted">
+                Manually record a sale for <strong className="text-espresso">{soldTarget?.name}</strong>. This creates a transaction and marks the puppy sold.
+              </p>
+              <div>
+                <label className="label">Buyer Name</label>
+                <input className="input-field" value={soldForm.buyer_name} onChange={e => setSoldForm(f => ({ ...f, buyer_name: e.target.value }))} placeholder="Full name" />
+              </div>
+              <div>
+                <label className="label">Buyer Email</label>
+                <input type="email" className="input-field" value={soldForm.buyer_email} onChange={e => setSoldForm(f => ({ ...f, buyer_email: e.target.value }))} placeholder="email@example.com" />
+              </div>
+              <div>
+                <label className="label">Buyer Account ID <span className="text-muted">(optional)</span></label>
+                <input className="input-field" value={soldForm.buyer_id} onChange={e => setSoldForm(f => ({ ...f, buyer_id: e.target.value }))} placeholder="b1234abcd" />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => setSoldTarget(null)} className="flex-1 btn-secondary text-xs tracking-widest uppercase py-3">Cancel</button>
+                <button onClick={handleMarkSold} disabled={soldLoading || !soldForm.buyer_name || !soldForm.buyer_email}
+                  className="flex-1 bg-sage text-white font-body text-xs font-semibold tracking-widest uppercase py-3 hover:bg-sage-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  {soldLoading ? 'Recording…' : 'Confirm Sale'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
 
       {/* Delete confirmation */}
       <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Remove Listing">
