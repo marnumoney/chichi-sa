@@ -29,9 +29,19 @@ export default function PuppyDetailPage() {
   const [buyer, setBuyer] = useState({ name: buyerUser?.name || '', email: buyerUser?.email || '' })
   const [errors, setErrors] = useState({})
 
-  // After PayFast redirect, refresh puppies so sold status is current
   useEffect(() => {
-    if (searchParams.get('purchased') === 'true') {
+    if (searchParams.get('purchased') !== 'true') return
+    const checkoutId = sessionStorage.getItem(`yoco_checkout_puppy_${id}`)
+    if (checkoutId) {
+      fetch(`${API}/yoco/verify-puppy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ checkout_id: checkoutId, puppy_id: id }),
+      })
+        .then(() => sessionStorage.removeItem(`yoco_checkout_puppy_${id}`))
+        .catch(() => {})
+        .finally(() => loadPuppies())
+    } else {
       loadPuppies()
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -84,7 +94,8 @@ export default function PuppyDetailPage() {
         body: JSON.stringify({ puppy_id: puppy.id, buyer_name: buyer.name, buyer_email: buyer.email, buyer_id: buyerUser?.id || '' }),
       })
       if (!res.ok) throw new Error('Payment provider error. Please try again.')
-      const { redirect_url } = await res.json()
+      const { redirect_url, checkout_id } = await res.json()
+      sessionStorage.setItem(`yoco_checkout_puppy_${puppy.id}`, checkout_id)
       window.location.href = redirect_url
     } catch (err) {
       setPayError(err.message || 'Payment failed. Please try again.')

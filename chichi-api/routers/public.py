@@ -1,7 +1,7 @@
 import os
 import sqlite3
 import uuid
-from datetime import date
+from datetime import date, datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -51,7 +51,21 @@ def list_puppies(
         query += ' AND sold = ?'
         params.append(1 if sold.lower() == 'true' else 0)
     rows = db.execute(query, params).fetchall()
-    return [parse_puppy(r) for r in rows]
+    cutoff = datetime.now() - timedelta(hours=24)
+
+    def _visible(row):
+        d = dict(row)
+        if not d.get('sold'):
+            return True
+        sold_at = d.get('sold_at')
+        if not sold_at:
+            return True
+        try:
+            return datetime.fromisoformat(sold_at) > cutoff
+        except Exception:
+            return True
+
+    return [parse_puppy(r) for r in rows if _visible(r)]
 
 
 @router.get('/puppies/{puppy_id}')
@@ -59,7 +73,14 @@ def get_puppy(puppy_id: str, db: sqlite3.Connection = Depends(get_db)):
     row = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
     if not row:
         raise HTTPException(status_code=404, detail='Puppy not found')
-    return parse_puppy(row)
+    puppy = parse_puppy(row)
+    if puppy.get('sold') and puppy.get('sold_at'):
+        try:
+            if datetime.fromisoformat(puppy['sold_at']) < datetime.now() - timedelta(hours=24):
+                raise HTTPException(status_code=404, detail='Puppy not found')
+        except ValueError:
+            pass
+    return puppy
 
 
 @router.get('/testimonials')

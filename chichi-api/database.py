@@ -286,6 +286,8 @@ f"{insert_ignore} admin_settings (id) VALUES (1) {on_conflict}",
     ]:
         _add_column(conn, is_pg, 'admin_settings', col, defn)
 
+    _add_column(conn, is_pg, 'puppies', 'sold_at', "TEXT DEFAULT NULL")
+
     # Backfill referral codes for any kennel that doesn't have one yet
     import random, string
     rows = conn.execute("SELECT id FROM kennels WHERE referral_code IS NULL OR referral_code = ''").fetchall()

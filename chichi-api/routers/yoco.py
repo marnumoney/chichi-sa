@@ -1,6 +1,6 @@
 import json
 import uuid
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -122,6 +122,7 @@ async def yoco_webhook(request: Request, db=Depends(get_db)):
         seller_payout = round(puppy['price'] - commission, 2)
 
         txn_id = f'txn{uuid.uuid4().hex[:8]}'
+        now = datetime.now().isoformat()
         db.execute("""
             INSERT INTO transactions
             (id, puppy_id, puppy_name, kennel_id, kennel_name, buyer_name, buyer_email,
@@ -133,7 +134,7 @@ async def yoco_webhook(request: Request, db=Depends(get_db)):
             buyer_name, buyer_email,
             puppy['price'], commission, seller_payout, date.today().isoformat(), buyer_id,
         ))
-        db.execute('UPDATE puppies SET sold = 1 WHERE id = ?', (puppy_id,))
+        db.execute('UPDATE puppies SET sold = 1, sold_at = ? WHERE id = ?', (now, puppy_id))
         db.commit()
 
     return PlainTextResponse('OK')
@@ -177,5 +178,64 @@ async def verify_membership(body: dict, db=Depends(get_db)):
             UPDATE kennels SET status = 'approved', membership_status = 'active',
             membership_expiry = ? WHERE id = ?
         """, (expiry, seller['kennel_id']))
+    db.commit()
+    return {'ok': True}
+
+
+@router.post('/yoco/verify-puppy')
+async def verify_puppy(body: dict, db=Depends(get_db)):
+    checkout_id = body.get('checkout_id', '')
+    puppy_id = body.get('puppy_id', '')
+
+    if not checkout_id or not puppy_id:
+        raise HTTPException(status_code=400, detail='Missing parameters')
+
+    async with httpx.AsyncClient() as client:
+        res = await client.get(
+            f'https://payments.yoco.com/api/checkouts/{checkout_id}',
+            headers={'Authorization': f'Bearer {YOCO_SECRET_KEY}'},
+            timeout=10,
+        )
+
+    if not res.is_success:
+        raise HTTPException(status_code=400, detail='Could not verify payment')
+
+    checkout = res.json()
+    status = checkout.get('status', '')
+    if status not in ('succeeded', 'success', 'complete'):
+        raise HTTPException(status_code=400, detail='Payment not complete')
+
+    puppy = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
+    if not puppy:
+        raise HTTPException(status_code=404, detail='Puppy not found')
+    puppy = dict(puppy)
+
+    if puppy.get('sold'):
+        return {'ok': True}
+
+    metadata = checkout.get('metadata', {})
+    buyer_name = metadata.get('buyer_name', '')
+    buyer_email = metadata.get('buyer_email', '')
+    buyer_id = metadata.get('buyer_id', '')
+
+    kennel = db.execute('SELECT * FROM kennels WHERE id = ?', (puppy['kennel_id'],)).fetchone()
+    rate = dict(kennel)['commission'] if kennel else 8.0
+    commission = round(puppy['price'] * rate / 100, 2)
+    seller_payout = round(puppy['price'] - commission, 2)
+
+    txn_id = f'txn{uuid.uuid4().hex[:8]}'
+    now = datetime.now().isoformat()
+    db.execute("""
+        INSERT INTO transactions
+        (id, puppy_id, puppy_name, kennel_id, kennel_name, buyer_name, buyer_email,
+         amount, commission, seller_payout, seller_paid, commission_paid, date, buyer_id)
+        VALUES (?,?,?,?,?,?,?,?,?,?,0,0,?,?)
+    """, (
+        txn_id, puppy['id'], puppy['name'],
+        puppy['kennel_id'], dict(kennel)['name'] if kennel else '',
+        buyer_name, buyer_email,
+        puppy['price'], commission, seller_payout, date.today().isoformat(), buyer_id,
+    ))
+    db.execute('UPDATE puppies SET sold = 1, sold_at = ? WHERE id = ?', (now, puppy_id))
     db.commit()
     return {'ok': True}
