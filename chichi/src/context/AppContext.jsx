@@ -27,21 +27,21 @@ function denormalize(val) {
   return val
 }
 
-function getToken() {
+// Role-specific token keys so buyer login never clobbers seller token
+function getToken(path = '') {
+  if (path.startsWith('/buyer')) return localStorage.getItem('buyer_token')
+  if (path.startsWith('/seller')) return localStorage.getItem('seller_token') || localStorage.getItem('token')
+  if (path.startsWith('/admin')) return localStorage.getItem('admin_token') || localStorage.getItem('token')
   return localStorage.getItem('token')
 }
 
-function authHeaders() {
-  const token = getToken()
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
-
 export async function apiFetch(path, options = {}) {
+  const token = getToken(path)
   const body = options.body && typeof options.body === 'object'
     ? JSON.stringify(denormalize(options.body))
     : options.body
   const res = await fetch(`${API}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     ...options,
     body,
   })
@@ -84,7 +84,9 @@ export function AppProvider({ children }) {
   const [sellerUser, setSellerUser] = useState(null)
   const [buyerUser, setBuyerUser] = useState(null)
   const [loadingPublic, setLoadingPublic] = useState(true)
-  const [authLoading, setAuthLoading] = useState(!!getToken())
+  const [authLoading, setAuthLoading] = useState(
+    !!(localStorage.getItem('token') || localStorage.getItem('buyer_token'))
+  )
 
   // ── Public data loaders ───────────────────────────────────────────────────
   const loadKennels = useCallback(async () => {
@@ -130,24 +132,29 @@ export function AppProvider({ children }) {
 
   // ── Bootstrap: restore session from localStorage ──────────────────────────
   useEffect(() => {
-    const token = getToken()
     const role = localStorage.getItem('role')
-    if (!token) return
-    if (role === 'admin') {
+    const sellerToken = localStorage.getItem('seller_token') || localStorage.getItem('token')
+    const buyerToken = localStorage.getItem('buyer_token')
+    let pending = 0
+    const done = () => { if (--pending === 0) setAuthLoading(false) }
+
+    if (role === 'admin' && sellerToken) {
+      pending++
       setAdminUser({ email: localStorage.getItem('adminEmail') || '', name: 'Admin' })
-      loadAdminData()
-      setAuthLoading(false)
+      loadAdminData().finally(done)
     }
-    if (role === 'seller') {
+    if (role === 'seller' && sellerToken) {
+      pending++
       apiFetch('/seller/me').then(async res => {
         if (res.ok) {
           const data = normalize(await res.json())
           setSellerUser({ ...data.seller, kennel: data.kennel })
         } else {
+          localStorage.removeItem('seller_token')
           localStorage.removeItem('token')
           localStorage.removeItem('role')
         }
-      }).finally(() => setAuthLoading(false))
+      }).finally(done)
       apiFetch('/seller/transactions').then(async res => {
         if (res.ok) setTransactions(normalize(await res.json()))
       })
@@ -155,17 +162,20 @@ export function AppProvider({ children }) {
         if (res.ok) setBroadcasts(normalize(await res.json()))
       })
     }
-    if (role === 'buyer') {
+    // Buyer session is independent — restored regardless of current role
+    if (buyerToken) {
+      pending++
       apiFetch('/buyer/me').then(async res => {
         if (res.ok) {
           const data = normalize(await res.json())
           setBuyerUser(data.buyer)
         } else {
-          localStorage.removeItem('token')
-          localStorage.removeItem('role')
+          localStorage.removeItem('buyer_token')
         }
-      }).finally(() => setAuthLoading(false))
+      }).finally(done)
     }
+
+    if (pending === 0) setAuthLoading(false)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Admin data loaders ────────────────────────────────────────────────────
@@ -207,6 +217,7 @@ export function AppProvider({ children }) {
     })
     if (!res.ok) return false
     const { token } = await res.json()
+    localStorage.setItem('admin_token', token)
     localStorage.setItem('token', token)
     localStorage.setItem('role', 'admin')
     localStorage.setItem('adminEmail', email)
@@ -229,6 +240,7 @@ export function AppProvider({ children }) {
     const raw = await res.json()
     const { token } = raw
     const seller = normalize(raw.seller)
+    localStorage.setItem('seller_token', token)
     localStorage.setItem('token', token)
     localStorage.setItem('role', 'seller')
     setSellerUser(seller)
@@ -242,6 +254,7 @@ export function AppProvider({ children }) {
   }
 
   const logoutAdmin = () => {
+    localStorage.removeItem('admin_token')
     localStorage.removeItem('token')
     localStorage.removeItem('role')
     localStorage.removeItem('adminEmail')
@@ -249,8 +262,13 @@ export function AppProvider({ children }) {
   }
 
   const logoutSeller = () => {
+    localStorage.removeItem('seller_token')
     localStorage.removeItem('token')
-    localStorage.removeItem('role')
+    if (localStorage.getItem('buyer_token')) {
+      localStorage.setItem('role', 'buyer')
+    } else {
+      localStorage.removeItem('role')
+    }
     setSellerUser(null)
     setTransactions([])
     setBroadcasts([])
@@ -261,8 +279,8 @@ export function AppProvider({ children }) {
     const json = await res.json()
     if (!res.ok) throw new Error(json.detail || 'Signup failed')
     const { token, buyer } = normalize(json)
-    localStorage.setItem('token', token)
-    localStorage.setItem('role', 'buyer')
+    localStorage.setItem('buyer_token', token)
+    if (!localStorage.getItem('seller_token')) localStorage.setItem('role', 'buyer')
     setBuyerUser(buyer)
     return buyer
   }
@@ -274,15 +292,17 @@ export function AppProvider({ children }) {
       return { success: false, error: err.detail || 'Invalid credentials.' }
     }
     const { token, buyer } = normalize(await res.json())
-    localStorage.setItem('token', token)
-    localStorage.setItem('role', 'buyer')
+    localStorage.setItem('buyer_token', token)
+    if (!localStorage.getItem('seller_token')) localStorage.setItem('role', 'buyer')
     setBuyerUser(buyer)
     return { success: true }
   }
 
   const logoutBuyer = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('role')
+    localStorage.removeItem('buyer_token')
+    if (!localStorage.getItem('seller_token') && !localStorage.getItem('token')) {
+      localStorage.removeItem('role')
+    }
     setBuyerUser(null)
   }
 
