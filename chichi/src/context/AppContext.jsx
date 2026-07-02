@@ -149,12 +149,12 @@ export function AppProvider({ children }) {
         if (res.ok) {
           const data = normalize(await res.json())
           setSellerUser({ ...data.seller, kennel: data.kennel })
-        } else {
+        } else if (res.status === 401) {
           localStorage.removeItem('seller_token')
           localStorage.removeItem('token')
           localStorage.removeItem('role')
         }
-      }).finally(done)
+      }).catch(() => {}).finally(done)
       apiFetch('/seller/transactions').then(async res => {
         if (res.ok) setTransactions(normalize(await res.json()))
       })
@@ -169,10 +169,10 @@ export function AppProvider({ children }) {
         if (res.ok) {
           const data = normalize(await res.json())
           setBuyerUser(data.buyer)
-        } else {
+        } else if (res.status === 401) {
           localStorage.removeItem('buyer_token')
         }
-      }).finally(done)
+      }).catch(() => {}).finally(done)
     }
 
     if (pending === 0) setAuthLoading(false)
