@@ -306,6 +306,42 @@ export function AppProvider({ children }) {
     setBuyerUser(null)
   }
 
+  // ── Inactivity logout (10 min) ────────────────────────────────────────────
+  useEffect(() => {
+    const TIMEOUT = 10 * 60 * 1000
+    let timer
+
+    const reset = () => {
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        const isLoggedIn = localStorage.getItem('seller_token') ||
+          localStorage.getItem('admin_token') ||
+          localStorage.getItem('buyer_token')
+        if (!isLoggedIn) return
+        localStorage.removeItem('seller_token')
+        localStorage.removeItem('admin_token')
+        localStorage.removeItem('buyer_token')
+        localStorage.removeItem('token')
+        localStorage.removeItem('role')
+        localStorage.removeItem('adminEmail')
+        setSellerUser(null)
+        setAdminUser(null)
+        setBuyerUser(null)
+        setTransactions([])
+        setBroadcasts([])
+      }, TIMEOUT)
+    }
+
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click']
+    events.forEach(e => window.addEventListener(e, reset, { passive: true }))
+    reset()
+
+    return () => {
+      clearTimeout(timer)
+      events.forEach(e => window.removeEventListener(e, reset))
+    }
+  }, [])
+
   const signupSeller = async (formData) => {
     const res = await apiFetch('/auth/seller/signup', {
       method: 'POST',
