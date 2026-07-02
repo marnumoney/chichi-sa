@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 def scrape_businesses(config: dict) -> list[dict]:
-    """Search Google Places for businesses in SA cities and return place dicts.
+    """Search Google Places for businesses in cities worldwide and return place dicts.
 
     Each returned dict has keys: place_id, business_name, industry, city,
     phone, email, rating, review_count, website, found_date.
@@ -29,7 +29,7 @@ def scrape_businesses(config: dict) -> list[dict]:
 
     for industry in industries:
         for city in cities:
-            query = f"{industry} in {city}, South Africa"
+            query = f"{industry} in {city}"
             logger.info("Searching: %s", query)
             page_token = None
             while True:

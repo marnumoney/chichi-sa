@@ -24,8 +24,8 @@ SKIP_EMAIL_DOMAINS = {
 # URL domains to skip when visiting pages (review sites, news, aggregators)
 SKIP_URL_DOMAINS = {
     "tripadvisor.com", "yelp.com", "zomato.com", "foursquare.com",
-    "yellowpages.co.za", "cylex.co.za", "trovit.co.za",
-    "expressen.se", "dailymail.co.uk", "news24.com", "timeslive.co.za",
+    "yellowpages.com", "whitepages.com", "superpages.com",
+    "expressen.se", "dailymail.co.uk", "news24.com",
     "businessinsider.com", "wikimedia.org", "wikipedia.org",
 }
 
@@ -35,7 +35,7 @@ HEADERS = {
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/123.0.0.0 Safari/537.36"
     ),
-    "Accept-Language": "en-ZA,en;q=0.9",
+    "Accept-Language": "en,en-US;q=0.9",
 }
 
 
@@ -49,11 +49,10 @@ def _is_valid_email(email: str) -> bool:
 
 
 def _score_email(email: str) -> int:
-    """Higher score = more likely to be a real SA business email."""
-    domain = email.split("@")[-1].lower()
-    if domain.endswith(".co.za") or domain.endswith(".za"):
-        return 3  # SA domain — best match
+    """Higher score = more likely to be a real business email."""
     if email.startswith(("info@", "contact@", "hello@", "admin@", "enquiries@")):
+        return 3
+    if "." in email.split("@")[-1]:
         return 2
     return 1
 
@@ -75,14 +74,14 @@ def _extract_emails(html: str) -> list[str]:
         email = email.lower()
         if _is_valid_email(email) and email not in emails:
             emails.append(email)
-    # Sort by score: SA domains and info@ addresses first
+    # Sort by score: contact@ prefixes and mailto: links first
     emails.sort(key=_score_email, reverse=True)
     return emails
 
 
 def _search_urls(business_name: str, city: str) -> list[str]:
     """Search DuckDuckGo for the business and return top result URLs."""
-    query = f'"{business_name}" {city} South Africa contact email'
+    query = f'"{business_name}" {city} contact email'
     try:
         with DDGS() as ddgs:
             results = list(ddgs.text(query, max_results=8))
@@ -116,7 +115,7 @@ def find_email(lead: dict, delay: float = 1.0) -> str | None:
     """Search the web for a business email address.
 
     Searches DuckDuckGo for the business, visits top result pages,
-    and extracts email addresses — prioritising South African domains
+    and extracts email addresses — prioritising contact@ prefixes and mailto: links
     and mailto: links over regex matches.
 
     Args:

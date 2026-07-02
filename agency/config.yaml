@@ -12,17 +12,16 @@ google_places:
     - electrician
     - hair salon
   cities:
-    - Cape Town
-    - Johannesburg
-    - Durban
-    - Pretoria
-    - Port Elizabeth
+    - New York
+    - Chicago
+    - Los Angeles
+    - Houston
 
 agency:
   name: Launchpad Studio
   website: https://launchpadstudio.co.za
   tone: professional but friendly
-  services: modern websites starting from $200
+  services: modern websites starting from $500
   cta: Reply to this email or call us
 
 database:

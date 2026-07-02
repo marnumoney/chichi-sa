@@ -3,10 +3,10 @@
 _Last updated: 2026-04-15 (initial seed)_
 
 ## Current Stage
-Early-stage web agency targeting South African small businesses. No paying clients yet. Focus: convert leads to first 5 paying clients.
+Early-stage web agency targeting US small businesses. No paying clients yet. Focus: convert leads to first 5 paying clients.
 
 ## What We Sell
-Affordable, modern websites for local businesses — starter sites from $200. Target: businesses with strong Google ratings but no website.
+Affordable, modern websites for local businesses — starter sites from $500. Target: businesses with strong Google ratings but no website.
 
 ## Top Priority: Sales
 - Scrape Google Places daily for businesses with 4+ stars, 10+ reviews, no website
@@ -15,8 +15,8 @@ Affordable, modern websites for local businesses — starter sites from $200. Ta
 - Reply rate benchmark: aim for 2%+ (currently building baseline)
 
 ## Content Strategy
-- Weekly blog posts targeting SA small business owners
-- Topics: why you need a website, how to get customers online, SA business success stories
+- Weekly blog posts targeting US small business owners
+- Topics: why you need a website, how to get customers online, US small business success stories
 - Goal: build authority and organic traffic
 
 ## What Not To Do Yet

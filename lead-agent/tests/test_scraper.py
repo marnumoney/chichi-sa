@@ -17,10 +17,10 @@ MOCK_DETAILS_WITH_WEBSITE = {
         "name": "Joe Plumbing",
         "rating": 4.5,
         "user_ratings_total": 30,
-        "formatted_phone_number": "031 111 2222",
-        "website": "https://joeplumbing.co.za",
+        "formatted_phone_number": "+1 555 111 2222",
+        "website": "https://joeplumbing.com",
         "types": ["plumber"],
-        "vicinity": "Durban",
+        "vicinity": "Austin",
     }
 }
 
@@ -30,9 +30,9 @@ MOCK_DETAILS_NO_WEBSITE = {
         "name": "Joe Plumbing",
         "rating": 4.5,
         "user_ratings_total": 30,
-        "formatted_phone_number": "031 111 2222",
+        "formatted_phone_number": "+1 555 111 2222",
         "types": ["plumber"],
-        "vicinity": "Durban",
+        "vicinity": "Austin",
     }
 }
 
@@ -44,7 +44,7 @@ def make_config():
         "min_reviews": 10,
         "request_delay_seconds": 0,
         "industries": ["plumber"],
-        "cities": ["Durban"],
+        "cities": ["Austin"],
     }
 
 
@@ -69,7 +69,7 @@ def test_scraper_includes_website_when_present(mocker):
 
     results = scrape_businesses(make_config())
     assert len(results) == 1
-    assert results[0]["website"] == "https://joeplumbing.co.za"
+    assert results[0]["website"] == "https://joeplumbing.com"
 
 
 def test_scraper_handles_empty_results(mocker):
@@ -89,6 +89,6 @@ def test_scraper_deduplicates_place_ids(mocker):
     mock_client.place.return_value = MOCK_DETAILS_NO_WEBSITE
 
     config = make_config()
-    config["cities"] = ["Durban", "Joburg"]  # two queries, same result
+    config["cities"] = ["Austin", "New York"]  # two queries, same result
     results = scrape_businesses(config)
     assert len(results) == 1  # deduplicated
