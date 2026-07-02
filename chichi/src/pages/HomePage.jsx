@@ -32,6 +32,11 @@ export default function HomePage() {
 
   return (
     <div>
+      {/* ── Disclaimer Banner ── */}
+      <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 text-center text-sm text-amber-800 leading-relaxed">
+        <span className="font-semibold">Disclaimer:</span> Chihuahuasouthafrica.com is not officially affiliated with Canine SA or KUSA. However, to help maintain the integrity of our breeder listings, every member is verified by our administrators through direct email confirmation with the relevant registry office to confirm that they are a valid, registered breeder with their respective registry.
+      </div>
+
       {/* ── Hero ── */}
       <section className="relative overflow-hidden min-h-[82vh] flex items-center">
         {/* Background photo */}
