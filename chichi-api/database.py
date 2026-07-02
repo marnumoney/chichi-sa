@@ -174,7 +174,7 @@ def create_tables(conn):
         """CREATE TABLE IF NOT EXISTS admin_settings (
             id INTEGER PRIMARY KEY DEFAULT 1,
             default_commission REAL DEFAULT 8.0,
-            membership_fee_annual REAL DEFAULT 1200.0,
+            membership_fee_annual REAL DEFAULT 200.0,
             referral_discount REAL DEFAULT 1.5,
             site_name TEXT DEFAULT 'Chihuahua South Africa',
             tagline TEXT DEFAULT 'South Africa''s Premier Chihuahua Marketplace',

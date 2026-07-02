@@ -170,6 +170,6 @@ def get_seller_payment_info(seller_id: str, db: sqlite3.Connection = Depends(get
         if row:
             kennel = dict(row)
     settings = db.execute('SELECT membership_fee_annual, default_commission FROM admin_settings WHERE id = 1').fetchone()
-    fee = dict(settings)['membership_fee_annual'] if settings else 1200.0
+    fee = dict(settings)['membership_fee_annual'] if settings else 200.0
     commission = dict(settings)['default_commission'] if settings else 8.0
     return {'seller': seller, 'kennel': kennel, 'membership_fee': fee, 'default_commission': commission}

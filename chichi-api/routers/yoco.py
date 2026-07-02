@@ -21,7 +21,7 @@ async def yoco_membership_checkout(body: dict, db=Depends(get_db)):
         raise HTTPException(status_code=404, detail='Seller not found')
 
     settings = db.execute('SELECT membership_fee_annual FROM admin_settings WHERE id = 1').fetchone()
-    fee = dict(settings)['membership_fee_annual'] if settings else 1200.0
+    fee = dict(settings)['membership_fee_annual'] if settings else 200.0
     amount_cents = int(fee * 100)
 
     try:

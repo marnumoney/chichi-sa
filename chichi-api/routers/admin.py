@@ -247,7 +247,7 @@ def admin_approve_seller(
     db.commit()
 
     settings = db.execute('SELECT membership_fee_annual FROM admin_settings WHERE id = 1').fetchone()
-    fee = dict(settings)['membership_fee_annual'] if settings else 1200.0
+    fee = dict(settings)['membership_fee_annual'] if settings else 200.0
     payment_link = f'{FRONTEND_URL}/pay/membership?seller={seller_id}'
     _send_email(
         seller['email'],
@@ -334,7 +334,7 @@ def admin_send_payment_email(
     kennel_name = (kennel or {}).get('name') or seller.get('kennel_name') or f"{seller['name']}'s Kennel"
     registry = (kennel or {}).get('registry') or seller.get('registry') or 'KUSA'
     settings = db.execute('SELECT membership_fee_annual FROM admin_settings WHERE id = 1').fetchone()
-    fee = dict(settings)['membership_fee_annual'] if settings else 1200.0
+    fee = dict(settings)['membership_fee_annual'] if settings else 200.0
     payment_link = f'{FRONTEND_URL}/pay/membership?seller={seller_id}'
     _send_email(
         seller['email'],

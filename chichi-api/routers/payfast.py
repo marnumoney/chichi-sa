@@ -82,7 +82,7 @@ async def membership_checkout(body: dict, db=Depends(get_db)):
     seller = dict(seller)
 
     settings = db.execute('SELECT membership_fee_annual FROM admin_settings WHERE id = 1').fetchone()
-    fee = dict(settings)['membership_fee_annual'] if settings else 1200.0
+    fee = dict(settings)['membership_fee_annual'] if settings else 200.0
 
     fields = build_payment_fields({
         'return_url': f'{FRONTEND_URL}/pay/membership?paid=true&seller={seller_id}',
