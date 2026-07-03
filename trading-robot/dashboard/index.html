@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Trading Robot</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#0d1117;color:#c9d1d9;font-family:'Courier New',monospace;padding:16px}
+    h1{color:#58a6ff;font-size:18px;margin-bottom:12px;letter-spacing:2px}
+    h2{color:#8b949e;font-size:12px;margin:16px 0 8px;text-transform:uppercase;letter-spacing:1px}
+    .bar{display:flex;gap:24px;padding:10px 14px;background:#161b22;border:1px solid #30363d;border-radius:6px;margin-bottom:16px}
+    .stat{display:flex;flex-direction:column}
+    .lbl{font-size:10px;color:#8b949e}
+    .val{font-size:18px;font-weight:bold}
+    .pos{color:#3fb950}.neg{color:#f85149}.neu{color:#58a6ff}
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    th{text-align:left;padding:6px 8px;color:#8b949e;border-bottom:1px solid #30363d}
+    td{padding:6px 8px;border-bottom:1px solid #21262d}
+    tr:hover td{background:#161b22}
+    .empty{color:#8b949e;font-size:12px;padding:12px 0}
+    #chart{display:block;width:100%;height:120px;background:#161b22;border:1px solid #30363d;border-radius:4px;margin-top:8px}
+  </style>
+</head>
+<body>
+  <h1>TRADING ROBOT</h1>
+  <div class="bar">
+    <div class="stat"><span class="lbl">STATUS</span><span class="val neu" id="s-status">--</span></div>
+    <div class="stat"><span class="lbl">ACTIVE</span><span class="val" id="s-active">--</span></div>
+    <div class="stat"><span class="lbl">TODAY P&amp;L</span><span class="val" id="s-pnl">--</span></div>
+  </div>
+  <h2>Active Positions</h2>
+  <table><thead><tr><th>Pair</th><th>Dir</th><th>Entry</th><th>SL</th><th>TP</th><th>Lot</th><th>Opened</th></tr></thead>
+    <tbody id="pos-body"></tbody></table>
+  <h2>Today's Trades</h2>
+  <table><thead><tr><th>Pair</th><th>Dir</th><th>Entry</th><th>Exit</th><th>P&amp;L</th><th>Lot</th></tr></thead>
+    <tbody id="tr-body"></tbody></table>
+  <h2>7-Day P&amp;L</h2>
+  <canvas id="chart"></canvas>
+
+  <script>
+    function esc(v){ return String(v ?? '--'); }
+    function fmt(n,d=2){ return n != null ? (n>=0?'+':'')+parseFloat(n).toFixed(d) : '--'; }
+    function cls(n){ return n > 0 ? 'pos' : n < 0 ? 'neg' : 'neu'; }
+
+    function setRow(tbody, cols) {
+      const tr = document.createElement('tr');
+      cols.forEach(({ text, klass }) => {
+        const td = document.createElement('td');
+        td.textContent = text;
+        if (klass) td.className = klass;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    }
+
+    function setEmpty(tbody, colspan, msg) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = colspan;
+      td.className = 'empty';
+      td.textContent = msg;
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    }
+
+    async function refresh() {
+      const [status, positions, trades, week] = await Promise.all([
+        fetch('/api/status').then(r=>r.json()),
+        fetch('/api/positions').then(r=>r.json()),
+        fetch('/api/trades/today').then(r=>r.json()),
+        fetch('/api/pnl/week').then(r=>r.json()),
+      ]);
+
+      document.getElementById('s-status').textContent = esc(status.status).toUpperCase();
+      document.getElementById('s-active').textContent = esc(status.active_trades);
+      const pEl = document.getElementById('s-pnl');
+      pEl.textContent = status.today_pnl != null ? '$'+fmt(status.today_pnl) : '--';
+      pEl.className = 'val ' + cls(status.today_pnl);
+
+      const posBody = document.getElementById('pos-body');
+      posBody.textContent = '';
+      if (positions.length) {
+        positions.forEach(p => setRow(posBody, [
+          {text: esc(p.pair)}, {text: esc(p.direction).toUpperCase()},
+          {text: p.entry_price != null ? p.entry_price.toFixed(5) : '--'},
+          {text: p.sl != null ? p.sl.toFixed(5) : '--'},
+          {text: p.tp != null ? p.tp.toFixed(5) : '--'},
+          {text: esc(p.lot_size)},
+          {text: esc(p.entry_time).slice(11,16)},
+        ]));
+      } else { setEmpty(posBody, 7, 'No active positions'); }
+
+      const trBody = document.getElementById('tr-body');
+      trBody.textContent = '';
+      if (trades.length) {
+        trades.forEach(t => setRow(trBody, [
+          {text: esc(t.pair)}, {text: esc(t.direction).toUpperCase()},
+          {text: t.entry_price != null ? t.entry_price.toFixed(5) : '--'},
+          {text: t.exit_price != null ? t.exit_price.toFixed(5) : '--'},
+          {text: '$'+fmt(t.pnl_usd), klass: cls(t.pnl_usd)},
+          {text: esc(t.lot_size)},
+        ]));
+      } else { setEmpty(trBody, 6, 'No trades today'); }
+
+      const canvas = document.getElementById('chart');
+      canvas.width = canvas.offsetWidth; canvas.height = 120;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (week.length) {
+        const vals = week.map(d => d.pnl || 0);
+        const max = Math.max(...vals.map(Math.abs), 1);
+        const w = canvas.width / week.length;
+        vals.forEach((v, i) => {
+          const h = Math.abs(v) / max * 52;
+          ctx.fillStyle = v >= 0 ? '#3fb950' : '#f85149';
+          ctx.fillRect(i*w+2, v>=0 ? 60-h : 60, w-4, h);
+        });
+        ctx.strokeStyle = '#30363d';
+        ctx.beginPath(); ctx.moveTo(0,60); ctx.lineTo(canvas.width,60); ctx.stroke();
+      }
+    }
+
+    refresh();
+    setInterval(refresh, 30000);
+  </script>
+</body>
+</html>
