@@ -66,3 +66,37 @@ def test_l3_gate_short_skipped(tmp_path):
     result = bot.l3_gate("EURUSD", "short", 1.0, 1.085, pending_dir, approved_dir, rejected_dir, timeout=5)
     assert result is True
     assert list(pending_dir.iterdir()) == []
+
+
+def test_l3_gate_timeout(tmp_path):
+    pending_dir = tmp_path / "pending"
+    approved_dir = tmp_path / "approved"
+    rejected_dir = tmp_path / "rejected"
+    for d in [pending_dir, approved_dir, rejected_dir]:
+        d.mkdir()
+    result = bot.l3_gate("EURUSD", "long", 0.1, 1.085, pending_dir, approved_dir, rejected_dir, timeout=1)
+    assert result is False
+    # Stale pending file must be cleaned up
+    assert list(pending_dir.iterdir()) == []
+
+
+def test_l3_gate_rejected(tmp_path):
+    pending_dir = tmp_path / "pending"
+    approved_dir = tmp_path / "approved"
+    rejected_dir = tmp_path / "rejected"
+    for d in [pending_dir, approved_dir, rejected_dir]:
+        d.mkdir()
+
+    def reject_later():
+        import time
+        time.sleep(0.3)
+        trade_id = list(pending_dir.iterdir())[0].stem
+        (rejected_dir / f"{trade_id}.json").write_text(
+            '{"approved": false}'
+        )
+
+    th = threading.Thread(target=reject_later)
+    th.start()
+    result = bot.l3_gate("EURUSD", "long", 0.1, 1.085, pending_dir, approved_dir, rejected_dir, timeout=5)
+    th.join()
+    assert result is False

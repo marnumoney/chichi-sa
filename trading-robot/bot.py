@@ -74,6 +74,9 @@ def l3_gate(pair, direction, lot, entry_price,
     pending_dir = Path(pending_dir)
     approved_dir = Path(approved_dir)
     rejected_dir = Path(rejected_dir)
+    pending_dir.mkdir(parents=True, exist_ok=True)
+    approved_dir.mkdir(parents=True, exist_ok=True)
+    rejected_dir.mkdir(parents=True, exist_ok=True)
 
     trade_id = str(uuid.uuid4())
     (pending_dir / f"{trade_id}.json").write_text(json.dumps({
@@ -95,6 +98,10 @@ def l3_gate(pair, direction, lot, entry_price,
             return False
         time.sleep(0.5)
 
+    try:
+        (pending_dir / f"{trade_id}.json").unlink(missing_ok=True)
+    except OSError:
+        pass
     return False
 
 
