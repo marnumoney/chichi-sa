@@ -1,8 +1,7 @@
 name: Keep Chichi API Alive
 
+# Disabled until new backend URL is confirmed
 on:
-  schedule:
-    - cron: '*/10 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -11,9 +10,13 @@ jobs:
     steps:
       - name: Ping chichi-api health
         env:
-          API_URL: https://chichi-api-7k6y.onrender.com/health
+          API_URL: ${{ vars.CHICHI_API_URL }}
         run: |
-          status=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL")
+          if [ -z "$API_URL" ]; then
+            echo "CHICHI_API_URL not set — update this workflow with the correct URL"
+            exit 1
+          fi
+          status=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL/health")
           echo "Status: $status"
           if [ "$status" != "200" ]; then
             echo "Warning: chichi-api returned $status"
