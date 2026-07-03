@@ -8,7 +8,7 @@ YOCO_SECRET_KEY = os.getenv('YOCO_SECRET_KEY', '')
 YOCO_WEBHOOK_SECRET = os.getenv('YOCO_WEBHOOK_SECRET', '')
 YOCO_CHECKOUT_URL = 'https://payments.yoco.com/api/checkouts'
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://chihuahuasouthafrica.com')
-BACKEND_URL = os.getenv('BACKEND_URL', 'https://chichi-api-7k6y.onrender.com')
+BACKEND_URL = os.getenv('BACKEND_URL', 'https://chichi-api.onrender.com')
 
 
 async def create_checkout(amount_cents: int, metadata: dict, success_url: str, cancel_url: str) -> dict:

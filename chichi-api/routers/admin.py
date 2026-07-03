@@ -11,7 +11,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from payfast_helper import FRONTEND_URL
+from yoco_helper import FRONTEND_URL
 
 from auth import get_current_admin, hash_password
 from database import get_db, parse_puppy, parse_seller, parse_transaction

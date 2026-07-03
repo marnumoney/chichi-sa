@@ -14,16 +14,54 @@ function RandIcon() {
   return <span className="font-body font-bold text-base leading-none">R</span>
 }
 
-function StatCard({ icon: Icon, label, value, sub, color }) {
+function StatCard({ icon: Icon, label, value, sub, color, adjustment = 0, onEditAdj }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(String(adjustment))
+
+  const handleSave = () => {
+    const parsed = parseFloat(draft) || 0
+    onEditAdj(parsed)
+    setEditing(false)
+  }
+
   return (
-    <div className="bg-white border border-divider p-5 flex items-start gap-4">
+    <div className="bg-white border border-divider p-5 flex items-start gap-4 relative">
       <div className={`w-10 h-10 flex items-center justify-center flex-shrink-0 ${color}`}>
         <Icon className="w-5 h-5" />
       </div>
-      <div>
+      <div className="flex-1 min-w-0">
         <p className="font-body text-xs text-muted uppercase tracking-widest mb-0.5">{label}</p>
         <p className="font-display text-3xl font-semibold text-espresso leading-none">{value}</p>
+        {adjustment !== 0 && (
+          <p className="font-body text-[10px] text-muted mt-0.5">
+            incl. manual adj. {adjustment > 0 ? '+' : ''}R{adjustment.toLocaleString()}
+          </p>
+        )}
         {sub && <p className="font-body text-xs text-muted mt-1">{sub}</p>}
+        {editing ? (
+          <div className="mt-2 flex items-center gap-2">
+            <span className="font-body text-xs text-muted">Adj ±R</span>
+            <input
+              autoFocus
+              type="number"
+              className="input-field py-1 px-2 text-xs w-28 font-mono"
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setEditing(false) }}
+            />
+            <button onClick={handleSave} className="font-body text-[10px] font-bold uppercase tracking-widest bg-espresso text-cream px-2 py-1">Save</button>
+            <button onClick={() => setEditing(false)} className="font-body text-[10px] text-muted">Cancel</button>
+          </div>
+        ) : (
+          onEditAdj && (
+            <button
+              onClick={() => { setDraft(String(adjustment)); setEditing(true) }}
+              className="mt-1.5 flex items-center gap-1 font-body text-[10px] text-muted hover:text-sienna transition-colors"
+            >
+              <Pencil className="w-3 h-3" /> Manual adjustment
+            </button>
+          )
+        )}
       </div>
     </div>
   )
@@ -149,10 +187,25 @@ export default function AdminWallet() {
   const [bankSaved, setBankSaved] = useState(false)
 
   const pendingTxns = transactions.filter(t => !t.sellerPaid || !t.commissionPaid)
-  const totalHeld = pendingTxns.reduce((a, t) => a + (!t.sellerPaid ? t.sellerPayout : 0) + (!t.commissionPaid ? t.commission : 0), 0)
-  const totalCommission = transactions.reduce((a, t) => a + t.commission, 0)
-  const totalPaidOut = transactions.filter(t => t.sellerPaid).reduce((a, t) => a + t.sellerPayout, 0)
-  const totalVolume = transactions.reduce((a, t) => a + t.amount, 0)
+
+  const adjCommission = adminSettings.walletAdjCommission ?? 0
+  const adjPaidOut    = adminSettings.walletAdjPaidOut    ?? 0
+  const adjVolume     = adminSettings.walletAdjVolume     ?? 0
+  const adjPending    = adminSettings.walletAdjPending    ?? 0
+
+  const baseHeld       = pendingTxns.reduce((a, t) => a + (!t.sellerPaid ? t.sellerPayout : 0) + (!t.commissionPaid ? t.commission : 0), 0)
+  const baseCommission = transactions.reduce((a, t) => a + t.commission, 0)
+  const basePaidOut    = transactions.filter(t => t.sellerPaid).reduce((a, t) => a + t.sellerPayout, 0)
+  const baseVolume     = transactions.reduce((a, t) => a + t.amount, 0)
+
+  const totalHeld       = baseHeld       + adjPending
+  const totalCommission = baseCommission + adjCommission
+  const totalPaidOut    = basePaidOut    + adjPaidOut
+  const totalVolume     = baseVolume     + adjVolume
+
+  const saveAdj = (key) => async (val) => {
+    await updateAdminSettings({ [key]: val })
+  }
 
   const txnStatus = (t) => {
     if (t.sellerPaid && t.commissionPaid) return 'complete'
@@ -236,10 +289,10 @@ export default function AdminWallet() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-        <StatCard icon={Clock} label="Pending EFTs" value={`R${totalHeld.toLocaleString()}`} sub={`${pendingTxns.length} transactions outstanding`} color="bg-amber-100 text-amber-700" />
-        <StatCard icon={RandIcon} label="Commission Earned" value={`R${totalCommission.toLocaleString()}`} sub="Total commission across all sales" color="bg-sienna/10 text-sienna" />
-        <StatCard icon={RandIcon} label="Paid Out to Sellers" value={`R${totalPaidOut.toLocaleString()}`} sub="EFTs completed to sellers" color="bg-sage/10 text-sage-dark" />
-        <StatCard icon={Wallet} label="Total Volume" value={`R${totalVolume.toLocaleString()}`} sub="All time buyer payments" color="bg-espresso/10 text-espresso" />
+        <StatCard icon={Clock} label="Pending EFTs" value={`R${totalHeld.toLocaleString()}`} sub={`${pendingTxns.length} transactions outstanding`} color="bg-amber-100 text-amber-700" adjustment={adjPending} onEditAdj={saveAdj('walletAdjPending')} />
+        <StatCard icon={RandIcon} label="Commission Earned" value={`R${totalCommission.toLocaleString()}`} sub="Total commission across all sales" color="bg-sienna/10 text-sienna" adjustment={adjCommission} onEditAdj={saveAdj('walletAdjCommission')} />
+        <StatCard icon={RandIcon} label="Paid Out to Sellers" value={`R${totalPaidOut.toLocaleString()}`} sub="EFTs completed to sellers" color="bg-sage/10 text-sage-dark" adjustment={adjPaidOut} onEditAdj={saveAdj('walletAdjPaidOut')} />
+        <StatCard icon={Wallet} label="Total Volume" value={`R${totalVolume.toLocaleString()}`} sub="All time buyer payments" color="bg-espresso/10 text-espresso" adjustment={adjVolume} onEditAdj={saveAdj('walletAdjVolume')} />
       </div>
 
       {/* Pending banner */}
@@ -340,7 +393,7 @@ export default function AdminWallet() {
         <h3 className="font-body font-semibold text-sm text-espresso mb-4">Per Transaction — 2 EFTs Required</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { step: '1', label: 'Buyer Pays Full Amount', desc: 'e.g. R15,000 — processed via PayFast, pending admin release', color: 'bg-espresso' },
+            { step: '1', label: 'Buyer Pays Full Amount', desc: 'e.g. R15,000 — processed via Yoco, pending admin release', color: 'bg-espresso' },
             { step: '2', label: 'EFT Seller Payout', desc: 'e.g. R13,800 → to seller\'s bank account', color: 'bg-sage' },
             { step: '3', label: 'EFT Commission to Admin', desc: 'e.g. R1,200 → to admin\'s bank account above', color: 'bg-sienna' },
           ].map(({ step, label, desc, color }) => (

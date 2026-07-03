@@ -288,6 +288,14 @@ f"{insert_ignore} admin_settings (id) VALUES (1) {on_conflict}",
 
     _add_column(conn, is_pg, 'puppies', 'sold_at', "TEXT DEFAULT NULL")
 
+    for col, defn in [
+        ('wallet_adj_commission', 'REAL DEFAULT 0'),
+        ('wallet_adj_paid_out',   'REAL DEFAULT 0'),
+        ('wallet_adj_volume',     'REAL DEFAULT 0'),
+        ('wallet_adj_pending',    'REAL DEFAULT 0'),
+    ]:
+        _add_column(conn, is_pg, 'admin_settings', col, defn)
+
     # Backfill referral codes for any kennel that doesn't have one yet
     import random, string
     rows = conn.execute("SELECT id FROM kennels WHERE referral_code IS NULL OR referral_code = ''").fetchall()
