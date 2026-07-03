@@ -17,6 +17,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title='Chichi API', lifespan=lifespan)
 
+
+@app.get('/health')
+def health():
+    return {'ok': True}
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
