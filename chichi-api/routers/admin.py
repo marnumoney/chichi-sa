@@ -454,17 +454,38 @@ def admin_mark_puppy_sold(
     db.execute("""
         INSERT INTO transactions
         (id, puppy_id, puppy_name, kennel_id, kennel_name, buyer_name, buyer_email,
-         amount, commission, seller_payout, seller_paid, commission_paid, date, buyer_id)
-        VALUES (?,?,?,?,?,?,?,?,?,?,0,0,?,?)
+         amount, commission, seller_payout, seller_paid, commission_paid, date, buyer_id, type)
+        VALUES (?,?,?,?,?,?,?,?,?,?,0,0,?,?,?)
     """, (
         txn_id, puppy['id'], puppy['name'],
         puppy['kennel_id'], dict(kennel)['name'] if kennel else '',
         buyer_name, buyer_email,
-        puppy['price'], commission, seller_payout, date.today().isoformat(), buyer_id,
+        puppy['price'], commission, seller_payout, date.today().isoformat(), buyer_id, 'full',
     ))
-    db.execute('UPDATE puppies SET sold = 1, sold_at = ? WHERE id = ?', (now, puppy_id))
+    db.execute(
+        "UPDATE puppies SET sold = 1, sold_at = ?, status = 'sold', booked_by = '' WHERE id = ?",
+        (now, puppy_id))
     db.commit()
     return {'ok': True, 'txn_id': txn_id}
+
+
+@router.post('/puppies/{puppy_id}/cancel-booking')
+def admin_cancel_booking(
+    puppy_id: str,
+    _: dict = Depends(get_current_admin),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    row = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail='Puppy not found')
+    if (dict(row).get('status') or '') != 'booked':
+        raise HTTPException(status_code=409, detail='Puppy is not booked')
+    db.execute(
+        "UPDATE puppies SET status = 'available', booked_by = '', booked_at = NULL WHERE id = ?",
+        (puppy_id,))
+    db.commit()
+    row = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
+    return parse_puppy(row)
 
 
 # ── Testimonials ──────────────────────────────────────────────────────────────

@@ -155,6 +155,26 @@ def delist_puppy(
     return {'ok': True}
 
 
+@router.post('/puppies/{puppy_id}/cancel-booking')
+def cancel_booking(
+    puppy_id: str,
+    seller: dict = Depends(get_current_seller),
+    db: sqlite3.Connection = Depends(get_db),
+):
+    row = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
+    if not row or dict(row)['kennel_id'] != seller.get('kennel_id'):
+        raise HTTPException(status_code=404, detail='Puppy not found')
+    puppy = dict(row)
+    if (puppy.get('status') or '') != 'booked':
+        raise HTTPException(status_code=409, detail='Puppy is not booked')
+    db.execute(
+        "UPDATE puppies SET status = 'available', booked_by = '', booked_at = NULL WHERE id = ?",
+        (puppy_id,))
+    db.commit()
+    row = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
+    return parse_puppy(row)
+
+
 @router.post('/agree-terms')
 def agree_terms(
     seller: dict = Depends(get_current_seller),
