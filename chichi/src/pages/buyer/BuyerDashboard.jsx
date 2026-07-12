@@ -5,7 +5,7 @@ import { Logo } from '../../components/Logo'
 import { ShoppingBag, LogOut, Check } from 'lucide-react'
 
 export default function BuyerDashboard() {
-  const { buyerUser, logoutBuyer } = useApp()
+  const { buyerUser, logoutBuyer, puppies } = useApp()
   const navigate = useNavigate()
   const [purchases, setPurchases] = useState([])
   const [tab, setTab] = useState('purchases')
@@ -87,6 +87,18 @@ export default function BuyerDashboard() {
         {/* Purchases tab */}
         {tab === 'purchases' && (
           <div>
+            {purchases.filter(p => p.type === 'deposit' &&
+              puppies.find(pp => pp.id === p.puppyId)?.status === 'booked').map(p => (
+              <div key={`booked-${p.id}`} className="bg-amber-50 border border-amber-200 p-5 mb-4 flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <p className="font-display text-lg font-semibold text-espresso">{p.puppyName} — Reserved</p>
+                  <p className="font-body text-sm text-muted">Deposit of R{(p.amount || 0).toLocaleString()} paid · balance outstanding</p>
+                </div>
+                <Link to={`/puppies/${p.puppyId}`} className="btn-primary text-xs tracking-widest uppercase py-2.5 px-5">
+                  Pay Balance
+                </Link>
+              </div>
+            ))}
             {purchases.length === 0 ? (
               <div className="bg-white border border-divider p-12 text-center">
                 <ShoppingBag className="w-10 h-10 text-muted mx-auto mb-4" />
@@ -109,7 +121,11 @@ export default function BuyerDashboard() {
 
                       <div className="flex items-center gap-2 mt-3">
                         <Check className="w-4 h-4 text-sage-dark" />
-                        <span className="font-body text-xs text-sage-dark font-semibold">Payment confirmed via Yoco</span>
+                        <span className="font-body text-xs text-sage-dark font-semibold">
+                          {p.type === 'deposit' ? '50% deposit paid via Yoco'
+                            : p.type === 'balance' ? 'Balance paid via Yoco'
+                            : 'Payment confirmed via Yoco'}
+                        </span>
                       </div>
                     </div>
                   )
