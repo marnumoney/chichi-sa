@@ -605,7 +605,7 @@ export default function SellerPuppies() {
                           Edit
                         </button>
                       )}
-                      {!p.sold && (
+                      {!p.sold && p.status !== 'booked' && (
                         <button
                           onClick={() => setDeleteTarget(p)}
                           className="flex items-center gap-1 text-red-500 hover:text-red-700 font-body text-xs transition-colors"

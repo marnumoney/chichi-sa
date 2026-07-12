@@ -59,7 +59,8 @@ export default function AdminPuppies() {
         </div>
         <button onClick={() => exportCsv('listings.csv', puppies.map(p => {
           const k = kennels.find(kk => kk.id === p.kennelId)
-          return { Name: p.name, Breed: p.breed, Coat: p.coatType, Gender: p.gender, Colour: p.color, DOB: p.dob, Price: p.price, Kennel: k?.name ?? '—', Registry: k?.registry ?? '—', Status: p.sold ? 'Sold' : 'Available', 'Reg No': p.registrationNo ?? '—' }
+          const st = p.status || (p.sold ? 'sold' : 'available')
+          return { Name: p.name, Breed: p.breed, Coat: p.coatType, Gender: p.gender, Colour: p.color, DOB: p.dob, Price: p.price, Kennel: k?.name ?? '—', Registry: k?.registry ?? '—', Status: st === 'sold' ? 'Sold' : st === 'booked' ? 'Booked' : 'Available', 'Reg No': p.registrationNo ?? '—' }
         }))} className="flex items-center gap-1.5 btn-secondary text-xs tracking-widest uppercase py-2.5 px-4">
           <Download className="w-3.5 h-3.5" /> Export Excel
         </button>
