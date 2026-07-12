@@ -75,6 +75,8 @@ async def yoco_puppy_checkout(body: dict, db=Depends(get_db)):
             "ORDER BY date DESC LIMIT 1", (puppy_id,)).fetchone()
         deposit_paid = dict(dep)['amount'] if dep else round(puppy['price'] * 0.5, 2)
         amount = round(puppy['price'] - deposit_paid, 2)
+        if amount <= 0:
+            raise HTTPException(status_code=409, detail='No balance outstanding')
     else:
         amount = puppy['price']
     amount_cents = int(round(amount * 100))
@@ -225,11 +227,12 @@ async def verify_puppy(body: dict, db=Depends(get_db)):
         if status in ('created', 'cancelled', 'failed', 'expired'):
             raise HTTPException(status_code=400, detail='Payment not complete')
 
-        # Enrich buyer details from Yoco metadata when not provided by frontend
+        # Yoco checkout metadata (bound at checkout creation) is authoritative —
+        # it wins over client-supplied body values, which are untrusted.
         metadata = checkout.get('metadata', {})
-        buyer_name = buyer_name or metadata.get('buyer_name', '')
-        buyer_email = buyer_email or metadata.get('buyer_email', '')
-        buyer_id = buyer_id or metadata.get('buyer_id', '')
+        buyer_name = metadata.get('buyer_name', '') or buyer_name
+        buyer_email = metadata.get('buyer_email', '') or buyer_email
+        buyer_id = metadata.get('buyer_id', '') or buyer_id
         payment_option = metadata.get('payment_option', 'full')
 
     except HTTPException:

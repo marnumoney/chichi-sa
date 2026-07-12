@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from database import get_db, parse_transaction
 from models import PurchaseRequest
+from puppy_sales import puppy_status
 
 router = APIRouter()
 
@@ -16,8 +17,8 @@ def purchase_puppy(body: PurchaseRequest, db: sqlite3.Connection = Depends(get_d
     if not puppy:
         raise HTTPException(status_code=404, detail='Puppy not found')
     puppy = dict(puppy)
-    if puppy['sold']:
-        raise HTTPException(status_code=409, detail='Puppy already sold')
+    if puppy_status(puppy) != 'available':
+        raise HTTPException(status_code=409, detail='Puppy not available')
 
     kennel = db.execute('SELECT * FROM kennels WHERE id = ?', (puppy['kennel_id'],)).fetchone()
     rate = dict(kennel)['commission'] if kennel else 8.0

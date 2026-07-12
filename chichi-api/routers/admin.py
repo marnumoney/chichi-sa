@@ -17,6 +17,7 @@ from auth import get_current_admin, hash_password
 from database import get_db, parse_puppy, parse_seller, parse_transaction
 from models import (KennelCreate, KennelUpdate, LegalUpdate, SellerCreate,
                     SellerUpdate, SettingsUpdate, TestimonialCreate)
+from puppy_sales import puppy_status
 
 router = APIRouter()
 
@@ -418,6 +419,9 @@ def admin_delete_puppy(
     _: dict = Depends(get_current_admin),
     db: sqlite3.Connection = Depends(get_db),
 ):
+    row = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
+    if row and puppy_status(dict(row)) == 'booked':
+        raise HTTPException(status_code=409, detail='Cancel the booking first')
     db.execute('DELETE FROM puppies WHERE id = ?', (puppy_id,))
     db.commit()
     return {'ok': True}
@@ -439,6 +443,8 @@ def admin_mark_puppy_sold(
 
     if puppy.get('sold'):
         return {'ok': True, 'note': 'already sold'}
+    if puppy_status(puppy) == 'booked':
+        raise HTTPException(status_code=409, detail='Cancel the booking first')
 
     buyer_name = body.get('buyer_name', '')
     buyer_email = body.get('buyer_email', '')

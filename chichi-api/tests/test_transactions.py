@@ -34,7 +34,7 @@ def test_purchase_puppy_not_found(seeded_client):
 
 
 def test_purchase_already_sold_puppy(seeded_client, test_db):
-    test_db.execute("UPDATE puppies SET sold = 1 WHERE id = 'p1'")
+    test_db.execute("UPDATE puppies SET sold = 1, status = 'sold' WHERE id = 'p1'")
     test_db.commit()
     res = seeded_client.post('/transactions', json={
         'puppy_id': 'p1',

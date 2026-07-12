@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from auth import get_current_seller
 from database import get_db, parse_puppy, parse_transaction
 from models import KennelUpdate, PuppyCreate
+from puppy_sales import puppy_status
 
 router = APIRouter()
 
@@ -148,8 +149,11 @@ def delist_puppy(
     row = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
     if not row:
         raise HTTPException(status_code=404, detail='Puppy not found')
-    if dict(row)['kennel_id'] != seller['kennel_id']:
+    puppy = dict(row)
+    if puppy['kennel_id'] != seller['kennel_id']:
         raise HTTPException(status_code=403, detail='Not your puppy')
+    if puppy_status(puppy) == 'booked':
+        raise HTTPException(status_code=409, detail='Cancel the booking first')
     db.execute('DELETE FROM puppies WHERE id = ?', (puppy_id,))
     db.commit()
     return {'ok': True}
