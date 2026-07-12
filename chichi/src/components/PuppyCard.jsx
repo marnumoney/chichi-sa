@@ -34,7 +34,9 @@ function KennelAvatar({ kennel, size = 'sm' }) {
 export default function PuppyCard({ puppy }) {
   const { kennels } = useApp()
   const kennel = kennels.find(k => k.id === puppy.kennelId)
-  const isSold = puppy.sold
+  const status = puppy.status || (puppy.sold ? 'sold' : 'available')
+  const isSold = status === 'sold'
+  const isBooked = status === 'booked'
 
   return (
     <div className={`card overflow-hidden flex flex-col transition-shadow hover:shadow-md group ${isSold ? 'opacity-70' : ''}`}>
@@ -54,7 +56,8 @@ export default function PuppyCard({ puppy }) {
             <span className="badge-canine">Canine SA</span>
           )}
           {isSold && <span className="badge-sold">Sold</span>}
-          {!isSold && <span className="badge-available">Available</span>}
+          {isBooked && <span className="badge-booked">Booked</span>}
+          {!isSold && !isBooked && <span className="badge-available">Available</span>}
         </div>
         {/* Gender tag */}
         <div className={`absolute top-2.5 right-2.5 text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 ${puppy.gender === 'Male' ? 'bg-blue-600 text-white' : 'bg-pink-500 text-white'}`}>
