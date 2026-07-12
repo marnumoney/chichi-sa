@@ -1,8 +1,11 @@
 """Shared settlement logic for puppy payments (full / deposit / balance).
 
 Called from the Yoco webhook and verify-puppy — both may fire for the same
-payment, so every path here is an idempotent no-op when the puppy is not in
-the expected state.
+payment, so the puppy's status transition is the single authoritative gate.
+Cheap pre-checks reject inputs early, but the actual claim is an atomic
+UPDATE ... WHERE <expected prior state>: only the first caller to land that
+UPDATE proceeds to insert the transaction row, and a second concurrent call
+sees rowcount == 0 and is an idempotent no-op.
 """
 import uuid
 from datetime import date, datetime
@@ -15,6 +18,9 @@ def puppy_status(puppy: dict) -> str:
 def record_puppy_payment(db, puppy_id: str, payment_option: str,
                          buyer_name: str, buyer_email: str, buyer_id: str):
     """Record one successful payment. Returns the new txn id, or None if no-op."""
+    if payment_option not in ('full', 'deposit', 'balance'):
+        return None
+
     row = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
     if not row:
         return None
@@ -45,8 +51,28 @@ def record_puppy_payment(db, puppy_id: str, payment_option: str,
     commission = round(amount * rate / 100, 2)
     seller_payout = round(amount - commission, 2)
 
-    txn_id = f'txn{uuid.uuid4().hex[:8]}'
     now = datetime.now().isoformat()
+    if payment_option == 'deposit':
+        cur = db.execute(
+            "UPDATE puppies SET status = 'booked', booked_by = ?, booked_at = ? "
+            "WHERE id = ? AND status = 'available' AND sold = 0",
+            (buyer_id or '', now, puppy_id))
+    elif payment_option == 'balance':
+        cur = db.execute(
+            "UPDATE puppies SET status = 'sold', sold = 1, sold_at = ? "
+            "WHERE id = ? AND status = 'booked' AND sold = 0",
+            (now, puppy_id))
+    else:
+        cur = db.execute(
+            "UPDATE puppies SET status = 'sold', sold = 1, sold_at = ? "
+            "WHERE id = ? AND status = 'available' AND sold = 0",
+            (now, puppy_id))
+
+    if cur.rowcount == 0:
+        db.rollback()
+        return None
+
+    txn_id = f'txn{uuid.uuid4().hex[:8]}'
     db.execute("""
         INSERT INTO transactions
         (id, puppy_id, puppy_name, kennel_id, kennel_name, buyer_name, buyer_email,
@@ -59,14 +85,5 @@ def record_puppy_payment(db, puppy_id: str, payment_option: str,
         amount, commission, seller_payout, date.today().isoformat(), buyer_id or '',
         payment_option,
     ))
-
-    if payment_option == 'deposit':
-        db.execute(
-            "UPDATE puppies SET status = 'booked', booked_by = ?, booked_at = ? WHERE id = ?",
-            (buyer_id or '', now, puppy_id))
-    else:
-        db.execute(
-            "UPDATE puppies SET status = 'sold', sold = 1, sold_at = ? WHERE id = ?",
-            (now, puppy_id))
     db.commit()
     return txn_id
