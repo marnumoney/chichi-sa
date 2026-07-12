@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { useApp } from '../../context/AppContext'
+import { useApp, apiFetch } from '../../context/AppContext'
 import { Plus, Trash2, X, Check, Upload, Landmark, ChevronDown, ChevronUp, Loader2, Pencil } from 'lucide-react'
 import Modal from '../../components/Modal'
 import { uploadImage, uploadImages } from '../../utils/storage'
@@ -128,7 +128,7 @@ const HEALTH_OPTIONS = [
 ]
 
 export default function SellerPuppies() {
-  const { sellerUser, puppies, adminSettings, kennels, addPuppy, updatePuppy, delistPuppy, updateSellerProfile } = useApp()
+  const { sellerUser, puppies, adminSettings, kennels, addPuppy, updatePuppy, delistPuppy, updateSellerProfile, loadPuppies } = useApp()
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [imagePreviews, setImagePreviews] = useState([])
@@ -585,9 +585,14 @@ export default function SellerPuppies() {
                   </td>
                   <td className="px-5 py-3 text-muted text-xs font-mono">{p.registrationNo || '—'}</td>
                   <td className="px-5 py-3">
-                    <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 ${p.sold ? 'bg-red-100 text-red-700' : 'bg-sage/10 text-sage-dark'}`}>
-                      {p.sold ? 'Sold' : 'Active'}
-                    </span>
+                    {(() => {
+                      const st = p.status || (p.sold ? 'sold' : 'available')
+                      return (
+                        <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 ${st === 'sold' ? 'bg-red-100 text-red-700' : st === 'booked' ? 'bg-amber-100 text-amber-700' : 'bg-sage/10 text-sage-dark'}`}>
+                          {st === 'sold' ? 'Sold' : st === 'booked' ? 'Booked' : 'Active'}
+                        </span>
+                      )
+                    })()}
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
@@ -607,6 +612,19 @@ export default function SellerPuppies() {
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                           Delist
+                        </button>
+                      )}
+                      {(p.status === 'booked') && (
+                        <button
+                          onClick={async () => {
+                            if (!window.confirm(`Cancel the booking for ${p.name}? The puppy will become available again. Handle any deposit refund with the buyer directly.`)) return
+                            const res = await apiFetch(`/seller/puppies/${p.id}/cancel-booking`, { method: 'POST' })
+                            if (res.ok) loadPuppies()
+                          }}
+                          className="flex items-center gap-1 text-amber-600 hover:text-amber-800 font-body text-xs transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          Cancel Booking
                         </button>
                       )}
                     </div>

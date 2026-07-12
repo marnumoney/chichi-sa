@@ -37,8 +37,10 @@ export default function AdminPuppies() {
   const filtered = puppies.filter(p => {
     const kennel = kennels.find(k => k.id === p.kennelId)
     if (filterKennel !== 'All' && p.kennelId !== filterKennel) return false
-    if (filterStatus === 'Available' && p.sold) return false
-    if (filterStatus === 'Sold' && !p.sold) return false
+    const st = p.status || (p.sold ? 'sold' : 'available')
+    if (filterStatus === 'Available' && st !== 'available') return false
+    if (filterStatus === 'Booked' && st !== 'booked') return false
+    if (filterStatus === 'Sold' && st !== 'sold') return false
     if (search && !p.name.toLowerCase().includes(search.toLowerCase()) &&
         !p.breed?.toLowerCase().includes(search.toLowerCase()) &&
         !p.color?.toLowerCase().includes(search.toLowerCase())) return false
@@ -74,7 +76,7 @@ export default function AdminPuppies() {
           {approvedKennels.map(k => <option key={k.id} value={k.id}>{k.name}</option>)}
         </select>
         <div className="flex gap-1">
-          {['All', 'Available', 'Sold'].map(s => (
+          {['All', 'Available', 'Booked', 'Sold'].map(s => (
             <button key={s} onClick={() => setFilterStatus(s)}
               className={`px-3 py-2 font-body text-xs font-medium transition-colors ${filterStatus === s ? 'bg-espresso text-cream' : 'bg-white border border-divider text-muted hover:text-espresso'}`}>
               {s}
@@ -136,16 +138,31 @@ export default function AdminPuppies() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 ${p.sold ? 'bg-red-100 text-red-700' : 'bg-sage/10 text-sage-dark'}`}>
-                          {p.sold ? 'Sold' : 'Active'}
-                        </span>
+                        {(() => {
+                          const st = p.status || (p.sold ? 'sold' : 'available')
+                          return (
+                            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 ${st === 'sold' ? 'bg-red-100 text-red-700' : st === 'booked' ? 'bg-amber-100 text-amber-700' : 'bg-sage/10 text-sage-dark'}`}>
+                              {st === 'sold' ? 'Sold' : st === 'booked' ? 'Booked' : 'Active'}
+                            </span>
+                          )
+                        })()}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          {!p.sold && (
+                          {!p.sold && p.status !== 'booked' && (
                             <button onClick={() => { setSoldTarget(p); setSoldForm({ buyer_name: '', buyer_email: '', buyer_id: '' }) }}
                               className="flex items-center gap-1 text-muted hover:text-sage-dark font-body text-xs transition-colors">
                               <CheckSquare className="w-3.5 h-3.5" /> Mark Sold
+                            </button>
+                          )}
+                          {(p.status === 'booked') && (
+                            <button onClick={async () => {
+                              if (!window.confirm(`Cancel the booking for ${p.name}?`)) return
+                              const res = await apiFetch(`/admin/puppies/${p.id}/cancel-booking`, { method: 'POST' })
+                              if (res.ok) loadAdminData()
+                            }}
+                              className="flex items-center gap-1 text-amber-600 hover:text-amber-800 font-body text-xs transition-colors">
+                              Cancel Booking
                             </button>
                           )}
                           <button onClick={() => setDeleteTarget(p)}
