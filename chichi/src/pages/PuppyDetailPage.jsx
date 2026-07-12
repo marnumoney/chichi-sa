@@ -23,14 +23,17 @@ export default function PuppyDetailPage() {
   const navigate = useNavigate()
   const [imgIdx, setImgIdx] = useState(0)
   const [payOpen, setPayOpen] = useState(false)
-  const [successOpen, setSuccessOpen] = useState(searchParams.get('purchased') === 'true')
+  const [successOpen, setSuccessOpen] = useState(!!searchParams.get('purchased'))
   const [loading, setLoading] = useState(false)
   const [payError, setPayError] = useState('')
   const [buyer, setBuyer] = useState({ name: buyerUser?.name || '', email: buyerUser?.email || '' })
   const [errors, setErrors] = useState({})
+  const [payOption, setPayOption] = useState('full')
+
+  const purchasedKind = searchParams.get('purchased') // 'full' | 'deposit' | 'balance' | 'true' (legacy)
 
   useEffect(() => {
-    if (searchParams.get('purchased') !== 'true') return
+    if (!searchParams.get('purchased')) return
     // sessionStorage is primary; Yoco may also append checkoutId to the success URL
     const checkoutId = sessionStorage.getItem(`yoco_checkout_puppy_${id}`)
                        || searchParams.get('checkoutId')
@@ -75,7 +78,16 @@ export default function PuppyDetailPage() {
   const commission = kennel?.commission ?? adminSettings?.defaultCommission ?? 8
   const commissionAmt = Math.round(puppy.price * commission / 100)
   const sellerPayout = puppy.price - commissionAmt
-  const isSold = puppy.sold
+  const status = puppy.status || (puppy.sold ? 'sold' : 'available')
+  const isSold = status === 'sold'
+  const isBooked = status === 'booked'
+  const isMyBooking = isBooked && buyerUser && buyerUser.id === puppy.bookedBy
+  const depositAmount = Math.round(puppy.price * 0.5)
+  const payAmount = payOption === 'full' ? puppy.price
+    : payOption === 'deposit' ? depositAmount
+    : puppy.price - depositAmount
+  const payLabel = payOption === 'deposit' ? 'Pay 50% Deposit'
+    : payOption === 'balance' ? 'Pay Remaining Balance' : 'Pay'
 
   const setB = (key) => (e) => {
     setBuyer(b => ({ ...b, [key]: e.target.value }))
@@ -99,7 +111,7 @@ export default function PuppyDetailPage() {
       const res = await fetch(`${API}/yoco/puppy-checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ puppy_id: puppy.id, buyer_name: buyer.name, buyer_email: buyer.email, buyer_id: buyerUser?.id || '' }),
+        body: JSON.stringify({ puppy_id: puppy.id, buyer_name: buyer.name, buyer_email: buyer.email, buyer_id: buyerUser?.id || '', payment_option: payOption }),
       })
       if (!res.ok) throw new Error('Payment provider error. Please try again.')
       const { redirect_url, checkout_id } = await res.json()
@@ -213,18 +225,39 @@ export default function PuppyDetailPage() {
 
           {isSold ? (
             <div className="w-full py-4 bg-divider text-center font-body text-sm text-muted tracking-widest uppercase">This puppy has been sold</div>
-          ) : buyerUser ? (
+          ) : isBooked && isMyBooking ? (
             <>
+              <div className="w-full py-3 mb-3 bg-amber-50 border border-amber-200 text-center font-body text-xs text-amber-700 tracking-widest uppercase">Reserved for you — deposit paid</div>
               <button
-                onClick={() => setPayOpen(true)}
+                onClick={() => { setPayOption('balance'); setPayOpen(true) }}
                 className="w-full py-4 bg-sienna text-cream font-body font-semibold text-sm tracking-widest uppercase hover:bg-sienna-dark transition-colors flex items-center justify-center gap-2"
               >
                 <Lock className="w-4 h-4" />
-                Purchase Securely via Yoco
+                Pay Remaining Balance · R{(puppy.price - depositAmount).toLocaleString()}
+              </button>
+            </>
+          ) : isBooked ? (
+            <div className="w-full py-4 bg-amber-50 border border-amber-200 text-center font-body text-sm text-amber-700 tracking-widest uppercase">This puppy is reserved</div>
+          ) : buyerUser ? (
+            <>
+              <button
+                onClick={() => { setPayOption('full'); setPayOpen(true) }}
+                className="w-full py-4 bg-sienna text-cream font-body font-semibold text-sm tracking-widest uppercase hover:bg-sienna-dark transition-colors flex items-center justify-center gap-2"
+              >
+                <Lock className="w-4 h-4" />
+                Buy Now · R{puppy.price.toLocaleString()}
+              </button>
+              <button
+                onClick={() => { setPayOption('deposit'); setPayOpen(true) }}
+                className="w-full mt-3 py-4 border-2 border-sienna text-sienna font-body font-semibold text-sm tracking-widest uppercase hover:bg-sienna hover:text-cream transition-colors flex items-center justify-center gap-2"
+              >
+                <Lock className="w-4 h-4" />
+                Reserve · 50% Deposit · R{depositAmount.toLocaleString()}
               </button>
               <div className="flex items-center justify-center gap-4 mt-3">
                 <span className="font-body text-xs text-muted">🔒 Secure SA payments via Yoco</span>
               </div>
+              <p className="font-body text-[11px] text-muted text-center mt-2">Pay a 50% deposit to reserve this puppy — the balance is payable here before collection.</p>
             </>
           ) : (
             <div className="border border-divider p-5 text-center space-y-3">
@@ -302,7 +335,7 @@ export default function PuppyDetailPage() {
       </div>
 
       {/* ── Payment Modal ── */}
-      <Modal open={payOpen} onClose={() => !loading && setPayOpen(false)} title="Purchase via Yoco" maxWidth="max-w-lg">
+      <Modal open={payOpen} onClose={() => !loading && setPayOpen(false)} title={payOption === 'deposit' ? 'Reserve via Yoco' : 'Purchase via Yoco'} maxWidth="max-w-lg">
         <form onSubmit={handlePay} className="space-y-4">
           <div className="bg-cream border border-divider p-4 flex items-center gap-3">
             <img src={puppy.images[0]} alt={puppy.name} className="w-12 h-12 object-cover flex-shrink-0" onError={e => { e.target.src = `https://picsum.photos/seed/${puppy.id}/80/80` }} />
@@ -310,7 +343,7 @@ export default function PuppyDetailPage() {
               <p className="font-display text-lg font-semibold text-espresso">{puppy.name}</p>
               <p className="font-body text-xs text-muted">Chihuahua · {puppy.coatType} · {kennel?.name}</p>
             </div>
-            <span className="ml-auto font-display text-xl font-semibold text-espresso">R{puppy.price.toLocaleString()}</span>
+            <span className="ml-auto font-display text-xl font-semibold text-espresso">R{payAmount.toLocaleString()}</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -332,7 +365,7 @@ export default function PuppyDetailPage() {
             className={`w-full py-4 font-body font-semibold text-sm tracking-widest uppercase flex items-center justify-center gap-2 transition-colors ${loading ? 'bg-muted text-cream cursor-not-allowed' : 'bg-sienna text-white hover:bg-sienna-dark'}`}
           >
             <Lock className="w-4 h-4" />
-            {loading ? 'Redirecting to Yoco...' : `Pay R${puppy.price.toLocaleString()} via Yoco`}
+            {loading ? 'Redirecting to Yoco...' : `${payLabel} R${payAmount.toLocaleString()} via Yoco`}
           </button>
           {payError && <p className="font-body text-xs text-red-600 text-center">{payError}</p>}
           <p className="font-body text-xs text-muted text-center">You will be redirected to Yoco to complete your payment securely.</p>
@@ -340,14 +373,18 @@ export default function PuppyDetailPage() {
       </Modal>
 
       {/* ── Success Modal ── */}
-      <Modal open={successOpen} onClose={() => { setSuccessOpen(false); navigate('/') }} title="Payment Successful!">
+      <Modal open={successOpen} onClose={() => { setSuccessOpen(false); navigate('/') }} title={purchasedKind === 'deposit' ? 'Deposit Received!' : 'Payment Successful!'}>
         <div className="text-center space-y-4">
           <div className="w-14 h-14 bg-sage/20 mx-auto flex items-center justify-center">
             <Check className="w-7 h-7 text-sage-dark" />
           </div>
           <div>
             <p className="font-display text-2xl font-semibold text-espresso mb-1">Thank You!</p>
-            <p className="font-body text-sm text-muted">Your purchase of <strong className="text-espresso">{puppy.name}</strong> is confirmed. The breeder will be in touch shortly.</p>
+            <p className="font-body text-sm text-muted">
+              {purchasedKind === 'deposit'
+                ? <>Your 50% deposit for <strong className="text-espresso">{puppy.name}</strong> is confirmed — this puppy is now reserved for you. Pay the balance here anytime before collection.</>
+                : <>Your purchase of <strong className="text-espresso">{puppy.name}</strong> is confirmed. The breeder will be in touch shortly.</>}
+            </p>
           </div>
           <div className="bg-white border border-divider p-4 text-left space-y-1">
             <p className="font-body text-xs font-semibold uppercase tracking-widest text-muted mb-2">Breeder Contact</p>
