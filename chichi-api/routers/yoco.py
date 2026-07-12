@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 
 from database import get_db
+from puppy_sales import puppy_status
 from yoco_helper import FRONTEND_URL, BACKEND_URL, YOCO_SECRET_KEY, create_checkout, verify_webhook
 
 router = APIRouter()
@@ -43,27 +44,54 @@ async def yoco_puppy_checkout(body: dict, db=Depends(get_db)):
     buyer_name = body.get('buyer_name', '').strip()
     buyer_email = body.get('buyer_email', '').strip()
     buyer_id = body.get('buyer_id', '')
+    payment_option = body.get('payment_option', 'full')
+
+    if payment_option not in ('full', 'deposit', 'balance'):
+        raise HTTPException(status_code=400, detail='Invalid payment option')
 
     puppy = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
     if not puppy:
         raise HTTPException(status_code=404, detail='Puppy not found')
     puppy = dict(puppy)
-    if puppy['sold']:
-        raise HTTPException(status_code=409, detail='Already sold')
+    status = puppy_status(puppy)
 
-    amount_cents = int(puppy['price'] * 100)
+    if payment_option in ('full', 'deposit'):
+        if status != 'available':
+            raise HTTPException(status_code=409, detail='Puppy not available')
+    if payment_option == 'deposit':
+        buyer = db.execute('SELECT id FROM buyers WHERE id = ?', (buyer_id,)).fetchone() if buyer_id else None
+        if not buyer:
+            raise HTTPException(status_code=403, detail='Deposit requires a buyer account')
+    if payment_option == 'balance':
+        if status != 'booked':
+            raise HTTPException(status_code=409, detail='Puppy is not booked')
+        if not buyer_id or buyer_id != (puppy.get('booked_by') or ''):
+            raise HTTPException(status_code=403, detail='Only the booking buyer can pay the balance')
+
+    if payment_option == 'deposit':
+        amount = round(puppy['price'] * 0.5, 2)
+    elif payment_option == 'balance':
+        dep = db.execute(
+            "SELECT amount FROM transactions WHERE puppy_id = ? AND type = 'deposit' "
+            "ORDER BY date DESC LIMIT 1", (puppy_id,)).fetchone()
+        deposit_paid = dict(dep)['amount'] if dep else round(puppy['price'] * 0.5, 2)
+        amount = round(puppy['price'] - deposit_paid, 2)
+    else:
+        amount = puppy['price']
+    amount_cents = int(round(amount * 100))
 
     try:
         session = await create_checkout(
             amount_cents=amount_cents,
             metadata={
                 'type': 'puppy',
+                'payment_option': payment_option,
                 'puppy_id': puppy_id,
                 'buyer_name': buyer_name,
                 'buyer_email': buyer_email,
                 'buyer_id': buyer_id,
             },
-            success_url=f'{FRONTEND_URL}/puppies/{puppy_id}?purchased=true',
+            success_url=f'{FRONTEND_URL}/puppies/{puppy_id}?purchased={payment_option}',
             cancel_url=f'{FRONTEND_URL}/puppies/{puppy_id}',
         )
     except httpx.HTTPError:
