@@ -1,13 +1,12 @@
 import json
-import uuid
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 
 from database import get_db
-from puppy_sales import puppy_status
+from puppy_sales import puppy_status, record_puppy_payment
 from yoco_helper import FRONTEND_URL, BACKEND_URL, YOCO_SECRET_KEY, create_checkout, verify_webhook
 
 router = APIRouter()
@@ -134,36 +133,14 @@ async def yoco_webhook(request: Request, db=Depends(get_db)):
         db.commit()
 
     elif payment_type == 'puppy':
-        puppy_id = metadata.get('puppy_id', '')
-        buyer_name = metadata.get('buyer_name', '')
-        buyer_email = metadata.get('buyer_email', '')
-        buyer_id = metadata.get('buyer_id', '')
-
-        puppy = db.execute('SELECT * FROM puppies WHERE id = ?', (puppy_id,)).fetchone()
-        if not puppy or dict(puppy)['sold']:
-            return PlainTextResponse('OK')
-        puppy = dict(puppy)
-
-        kennel = db.execute('SELECT * FROM kennels WHERE id = ?', (puppy['kennel_id'],)).fetchone()
-        rate = dict(kennel)['commission'] if kennel else 8.0
-        commission = round(puppy['price'] * rate / 100, 2)
-        seller_payout = round(puppy['price'] - commission, 2)
-
-        txn_id = f'txn{uuid.uuid4().hex[:8]}'
-        now = datetime.now().isoformat()
-        db.execute("""
-            INSERT INTO transactions
-            (id, puppy_id, puppy_name, kennel_id, kennel_name, buyer_name, buyer_email,
-             amount, commission, seller_payout, seller_paid, commission_paid, date, buyer_id)
-            VALUES (?,?,?,?,?,?,?,?,?,?,0,0,?,?)
-        """, (
-            txn_id, puppy['id'], puppy['name'],
-            puppy['kennel_id'], dict(kennel)['name'] if kennel else '',
-            buyer_name, buyer_email,
-            puppy['price'], commission, seller_payout, date.today().isoformat(), buyer_id,
-        ))
-        db.execute('UPDATE puppies SET sold = 1, sold_at = ? WHERE id = ?', (now, puppy_id))
-        db.commit()
+        record_puppy_payment(
+            db,
+            metadata.get('puppy_id', ''),
+            metadata.get('payment_option', 'full'),
+            metadata.get('buyer_name', ''),
+            metadata.get('buyer_email', ''),
+            metadata.get('buyer_id', ''),
+        )
 
     return PlainTextResponse('OK')
 
@@ -227,7 +204,7 @@ async def verify_puppy(body: dict, db=Depends(get_db)):
     puppy = dict(puppy)
 
     if puppy.get('sold'):
-        return {'ok': True}
+        return {'ok': True}  # settled — record_puppy_payment would no-op anyway
 
     try:
         async with httpx.AsyncClient() as client:
@@ -253,6 +230,7 @@ async def verify_puppy(body: dict, db=Depends(get_db)):
         buyer_name = buyer_name or metadata.get('buyer_name', '')
         buyer_email = buyer_email or metadata.get('buyer_email', '')
         buyer_id = buyer_id or metadata.get('buyer_id', '')
+        payment_option = metadata.get('payment_option', 'full')
 
     except HTTPException:
         raise
@@ -260,25 +238,8 @@ async def verify_puppy(body: dict, db=Depends(get_db)):
         print(f'[verify-puppy] exception: {e}')
         raise HTTPException(status_code=502, detail='Could not verify payment')
 
-    kennel = db.execute('SELECT * FROM kennels WHERE id = ?', (puppy['kennel_id'],)).fetchone()
-    rate = dict(kennel)['commission'] if kennel else 8.0
-    commission = round(puppy['price'] * rate / 100, 2)
-    seller_payout = round(puppy['price'] - commission, 2)
-
-    txn_id = f'txn{uuid.uuid4().hex[:8]}'
-    now = datetime.now().isoformat()
-    db.execute("""
-        INSERT INTO transactions
-        (id, puppy_id, puppy_name, kennel_id, kennel_name, buyer_name, buyer_email,
-         amount, commission, seller_payout, seller_paid, commission_paid, date, buyer_id)
-        VALUES (?,?,?,?,?,?,?,?,?,?,0,0,?,?)
-    """, (
-        txn_id, puppy['id'], puppy['name'],
-        puppy['kennel_id'], dict(kennel)['name'] if kennel else '',
-        buyer_name, buyer_email,
-        puppy['price'], commission, seller_payout, date.today().isoformat(), buyer_id,
-    ))
-    db.execute('UPDATE puppies SET sold = 1, sold_at = ? WHERE id = ?', (now, puppy_id))
-    db.commit()
-    print(f'[verify-puppy] txn {txn_id} created for puppy {puppy_id}, buyer_id={buyer_id!r}')
+    txn_id = record_puppy_payment(db, puppy_id, payment_option,
+                                  buyer_name, buyer_email, buyer_id)
+    if txn_id:
+        print(f'[verify-puppy] txn {txn_id} created for puppy {puppy_id} ({payment_option})')
     return {'ok': True}
