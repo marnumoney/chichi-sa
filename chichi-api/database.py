@@ -289,6 +289,24 @@ f"{insert_ignore} admin_settings (id) VALUES (1) {on_conflict}",
     _add_column(conn, is_pg, 'puppies', 'sold_at', "TEXT DEFAULT NULL")
 
     for col, defn in [
+        ('status', "TEXT DEFAULT 'available'"),
+        ('booked_by', "TEXT DEFAULT ''"),
+        ('booked_at', "TEXT DEFAULT NULL"),
+    ]:
+        _add_column(conn, is_pg, 'puppies', col, defn)
+
+    _add_column(conn, is_pg, 'transactions', 'type', "TEXT DEFAULT 'full'")
+
+    # Backfill status from the legacy sold flag — idempotent, safe on every deploy
+    try:
+        conn.execute("UPDATE puppies SET status = 'sold' WHERE sold = 1 AND (status IS NULL OR status != 'sold')")
+        conn.execute("UPDATE puppies SET status = 'available' WHERE sold = 0 AND (status IS NULL OR status = '')")
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f'[db] warning: status backfill failed: {e}')
+
+    for col, defn in [
         ('wallet_adj_commission', 'REAL DEFAULT 0'),
         ('wallet_adj_paid_out',   'REAL DEFAULT 0'),
         ('wallet_adj_volume',     'REAL DEFAULT 0'),
@@ -323,6 +341,8 @@ def parse_puppy(row) -> dict:
     d['breeding_rights_price'] = d.get('breeding_rights_price') or 0
     d['sire_image'] = d.get('sire_image') or ''
     d['dam_image'] = d.get('dam_image') or ''
+    d['status'] = d.get('status') or ('sold' if d['sold'] else 'available')
+    d['booked_by'] = d.get('booked_by') or ''
     return d
 
 
@@ -330,6 +350,7 @@ def parse_transaction(row) -> dict:
     d = dict(row)
     d['seller_paid'] = bool(d.get('seller_paid', 0))
     d['commission_paid'] = bool(d.get('commission_paid', 0))
+    d['type'] = d.get('type') or 'full'
     return d
 
 
