@@ -11,7 +11,7 @@ export default function Footer() {
               <ChihuahuaMark size="sm" />
               <div className="leading-none">
                 <div className="font-display text-xl font-semibold text-cream">Chihuahua</div>
-                <div className="font-body text-[8px] tracking-[0.2em] uppercase text-cream/40 font-semibold">South Africa</div>
+                <div className="font-body text-[8px] tracking-[0.2em] uppercase text-cream/50 font-semibold">South Africa</div>
               </div>
             </div>
             <p className="font-body text-sm leading-relaxed mb-4">
@@ -19,7 +19,7 @@ export default function Footer() {
             </p>
             <div className="flex gap-2">
               <span className="bg-cream/10 text-cream/80 text-[9px] font-bold tracking-widest uppercase px-2.5 py-1">KUSA</span>
-              <span className="bg-sage/30 text-sage-light text-[9px] font-bold tracking-widest uppercase px-2.5 py-1">CANINE SA</span>
+              <span className="bg-sage/30 text-[#7FB08D] text-[9px] font-bold tracking-widest uppercase px-2.5 py-1">CANINE SA</span>
             </div>
           </div>
 
@@ -52,8 +52,8 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-cream/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="font-body text-xs text-cream/40">© 2026 Chihuahua South Africa. All rights reserved.</p>
-          <p className="font-body text-xs text-cream/40">Verified Chihuahua breeders. Registered pedigrees. Trusted marketplace.</p>
+          <p className="font-body text-xs text-cream/50">© 2026 Chihuahua South Africa. All rights reserved.</p>
+          <p className="font-body text-xs text-cream/50">Verified Chihuahua breeders. Registered pedigrees. Trusted marketplace.</p>
         </div>
       </div>
     </footer>

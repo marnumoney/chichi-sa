@@ -39,7 +39,7 @@ export function Logo({ light = false, size = 'md' }) {
 /** Compact stacked logo for narrow sidebars */
 export function LogoCompact({ light = false }) {
   const textColor = light ? 'text-cream' : 'text-espresso'
-  const subColor = light ? 'text-cream/40' : 'text-muted'
+  const subColor = light ? 'text-cream/50' : 'text-muted'
   return (
     <div className="flex items-center gap-2.5">
       <ChihuahuaMark size="sm" />

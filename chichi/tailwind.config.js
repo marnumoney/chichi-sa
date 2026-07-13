@@ -7,7 +7,7 @@ export default {
         cream: '#FAF6F0',
         espresso: '#2A1F14',
         sienna: {
-          DEFAULT: '#B5651D',
+          DEFAULT: '#A85A15', // WCAG AA: 5.07 w/ white text, 4.71 as text on cream (was #B5651D — 4.34/4.03)
           light: '#D4895A',
           dark: '#8B4513',
         },
@@ -17,7 +17,7 @@ export default {
           dark: '#2D5140',
         },
         wheat: '#E8D5B0',
-        muted: '#8B7355',
+        muted: '#846C50', // WCAG AA: 4.60 on cream, 4.95 on white (was #8B7355 — 4.17/4.48)
         divider: '#E2D5C3',
       },
       fontFamily: {

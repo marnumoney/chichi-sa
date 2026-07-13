@@ -231,7 +231,7 @@ export default function HomePage() {
             { num: '03', title: 'Connect & Collect', desc: 'Once purchased, you\'re directly connected with the breeder to arrange collection or transport to your home.' },
           ].map(({ num, title, desc }) => (
             <div key={num} className="relative pl-6 border-l-2 border-divider">
-              <span className="font-display text-5xl font-bold text-divider select-none absolute -left-4 -top-3">{num}</span>
+              <span className="font-display text-5xl font-bold text-[#A0865E] select-none absolute -left-4 -top-3">{num}</span>
               <h3 className="font-display text-xl font-semibold text-espresso mb-2 mt-4">{title}</h3>
               <p className="font-body text-sm text-muted leading-relaxed">{desc}</p>
             </div>
@@ -245,7 +245,7 @@ export default function HomePage() {
           <h2 className="font-display text-3xl md:text-4xl font-semibold text-cream mb-4">
             Are you a registered Chihuahua breeder?
           </h2>
-          <p className="font-body text-sm text-cream/80 mb-8 max-w-lg mx-auto">
+          <p className="font-body text-sm text-cream mb-8 max-w-lg mx-auto">
             Join to list your Chihuahua puppies and reach thousands of serious buyers across South Africa.
             KUSA and Canine SA breeders welcome.
           </p>
