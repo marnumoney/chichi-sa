@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useApp } from '../../context/AppContext'
 import { Pencil, Trash2, Plus, Check, X, FileText, ExternalLink, Eye, Landmark } from 'lucide-react'
 import Modal from '../../components/Modal'
-import { sendApprovalEmail } from '../../utils/email'
 
 function BuyerModal({ buyer, transactions, open, onClose }) {
   const purchases = transactions.filter(t => t.buyerId === buyer?.id)
@@ -171,6 +170,7 @@ export default function AdminUsers() {
   const [docsTarget, setDocsTarget] = useState(null)
   const [bankingTarget, setBankingTarget] = useState(null)
   const [buyerTarget, setBuyerTarget] = useState(null)
+  const [approvingId, setApprovingId] = useState(null)
 
   const statusBadge = (status) => {
     if (status === 'approved') return <span className="badge-available px-2 py-0.5">Approved</span>
@@ -239,9 +239,14 @@ export default function AdminUsers() {
                       <td className="px-5 py-3">
                         <div className="flex gap-2 items-center">
                           {s.status === 'pending_verification' && (
-                            <button onClick={() => { approveSeller(s.id); sendApprovalEmail(s) }}
-                              className="flex items-center gap-1 bg-sage text-white text-[10px] font-bold uppercase tracking-widest px-2 py-1.5 hover:bg-sage-dark transition-colors">
-                              <Check className="w-3 h-3" /> Approve
+                            <button
+                              disabled={approvingId === s.id}
+                              onClick={async () => {
+                                setApprovingId(s.id)
+                                try { await approveSeller(s.id) } finally { setApprovingId(null) }
+                              }}
+                              className="flex items-center gap-1 bg-sage text-white text-[10px] font-bold uppercase tracking-widest px-2 py-1.5 hover:bg-sage-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                              <Check className="w-3 h-3" /> {approvingId === s.id ? 'Approving…' : 'Approve'}
                             </button>
                           )}
                           <button onClick={() => setDocsTarget(s)} className="text-muted hover:text-sienna transition-colors p-1" title="View documents">

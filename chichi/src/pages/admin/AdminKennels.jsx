@@ -3,7 +3,7 @@ import { useApp, apiFetch } from '../../context/AppContext'
 import { Check, X, Pencil, Copy, ExternalLink, Plus, Trash2, Download, FileText, Landmark, Bell, ClipboardList } from 'lucide-react'
 import Modal from '../../components/Modal'
 import { exportCsv } from '../../utils/exportCsv'
-import { sendApprovalEmail, sendRenewalEmail } from '../../utils/email'
+import { sendRenewalEmail } from '../../utils/email'
 
 function DocsModal({ seller, open, onClose }) {
   const docs = seller?.documents || {}
@@ -244,6 +244,7 @@ export default function AdminKennels() {
   const [bankingTarget, setBankingTarget] = useState(null)
   const [logTarget, setLogTarget] = useState(null)
   const [reminderSent, setReminderSent] = useState(null)
+  const [approvingId, setApprovingId] = useState(null)
 
   const pendingSellers = sellers.filter(s => s.status === 'pending_verification')
   const awaitingPayment = sellers.filter(s => s.status === 'pending_payment')
@@ -324,11 +325,15 @@ export default function AdminKennels() {
                     View Docs
                   </button>
                   <button
-                    onClick={() => { approveSeller(s.id); sendApprovalEmail(s) }}
-                    className="flex items-center gap-1.5 bg-sage text-white font-body text-xs font-semibold px-3 py-1.5 hover:bg-sage-dark transition-colors"
+                    disabled={approvingId === s.id}
+                    onClick={async () => {
+                      setApprovingId(s.id)
+                      try { await approveSeller(s.id) } finally { setApprovingId(null) }
+                    }}
+                    className="flex items-center gap-1.5 bg-sage text-white font-body text-xs font-semibold px-3 py-1.5 hover:bg-sage-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Check className="w-3.5 h-3.5" />
-                    Approve → Generate Payment Link
+                    {approvingId === s.id ? 'Approving…' : 'Approve → Generate Payment Link'}
                   </button>
                   <button onClick={() => rejectSeller(s.id)} className="flex items-center gap-1.5 bg-red-100 text-red-700 font-body text-xs font-semibold px-3 py-1.5 hover:bg-red-200 transition-colors">
                     <X className="w-3.5 h-3.5" />
