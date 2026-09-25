@@ -26,3 +26,6 @@ __pycache__/
 *.db-wal
 .vercel
 .env*
+
+# Freelancer Hub local database
+freelancer-hub/*.db
